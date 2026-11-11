@@ -83,7 +83,7 @@
         const d = document.createElement("div"); d.className = "pin" + (p.goal ? " goal" : "");
         d.style.left = p.x * this.w + "px"; d.style.top = p.y * this.h + "px";
         const pi = document.createElement("div"); pi.className = "pi";
-        const head = document.createElement("div"); head.className = "head"; if (!p.goal) head.style.background = p.color || "#ff5d8f";
+        const head = document.createElement("div"); head.className = "head"; if (!p.goal) head.style.background = p.color || "#ff7b72";
         pi.append(head);
         if (p.label) { const lb = document.createElement("div"); lb.className = "lbl"; lb.textContent = p.label; pi.append(lb); }
         d.append(pi); this.pinLayer.append(d);

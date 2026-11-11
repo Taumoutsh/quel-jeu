@@ -3,7 +3,7 @@
   "use strict";
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const COLORS = ["#c6ff3d", "#ff5d8f", "#3de0ff", "#ffc94d", "#b48bff", "#ff8a3d", "#5dffb0", "#f2f2f2"];
+  const COLORS = ["#f4b740", "#ff7b72", "#4cc9c0", "#9d8cff", "#6fd69b", "#ff9f5a", "#f07ac0", "#e3ecf2"]; // couleurs de joueur, accordées à la palette
   const CODE_ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   const LS = {
     get(k, d) { try { const v = localStorage.getItem("qj." + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -33,6 +33,10 @@
     mode: null, nroom: null, code: null, st: null, gen: null, res: [], peers: [],
     R: null, shownReveal: -1, shownFinal: false, sawHost: false,
   };
+
+  // couleur choisie avec l'ancienne palette : on prend sa remplaçante
+  const OLD_COLORS = ["#c6ff3d", "#ff5d8f", "#3de0ff", "#ffc94d", "#b48bff", "#ff8a3d", "#5dffb0", "#f2f2f2"];
+  if (!COLORS.includes(A.color)) { const k = OLD_COLORS.indexOf(String(A.color).toLowerCase()); A.color = COLORS[k >= 0 ? k : 0]; LS.set("color", A.color); }
 
   // réglages enregistrés avant l'arrivée du pack « Vrais jeux » : on bascule une fois sur ce pack
   if (LS.get("cfgV", 0) < 2) { A.cfg.pack = "real"; LS.set("cfg", A.cfg); LS.set("cfgV", 2); }
@@ -603,7 +607,7 @@
     $("finSolo").innerHTML = "<div class='bigscore'>" + fmt(mine.tot) + "</div><p class='mut' style='text-align:center;margin:8px 0 0'>sur " + fmt(max) + " points possibles · " + mine.found + "/" + n + " jeu" + (n > 1 ? "x" : "") + " trouvé" + (mine.found > 1 ? "s" : "") + "</p>";
     if (multi) {
       const order = [1, 0, 2].filter((k) => ps[k]);
-      const hgt = { 0: 120, 1: 86, 2: 64 }, col = { 0: "var(--acc)", 1: "#d9dee8", 2: "#e0a26b" };
+      const hgt = { 0: 120, 1: 86, 2: 64 }, col = { 0: "var(--acc)", 1: "#cfd9e2", 2: "#d9935a" };
       $("podium").innerHTML = order.map((k) => "<div class='pod'><div class='nm'>" + esc(ps[k].p.name) + "</div><div class='pt'>" + fmt(ps[k].tot) + "</div><div class='bar' style='height:" + hgt[k] + "px;background:" + col[k] + "'>" + (k + 1) + "</div></div>").join("");
     }
     if (multi) {
@@ -649,9 +653,9 @@
     const showMap = !!(E.mapImg || existing);
     $("eMapBox").classList.toggle("hidden", !showMap);
     if (showMap) {
-      if (!eMap) eMap = new MapView($("eMapView"), { onTap: (x, y) => { E.pin = { x, y }; eMap.setPins([{ x, y, color: "#c6ff3d", label: "Vue" }]); editorRefresh(); } });
+      if (!eMap) eMap = new MapView($("eMapView"), { onTap: (x, y) => { E.pin = { x, y }; eMap.setPins([{ x, y, color: "#f4b740", label: "Vue" }]); editorRefresh(); } });
       const src = E.mapImg ? { url: E.mapImg.src, w: E.mapImg.naturalWidth, h: E.mapImg.naturalHeight } : { url: "/_blob/" + existing.asset, w: existing.w, h: existing.h };
-      if (eMap._src !== src.url) { eMap._src = src.url; requestAnimationFrame(() => { eMap.setImage(src.url, src.w, src.h); eMap.setPins(E.pin ? [{ x: E.pin.x, y: E.pin.y, color: "#c6ff3d", label: "Vue" }] : []); }); }
+      if (eMap._src !== src.url) { eMap._src = src.url; requestAnimationFrame(() => { eMap.setImage(src.url, src.w, src.h); eMap.setPins(E.pin ? [{ x: E.pin.x, y: E.pin.y, color: "#f4b740", label: "Vue" }] : []); }); }
     }
     $("eSave").disabled = !(g && E.panoImg && showMap && E.pin) || E.busy;
   }
