@@ -38,7 +38,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir l'artefact : partage-le ave
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 114 vues de 14 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 133 vues de 18 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
@@ -57,6 +57,10 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir l'artefact : partage-le ave
     | Assassin's Creed IV: Black Flag | La Havane, Kingston, Nassau, Great Inagua |
     | Fallout: New Vegas | Le Strip, Goodsprings, barrage Hoover, Primm |
     | Cyberpunk 2077 | Marché de Kabuki, Wellsprings, Grand Imperial Mall (position au quartier près) |
+    | Grand Theft Auto IV | Middle Park, Star Junction, Statue of Happiness, Broker Bridge, Hove Beach |
+    | Grand Theft Auto: Vice City | Vice Point, Little Havana, Starfish Island, aéroport Escobar, Prawn Island |
+    | Assassin's Creed Unity | La Bastille, Hôtel de Ville, Palais-Royal, Panthéon, palais du Luxembourg (plan de Paris de 1789) |
+    | Assassin's Creed Syndicate | Palais de Westminster, Buckingham Palace, cathédrale Saint-Paul, Tour de Londres |
 
     Les captures portant le logo ou le nom du jeu ont été écartées. Les positions ont été relevées à la main sur les cartes (noms de lieux quand la carte en a, sinon repères visibles) : elles sont justes à quelques pourcents de la carte.
   - La visionneuse affiche une capture plate en plein écran ; on la déplace en glissant et on zoome comme pour un 360°.

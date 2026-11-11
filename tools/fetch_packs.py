@@ -99,11 +99,11 @@ def save(src, path, max_w, force):
         im = tiles_to_map(src)
     else:
         im = load_image(src["url"])
+    if im.width < 1000:  # image disparue remplacée par une vignette d'erreur
+        raise ValueError("image trop petite (%dx%d)" % im.size)
     if "crop" in src:  # recadrage normalisé [x0, y0, x1, y1]
         c = src["crop"]
         im = im.crop((round(c[0] * im.width), round(c[1] * im.height), round(c[2] * im.width), round(c[3] * im.height)))
-    if im.width < 1000:  # image disparue remplacée par une vignette d'erreur
-        raise ValueError("image trop petite (%dx%d)" % im.size)
     if im.width > max_w:
         im = im.resize((max_w, round(im.height * max_w / im.width)), Image.LANCZOS)
     im.save(path, "JPEG", quality=82, optimize=True, progressive=True)
