@@ -103,8 +103,16 @@ En local, seul le mode solo avec le pack démo fonctionne : le multijoueur et la
 
 Avec Docker (sur ton serveur) :
 ```bash
+git clone https://github.com/taumoutsh/quel-jeu.git
+cd quel-jeu
 docker compose up -d --build
 # puis http://<serveur>:6103
+```
+Mise à jour plus tard :
+```bash
+cd quel-jeu
+git pull
+docker compose up -d --build
 ```
 L'image télécharge elle-même les images du pack « Vrais jeux » à la construction. Comme en local, seul le mode solo fonctionne hors des artefacts Claude.
 
