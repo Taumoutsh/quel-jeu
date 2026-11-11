@@ -454,7 +454,7 @@
     if (ev.k === "empty") return;
     if (ev.k === "vague") { setFb("warn", "Trop vague : tape le titre d'un jeu."); return; }
     if (ev.k === "precision") {
-      setFb("warn", "<b>Précise !</b> « " + esc(text.trim()) + " » ne suffit pas" + (ev.series ? " : il existe plusieurs jeux <i>" + esc(ev.series) + "</i>" : "") + ". Donne le titre complet (numéro, sous-titre…). Ce n'est pas compté comme une erreur.");
+      setFb("warn", "<b>Précise !</b> " + (ev.series ? "Il existe plusieurs jeux <i>" + esc(ev.series) + "</i>." : "« " + esc(text.trim()) + " » ne suffit pas.") + " Donne le titre complet.");
       if (A.st.cfg.hints && ev.candidates) {
         $("cands").innerHTML = ev.candidates.map((c) => "<button type='button'>" + esc(c) + "</button>").join("");
         for (const b of $("cands").children) b.onclick = () => submitGuess(b.textContent);
