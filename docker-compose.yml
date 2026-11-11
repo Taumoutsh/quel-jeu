@@ -1,0 +1,7 @@
+services:
+  quel-jeu:
+    build: .
+    image: quel-jeu
+    ports:
+      - "8080:80"
+    restart: unless-stopped

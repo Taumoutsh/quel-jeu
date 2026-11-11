@@ -78,6 +78,13 @@ python3 -m http.server 8765
 ```
 En local, seul le mode solo avec le pack démo fonctionne : le multijoueur et la bibliothèque ont besoin de l'hébergement des artefacts Claude.
 
+Avec Docker (sur ton serveur) :
+```bash
+docker compose up -d --build
+# puis http://<serveur>:8080
+```
+L'image télécharge elle-même les images du pack « Vrais jeux » à la construction. Comme en local, seul le mode solo fonctionne hors des artefacts Claude.
+
 Tests :
 ```bash
 node tests/matcher.test.js
