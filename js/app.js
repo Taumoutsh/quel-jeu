@@ -13,7 +13,7 @@
   const fmt = (n) => Math.round(n).toLocaleString("fr-FR");
 
   // ------------------------------------------------------------------ points
-  const NAME_MAX = 1000, NAME_STEP = 200, NAME_MIN = 200, LOC_MAX = 4000;
+  const NAME_MAX = 1000, NAME_STEP = 200, NAME_MIN = 200, LOC_MAX = 1000;
   const namePoints = (errors) => Math.max(NAME_MIN, NAME_MAX - NAME_STEP * errors);
   function mapDist(a, b, w, h) {
     // distance normalisée par la diagonale de la carte (0 = parfait, 1 = coins opposés)

@@ -11,7 +11,7 @@ Seul ou à plusieurs avec un **code de partie**.
 | Étape | Points |
 |---|---|
 | Nom du jeu trouvé | 1 000, −200 par erreur (minimum 200) |
-| Position sur la carte | jusqu'à 4 000 : plein score à moins de 0,8 % de la diagonale de la carte, puis décroissance exponentielle (≈ 2 500 à 5 %, ≈ 1 450 à 10 %, ≈ 480 à 20 %) |
+| Position sur la carte | jusqu'à 1 000 : plein score à moins de 0,8 % de la diagonale de la carte, puis décroissance exponentielle (≈ 630 à 5 %, ≈ 365 à 10 %, ≈ 120 à 20 %) |
 | Nom raté / manche passée | 0 |
 
 **Demande de précision.** Une réponse incomplète n'est **pas** comptée comme une erreur : on demande de préciser.
