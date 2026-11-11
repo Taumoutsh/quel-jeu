@@ -16,6 +16,13 @@ const MAX_PEERS = 16, MAX_ROOMS = 500;
 const GRACE_MS = 15000;             // délai avant de retirer un joueur dont la connexion a coupé
 const ROOM_RE = /^qj-[a-z0-9]{1,12}$/, PEER_RE = /^[a-z0-9]{6,24}$/;
 
+// Choix des images, réglé par le .env (et non depuis le site) :
+//   QJ_IMAGES = real (vrais jeux, par défaut) | demo (jeux fictifs) | mix (les deux)
+//   QJ_JEUX   = liste facultative de clés de jeux du pack « Vrais jeux » (ex. gtav,rdr2,er) ; vide = tous
+const IMAGES = ["real", "demo", "mix"].includes(process.env.QJ_IMAGES) ? process.env.QJ_IMAGES : "real";
+const JEUX = (process.env.QJ_JEUX || "").split(",").map((s) => s.trim().toLowerCase()).filter((s) => /^[a-z0-9]{1,16}$/.test(s));
+if (process.env.QJ_IMAGES && process.env.QJ_IMAGES !== IMAGES) console.warn("QJ_IMAGES inconnu (« " + process.env.QJ_IMAGES + " ») : real utilisé");
+
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
   ".json": "application/json", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp",
   ".svg": "image/svg+xml", ".ico": "image/x-icon", ".md": "text/plain; charset=utf-8" };
@@ -124,7 +131,8 @@ function serveFile(req, res, url) {
       "Cache-Control": rel.startsWith("/packs/img/") && ext !== ".js" ? "public, max-age=2592000" : "no-cache" };
     if (rel === "/index.html") {
       // signale à la page qu'elle est servie par ce serveur : le multijoueur passe alors par /api/rooms
-      const html = fs.readFileSync(file, "utf8").replace("</head>", '<meta name="qj-server" content="1">\n</head>');
+      const meta = '<meta name="qj-server" content="1" data-images="' + IMAGES + '" data-jeux="' + JEUX.join(",") + '">';
+      const html = fs.readFileSync(file, "utf8").replace("</head>", meta + "\n</head>");
       headers["Content-Length"] = Buffer.byteLength(html);
       res.writeHead(200, headers); return res.end(req.method === "HEAD" ? undefined : html);
     }
@@ -141,5 +149,5 @@ const server = http.createServer((req, res) => {
   } else if (req.method === "GET" || req.method === "HEAD") serveFile(req, res, url);
   else { res.writeHead(405); res.end(); }
 });
-server.listen(PORT, () => console.log("Quel Jeu ? sur http://localhost:" + PORT + " (dossier " + ROOT + ")"));
+server.listen(PORT, () => console.log("Quel Jeu ? sur http://localhost:" + PORT + " (dossier " + ROOT + ") · images : " + IMAGES + (JEUX.length ? " · jeux : " + JEUX.join(", ") : "")));
 process.on("SIGTERM", () => server.close(() => process.exit(0)));

@@ -2,3 +2,4 @@
 packs/img
 tests
 *.md
+.env

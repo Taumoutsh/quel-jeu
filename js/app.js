@@ -60,6 +60,14 @@
 
   // ------------------------------------------------------------------ pack « Vrais jeux »
   // Données : packs/vrais-jeux.js (versionné). Images : packs/img/ (tools/fetch_packs.py), listées dans dispo.js.
+  // Site auto-hébergé (server/server.js) : le choix des images vient du .env, pas des réglages de la page.
+  const SERVER = (function () {
+    const m = document.querySelector('meta[name="qj-server"]');
+    if (!m) return null;
+    const images = ["real", "demo", "mix"].includes(m.dataset.images) ? m.dataset.images : "real";
+    const jeux = (m.dataset.jeux || "").split(",").filter(Boolean);
+    return { images, jeux };
+  })();
   const REAL = (function () {
     const P = window.REAL_PACK, D = window.REAL_PACK_DISPO;
     const out = { scenes: {}, maps: {}, games: {} };
@@ -67,6 +75,7 @@
     for (const g of P.games) {
       const m = D.maps[g.key];
       if (!m) continue;
+      if (SERVER && SERVER.jeux.length && !SERVER.jeux.includes(g.key)) continue;
       const id = Matcher.slug(g.t);
       out.games[g.key] = Object.assign({ id }, g);
       out.maps[id] = { url: "packs/img/map-" + g.key + ".jpg", w: m[0], h: m[1] };
@@ -77,6 +86,7 @@
     }
     return out;
   })();
+  if (SERVER) A.cfg.pack = SERVER.images; // imposé par le .env
 
   // ------------------------------------------------------------------ scènes et cartes
   const demoMapUrl = {};
@@ -349,6 +359,7 @@
     const avail = { demo: true, lib: pool("lib").length > 0, real: pool("real").length > 0 };
     avail.mix = avail.lib || avail.real;
     if (A.mode !== "guest" && !avail[cfg.pack]) { cfg.pack = "demo"; }
+    $("packSetting").classList.toggle("hidden", !!SERVER);
     const max = Math.max(1, Math.min(15, pool(cfg.pack).length));
     if (A.mode !== "guest" && cfg.rounds > max) cfg.rounds = max;
     $("sRounds").textContent = cfg.rounds;
@@ -363,6 +374,7 @@
   }
   function setCfg(k, v) {
     if (A.mode === "guest") return;
+    if (k === "pack" && SERVER) return; // imposé par le .env du serveur
     A.cfg[k] = v; LS.set("cfg", A.cfg);
     renderSettings();
     if (A.st && A.st.ph === "lobby") { A.st = Object.assign({}, A.st, { cfg: Object.assign({}, A.cfg) }); publish(); }

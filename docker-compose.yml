@@ -4,4 +4,8 @@ services:
     image: quel-jeu
     ports:
       - "6103:8080"
+    environment:
+      # réglés dans le fichier .env (voir .env.example)
+      QJ_IMAGES: ${QJ_IMAGES:-real}
+      QJ_JEUX: ${QJ_JEUX:-}
     restart: unless-stopped

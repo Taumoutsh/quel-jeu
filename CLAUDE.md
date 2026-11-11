@@ -11,6 +11,7 @@ Projet : « Quel Jeu ? », clone en français du concept GameGuessr (devine le j
 
 - Docker : `docker compose up -d --build`, port 6103 (images téléchargées à la construction). Servi par `server/server.js` (Node sans dépendance) qui fournit aussi les salles multijoueur (`/api/rooms`, SSE) ; `js/room-server.js` s'active seulement si la page contient `<meta name="qj-server">` (ajoutée par le serveur), donc rien ne change sur claude.ai. Test : `node tests/e2e_server.js /tmp/x`. La bibliothèque (db/assets) reste réservée à claude.ai.
 - Pack par défaut : « Vrais jeux » (réglage enregistré basculé une fois via `cfgV`).
+- Site auto-hébergé : le choix des images se fait dans `.env` (`QJ_IMAGES` = real|demo|mix, `QJ_JEUX` = filtre de clés), transmis par server.js dans la balise meta ; le bloc « Images » (#packSetting) est alors masqué et `setCfg('pack')` ignoré. Sur claude.ai et en local sans server.js, le choix reste dans la page.
 
 ## Pistes envisagées (pas encore faites)
 - Pack « jeux libres » (SuperTuxKart, 0 A.D., Veloren…) à partir d'images sous licence libre (le mode « capture plate » existe maintenant).

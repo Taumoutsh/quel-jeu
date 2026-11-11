@@ -107,9 +107,15 @@ Avec Docker (sur ton serveur) :
 ```bash
 git clone https://github.com/taumoutsh/quel-jeu.git
 cd quel-jeu
+cp .env.example .env      # puis ajuster le choix des images
 docker compose up -d --build
 # puis http://<serveur>:6103
 ```
+**Choix des images** : sur le site déployé, il ne se fait pas dans les réglages de la page mais dans `.env` :
+- `QJ_IMAGES` : `real` (vrais jeux, par défaut), `demo` (jeux fictifs) ou `mix` (les deux) ;
+- `QJ_JEUX` : jeux du pack « Vrais jeux » à garder, séparés par des virgules (vide = tous). Clés : `botw skyrim xcx gtav gtasa gta4 gtavc rdr2 rdr1 er gi aco acor ac4 acu acs fnv cp`.
+
+Après un changement du `.env`, `docker compose up -d` suffit (pas besoin de `--build`).
 Mise à jour plus tard :
 ```bash
 cd quel-jeu
