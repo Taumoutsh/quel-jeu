@@ -6,6 +6,7 @@
 //   PORT=3000 ROOT=/srv/site node server/server.js
 "use strict";
 const http = require("http");
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
@@ -118,6 +119,28 @@ async function api(req, res, url) {
 }
 
 // ------------------------------------------------------------------ fichiers statiques
+// Empreinte du contenu des fichiers appelés par la page (js, css) : la page les demande en « fichier?v=empreinte ».
+// Une nouvelle version a donc une nouvelle adresse, qu'aucun cache (navigateur, Cloudflare…) n'a déjà gardée.
+const versions = new Map();
+function version(rel) {
+  const file = path.join(ROOT, rel);
+  try {
+    const st = fs.statSync(file);
+    const key = st.mtimeMs + ":" + st.size, hit = versions.get(rel);
+    if (hit && hit.key === key) return hit.v;
+    const v = crypto.createHash("sha1").update(fs.readFileSync(file)).digest("hex").slice(0, 10);
+    versions.set(rel, { key, v });
+    return v;
+  } catch (e) {
+    return null;
+  }
+}
+function versionAssets(html) {
+  return html.replace(/(src|href)="((?:js|packs)\/[^"?#]+\.js|[^"?#/:]+\.css)"/g, (m, attr, rel) => {
+    const v = version(rel);
+    return v ? attr + '="' + rel + "?v=" + v + '"' : m;
+  });
+}
 function serveFile(req, res, url) {
   let rel = decodeURIComponent(url.pathname);
   if (rel.endsWith("/")) rel += "index.html";
@@ -127,12 +150,14 @@ function serveFile(req, res, url) {
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) { res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }); return res.end("Introuvable"); }
     const ext = path.extname(file).toLowerCase();
+    // adresse versionnée (?v=…) : contenu figé, cache long ; sinon on fait revérifier
+    const versioned = url.searchParams.has("v");
     const headers = { "Content-Type": TYPES[ext] || "application/octet-stream", "Content-Length": st.size,
-      "Cache-Control": rel.startsWith("/packs/img/") && ext !== ".js" ? "public, max-age=2592000" : "no-cache" };
+      "Cache-Control": versioned ? "public, max-age=31536000, immutable" : "no-cache" };
     if (rel === "/index.html") {
       // signale à la page qu'elle est servie par ce serveur : le multijoueur passe alors par /api/rooms
       const meta = '<meta name="qj-server" content="1" data-images="' + IMAGES + '" data-jeux="' + JEUX.join(",") + '">';
-      const html = fs.readFileSync(file, "utf8").replace("</head>", meta + "\n</head>");
+      const html = versionAssets(fs.readFileSync(file, "utf8").replace("</head>", meta + "\n</head>"));
       headers["Content-Length"] = Buffer.byteLength(html);
       res.writeHead(200, headers); return res.end(req.method === "HEAD" ? undefined : html);
     }

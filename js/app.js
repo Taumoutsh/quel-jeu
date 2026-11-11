@@ -82,11 +82,11 @@
       if (SERVER && SERVER.jeux.length && !SERVER.jeux.includes(g.key)) continue;
       const id = Matcher.slug(g.t);
       out.games[g.key] = Object.assign({ id }, g);
-      out.maps[id] = { url: "packs/img/map-" + g.key + ".jpg", w: m[0], h: m[1] };
+      out.maps[id] = { url: "packs/img/map-" + g.key + ".jpg" + (SERVER && m[2] ? "?v=" + m[2] : ""), w: m[0], h: m[1] };
     }
     for (const sc of P.scenes) {
       const g = out.games[sc.game];
-      if (g && D.scenes[sc.id]) out.scenes[sc.id] = { game: g.id, x: sc.x, y: sc.y, place: sc.place, flat: !!sc.flat, credit: sc.credit || g.credit, source: sc.source || g.source, url: "packs/img/" + sc.id + ".jpg" };
+      if (g && D.scenes[sc.id]) out.scenes[sc.id] = { game: g.id, x: sc.x, y: sc.y, place: sc.place, flat: !!sc.flat, credit: sc.credit || g.credit, source: sc.source || g.source, url: "packs/img/" + sc.id + ".jpg" + (SERVER && D.scenes[sc.id][2] ? "?v=" + D.scenes[sc.id][2] : "") };
     }
     return out;
   })();

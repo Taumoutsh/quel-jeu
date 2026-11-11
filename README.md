@@ -117,6 +117,8 @@ docker compose up -d --build
 
 Après un changement du `.env`, `docker compose up -d` suffit (pas besoin de `--build`). Sur le site déployé, le choix « Images » des réglages et le bloc « Bibliothèque » de l'accueil n'apparaissent pas.
 
+**Derrière un CDN (Cloudflare…)** : le serveur ajoute une empreinte de contenu à chaque fichier appelé par la page (`app.js?v=…`, images comprises), et la page elle-même n'est jamais mise en cache. Une mise à jour est donc visible tout de suite, sans purger le cache du CDN.
+
 Au démarrage, `docker compose logs quel-jeu` affiche les images réellement servies, par exemple `Vrais jeux : 18 jeux, 133 vues (botw 47, skyrim 13, …)`.
 
 **Reconstructions rapides** : les images téléchargées sont gardées dans un cache de construction Docker (BuildKit, `id=quel-jeu-images`). Un `docker compose up -d --build` après un `git pull` ne télécharge que les vues nouvelles ou dont la source a changé ; le reste de l'image vient du cache habituel de Docker. Seule la toute première construction télécharge tout (quelques minutes). `docker builder prune` vide ce cache.

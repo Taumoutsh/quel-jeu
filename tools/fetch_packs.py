@@ -20,6 +20,7 @@ reprises telles quelles quand leur source correspond, au lieu d'être téléchar
 
 Nécessite Pillow et NumPy (pip install pillow numpy).
 """
+import hashlib
 import io
 import json
 import math
@@ -179,6 +180,13 @@ def tiles_to_map(spec):
 SOURCE_KEYS = ("url", "multires", "tiles", "z", "crop")
 
 
+def digest(path):
+    """Empreinte courte du fichier : ajoutée à l'adresse de l'image (?v=…) pour qu'aucun cache
+    (navigateur, Cloudflare…) ne serve une ancienne version."""
+    with open(path, "rb") as f:
+        return hashlib.sha1(f.read()).hexdigest()[:10]
+
+
 def signature(src):
     """Empreinte de la source d'une image : si elle change, l'image est retéléchargée."""
     return json.dumps({k: src[k] for k in SOURCE_KEYS if k in src}, sort_keys=True)
@@ -248,7 +256,7 @@ def main():
     for g in pack["games"]:
         try:
             w, h = get("map-" + g["key"] + ".jpg", g["map"], MAP_W)
-            dispo["maps"][g["key"]] = [w, h]
+            dispo["maps"][g["key"]] = [w, h, digest(os.path.join(OUT, "map-" + g["key"] + ".jpg"))]
             print("carte", g["key"], w, h)
         except Exception as e:  # noqa: BLE001
             fail("carte " + g["key"] + " (jeu ignoré)", g["map"], e)
@@ -257,7 +265,7 @@ def main():
             continue
         try:
             w, h = get(sc["id"] + ".jpg", sc, PANO_W)
-            dispo["scenes"][sc["id"]] = [w, h]
+            dispo["scenes"][sc["id"]] = [w, h, digest(os.path.join(OUT, sc["id"] + ".jpg"))]
             print("%d/%d" % (i + 1, len(pack["scenes"])), sc["id"], w, h)
         except Exception as e:  # noqa: BLE001
             fail(sc["id"], sc, e)
@@ -268,7 +276,7 @@ def main():
     with open(man_path, "w", encoding="utf-8") as f:
         json.dump(new, f, indent=0)
     with open(os.path.join(OUT, "dispo.js"), "w", encoding="utf-8") as f:
-        f.write("/* Généré par tools/fetch_packs.py : images disponibles [largeur, hauteur]. */\n")
+        f.write("/* Généré par tools/fetch_packs.py : images disponibles [largeur, hauteur, empreinte]. */\n")
         f.write("window.REAL_PACK_DISPO = " + json.dumps(dispo) + ";\n")
     if failed:
         print("\n=== %d téléchargement(s) en échec ===" % len(failed))
