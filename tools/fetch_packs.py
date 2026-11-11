@@ -11,6 +11,9 @@ leurs auteurs. Ce script les récupère depuis leurs sources, les réduit et éc
 Une image déjà présente est réutilisée tant que sa source (url, crop…) n'a pas changé
 (empreintes dans sources.json). Les images qui ne sont plus dans le pack sont supprimées.
 QJ_OUT=dossier change le dossier de sortie (cache de construction Docker).
+QJ_SEED=dossier : images déjà téléchargées ailleurs (ex. packs/img copié depuis un autre ordinateur),
+reprises telles quelles quand leur source correspond, au lieu d'être téléchargées. Utile quand un site
+(Fandom) refuse l'accès depuis le serveur.
 
 Nécessite Pillow et NumPy (pip install pillow numpy).
 """
@@ -18,6 +21,7 @@ import io
 import json
 import math
 import os
+import shutil
 import sys
 import time
 import urllib.error
@@ -31,6 +35,7 @@ Image.MAX_IMAGE_PIXELS = None
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACK = os.path.join(ROOT, "packs", "vrais-jeux.js")
 OUT = os.environ.get("QJ_OUT") or os.path.join(ROOT, "packs", "img")
+SEED = os.environ.get("QJ_SEED") or ""
 PANO_W, MAP_W = 4096, 2400  # mêmes limites que la bibliothèque
 
 
@@ -166,11 +171,26 @@ def main():
     except (OSError, ValueError):
         old = {}
     new = {}
+    seed_man = {}
+    if SEED and os.path.isdir(SEED) and os.path.abspath(SEED) != os.path.abspath(OUT):
+        try:
+            seed_man = json.load(open(os.path.join(SEED, "sources.json"), encoding="utf-8"))
+            print("Images fournies dans %s : %d" % (SEED, len(seed_man)))
+        except (OSError, ValueError):
+            print("Dossier %s sans sources.json : ignoré" % SEED)
+    seeded = [0]
 
     def get(name, src, max_w):
         sig = signature(src)
-        new[name] = sig
-        return save(src, os.path.join(OUT, name), max_w, force or old.get(name) != sig)
+        path = os.path.join(OUT, name)
+        stale = force or old.get(name) != sig or not os.path.exists(path)
+        if stale and not force and seed_man.get(name) == sig and os.path.exists(os.path.join(SEED, name)):
+            shutil.copyfile(os.path.join(SEED, name), path)  # reprise d'une image fournie
+            seeded[0] += 1
+            stale = False
+        size = save(src, path, max_w, stale)
+        new[name] = sig  # seulement après réussite
+        return size
 
     failed = []
 
@@ -216,7 +236,8 @@ def main():
             print("Jeux absents faute de carte : " + ", ".join(skipped))
         print("Relancer la construction réessaiera seulement ce qui manque.\n")
     reused = sum(1 for k, v in new.items() if old.get(k) == v)
-    print("%d vues, %d cartes disponibles (%d images réutilisées, %d supprimées)" % (len(dispo["scenes"]), len(dispo["maps"]), reused if not force else 0, len(gone)))
+    print("%d vues, %d cartes disponibles (%d images réutilisées, %d reprises des images fournies, %d supprimées)" % (
+        len(dispo["scenes"]), len(dispo["maps"]), reused if not force else 0, seeded[0], len(gone)))
 
 
 if __name__ == "__main__":

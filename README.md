@@ -118,6 +118,19 @@ docker compose up -d --build
 Après un changement du `.env`, `docker compose up -d` suffit (pas besoin de `--build`).
 
 **Reconstructions rapides** : les images téléchargées sont gardées dans un cache de construction Docker (BuildKit, `id=quel-jeu-images`). Un `docker compose up -d --build` après un `git pull` ne télécharge que les vues nouvelles ou dont la source a changé ; le reste de l'image vient du cache habituel de Docker. Seule la toute première construction télécharge tout (quelques minutes). `docker builder prune` vide ce cache.
+
+**Si un site refuse ton serveur** (bilan de construction avec `ÉCHEC … HTTP Error 403`, typiquement les wikis Fandom qui bloquent certains hébergeurs) : télécharge les images depuis ton ordinateur et copie-les sur le serveur, la construction les reprendra.
+```bash
+# sur ton ordinateur (Python 3)
+git clone https://github.com/taumoutsh/quel-jeu.git && cd quel-jeu
+pip install pillow numpy
+python3 tools/fetch_packs.py
+scp -r packs/img <utilisateur>@<serveur>:~/quel-jeu/packs/
+
+# sur le serveur
+cd ~/quel-jeu && git pull && docker compose up -d --build
+```
+Les deux copies doivent être à jour (`git pull`) : une image n'est reprise que si sa source correspond à celle du pack.
 Mise à jour plus tard :
 ```bash
 cd quel-jeu
