@@ -6,6 +6,8 @@
 FROM python:3.12-slim AS images
 # affiche la progression du téléchargement au fil de l'eau
 ENV PYTHONUNBUFFERED=1
+# curl sert au téléchargement (certains CDN refusent le client HTTP de Python)
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir pillow==11.0.0 numpy==2.1.3
 WORKDIR /src
 # packs/ contient la liste des vues et, si tu l'y as copié, packs/img/ téléchargé sur un autre ordinateur

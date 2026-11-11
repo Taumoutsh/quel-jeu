@@ -119,7 +119,11 @@ Après un changement du `.env`, `docker compose up -d` suffit (pas besoin de `--
 
 **Reconstructions rapides** : les images téléchargées sont gardées dans un cache de construction Docker (BuildKit, `id=quel-jeu-images`). Un `docker compose up -d --build` après un `git pull` ne télécharge que les vues nouvelles ou dont la source a changé ; le reste de l'image vient du cache habituel de Docker. Seule la toute première construction télécharge tout (quelques minutes). `docker builder prune` vide ce cache.
 
-**Si un site refuse ton serveur** (bilan de construction avec `ÉCHEC … HTTP Error 403`, typiquement les wikis Fandom qui bloquent certains hébergeurs) : télécharge les images depuis ton ordinateur et copie-les sur le serveur, la construction les reprendra.
+**Si un site refuse ton serveur** (bilan de construction avec `ÉCHEC … HTTP Error 403`) : le téléchargement passe par `curl`, que certains CDN acceptent quand ils refusent le client HTTP de Python. Pour voir ce qui passe depuis ta machine :
+```bash
+python3 tools/diag_acces.py     # code HTTP par site, avec Python, curl et wget
+```
+Si même `curl` reçoit 403, c'est l'adresse IP du serveur qui est bloquée : télécharge alors les images depuis ton ordinateur et copie-les sur le serveur, la construction les reprendra.
 ```bash
 # sur ton ordinateur (Python 3)
 git clone https://github.com/taumoutsh/quel-jeu.git && cd quel-jeu

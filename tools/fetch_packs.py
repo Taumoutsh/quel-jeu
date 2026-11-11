@@ -8,6 +8,9 @@ leurs auteurs. Ce script les récupère depuis leurs sources, les réduit et éc
     python3 tools/fetch_packs.py            # télécharge ce qui manque ou a changé
     python3 tools/fetch_packs.py --force    # retélécharge tout
 
+Téléchargement avec curl s'il est installé (certains CDN refusent le client HTTP de Python),
+sinon avec Python. QJ_DOWNLOADER=python|curl pour forcer l'un des deux.
+
 Une image déjà présente est réutilisée tant que sa source (url, crop…) n'a pas changé
 (empreintes dans sources.json). Les images qui ne sont plus dans le pack sont supprimées.
 QJ_OUT=dossier change le dossier de sortie (cache de construction Docker).
@@ -22,7 +25,9 @@ import json
 import math
 import os
 import shutil
+import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -44,10 +49,52 @@ def load_pack():
     return json.loads(s.split("/*JSON*/", 1)[1].split("/*FIN*/", 1)[0])
 
 
-UA = "quel-jeu-fetch/1.1 (jeu privé entre amis)"
-PAUSE = 0.4          # secondes minimum entre deux requêtes vers un même site
+UA = "quel-jeu-fetch/1.1 (jeu prive entre amis)"
+PAUSE = 0.15         # secondes minimum entre deux requêtes vers un même site
 RETRIES = 5          # nouvelles tentatives sur 429, 5xx et erreurs réseau
 _last = {}
+DOWNLOADER = os.environ.get("QJ_DOWNLOADER") or ("curl" if shutil.which("curl") else "python")
+
+
+class HTTPFail(Exception):
+    def __init__(self, code, retry_after=None):
+        super().__init__("HTTP Error %d" % code)
+        self.code, self.retry_after = code, retry_after
+
+
+def _get_python(url):
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "image/avif,image/webp,image/png,image/jpeg,*/*"})
+        with urllib.request.urlopen(req, timeout=120) as r:
+            return r.read()
+    except urllib.error.HTTPError as e:
+        ra = e.headers.get("Retry-After") if e.headers else None
+        raise HTTPFail(e.code, ra) from None
+
+
+def _get_curl(url):
+    with tempfile.NamedTemporaryFile(delete=False) as body, tempfile.NamedTemporaryFile(delete=False) as head:
+        pass
+    try:
+        p = subprocess.run(["curl", "-sS", "-L", "--max-time", "120", "-A", UA, "-H", "Accept: image/avif,image/webp,image/png,image/jpeg,*/*",
+                            "-D", head.name, "-o", body.name, "-w", "%{http_code}", url], capture_output=True, text=True)
+        if p.returncode != 0:
+            raise ConnectionError("curl : " + (p.stderr.strip() or "code %d" % p.returncode))
+        code = int(p.stdout.strip() or 0)
+        if code != 200:
+            ra = None
+            for ln in open(head.name, encoding="latin-1"):
+                if ln.lower().startswith("retry-after:"):
+                    ra = ln.split(":", 1)[1].strip()
+            raise HTTPFail(code, ra)
+        with open(body.name, "rb") as f:
+            return f.read()
+    finally:
+        for f in (body.name, head.name):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
 
 
 def fetch(url):
@@ -58,14 +105,12 @@ def fetch(url):
             time.sleep(wait)
         _last[host] = time.time()
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "image/avif,image/webp,image/png,image/jpeg,*/*"})
-            with urllib.request.urlopen(req, timeout=120) as r:
-                return r.read()
-        except urllib.error.HTTPError as e:
-            if e.code not in (408, 425, 429, 500, 502, 503, 504) or attempt == RETRIES:
+            return _get_curl(url) if DOWNLOADER == "curl" else _get_python(url)
+        except HTTPFail as e:
+            if e.code not in (408, 415, 425, 429, 500, 502, 503, 504) or attempt == RETRIES:
                 raise
             delay = 2 ** (attempt + 1)
-            ra = e.headers.get("Retry-After") if e.headers else None
+            ra = e.retry_after
             if ra and ra.isdigit():
                 delay = max(delay, min(int(ra), 120))
             print("  %s : HTTP %d, nouvel essai dans %d s" % (host, e.code, delay))
@@ -164,6 +209,7 @@ def main():
     force = "--force" in sys.argv
     os.makedirs(OUT, exist_ok=True)
     pack = load_pack()
+    print("Téléchargement avec " + DOWNLOADER)
     dispo = {"maps": {}, "scenes": {}}
     man_path = os.path.join(OUT, "sources.json")
     try:
