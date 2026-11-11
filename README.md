@@ -38,9 +38,11 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir l'artefact : partage-le ave
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 60 vues à 360° de vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`).
+- **Vrais jeux** : 63 vues à 360° de vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`).
   - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
   - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios). Positions relevées sur la carte papier du jeu et recoupées avec le wiki Elder Scrolls.
+
+  - *Xenoblade Chronicles X* : 3 vues (Talon Rock Summit, Silent Mire, Dopang Caravan) du wiki [FrontierNav](https://frontiernav.net/wiki/xenoblade-chronicles-x/visualisations/panoramas) (CC BY-SA 4.0), avec la carte de Mira et la position exacte de chaque vue. Les panoramas y sont des cubes en tuiles : le script les assemble et les convertit en équirectangulaire.
 
   Les images ne sont **pas** dans le dépôt (il est public) : `python3 tools/fetch_packs.py` les télécharge depuis leurs sources dans `packs/img/` (ignoré par git), les réduit à 4096 px et écrit `packs/img/dispo.js`. Sans ce dossier, le bouton « Vrais jeux » reste grisé. Les crédits et le lien vers la source s'affichent à la révélation.
   Les panoramas Skyrim font 360° en largeur mais ne couvrent pas tout le haut et le bas : la visionneuse le détecte au format de l'image (plus large que 2,6:1) et affiche des bandes sombres au-delà.
@@ -103,4 +105,6 @@ Dans `packs/vrais-jeux.js` :
 - un jeu : `{"key": "...", "t": "Titre exact de js/games.js", "map": {"url": "...", "credit": "..."}, "credit": "...", "source": "..."}` ;
 - une vue : `{"id": "cle-unique", "game": "key du jeu", "place": "Nom du lieu", "x": 0.42, "y": 0.31, "url": "..."}`, avec `x`, `y` entre 0 et 1 depuis le coin haut gauche de la carte.
 
-Puis relance `python3 tools/fetch_packs.py`. Sources essayées sans succès : le site Elden Ring Street View du même auteur a disparu ; on ne trouve pas de panoramas 360° prêts à l'emploi pour GTA V, Red Dead Redemption 2 ou Cyberpunk 2077, sans position connue (il faut les faire soi-même : mod « panorama » de GTA V, Ansel de NVIDIA pour The Witcher 3…).
+Une vue peut aussi pointer vers un panorama Pannellum en tuiles (`"multires": "<dossier contenant config.json>"`) et une carte vers des tuiles Leaflet (`"tiles": ".../{z}/tile_{x}_{y}.png", "z": 3, "crop": [x0, y0, x1, y1]`).
+
+Puis relance `python3 tools/fetch_packs.py`. Sources essayées sans succès : le site Elden Ring Street View du même auteur a disparu ; on ne trouve pas de panoramas 360° prêts à l'emploi pour GTA V, Red Dead Redemption 2 ou Cyberpunk 2077, sans position connue (il faut les faire soi-même : mod « panorama » de GTA V, Ansel de NVIDIA pour The Witcher 3…). Flickr a des panoramas de Final Fantasy XIV, GTA V, PUBG, Guild Wars 2 ou The Witcher 3, mais presque tous limités à 1024 px en public, trop flous pour une vue 360°. Kuula (4096 px) n'est pas indexé par les moteurs de recherche ; AzerothGPS StreetView (World of Warcraft) est sur CurseForge, inaccessible aux scripts ; l'archive d'Elden Ring Street View est sur la Wayback Machine.

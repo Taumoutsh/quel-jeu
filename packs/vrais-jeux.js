@@ -1,12 +1,15 @@
 /* Pack « Vrais jeux » : panoramas 360° de vrais jeux, trouvés en ligne, avec leur position sur la carte.
  * x, y : position normalisée (0–1) sur la carte du jeu, depuis le coin haut gauche.
+ * Une vue a soit "url" (image équirectangulaire), soit "multires" (cube en tuiles Pannellum, converti).
+ * Une carte a soit "url", soit "tiles" (tuiles Leaflet {z}/{x}/{y} assemblées au zoom z, recadrées par crop).
  * Les images ne sont pas dans le dépôt : `python3 tools/fetch_packs.py` les télécharge dans packs/img/.
  * Ce fichier est lu par le navigateur (window.REAL_PACK) et par le script (JSON entre les marqueurs).
  */
 window.REAL_PACK = /*JSON*/{
  "games": [
   {"key": "botw", "t": "The Legend of Zelda: Breath of the Wild", "map": {"url": "https://nassimsoftware.github.io/zeldabotwstreetview/map.jpg", "credit": "Carte : Zelda BotW Street View (Nassim's Software)"}, "credit": "Panoramas : Zelda BotW Street View, par Nassim's Software", "source": "https://nassimsoftware.github.io/zeldabotwstreetview/"},
-  {"key": "skyrim", "t": "The Elder Scrolls V: Skyrim", "map": {"url": "https://static.wikia.nocookie.net/elderscrolls/images/4/4b/Skyrim_Map.jpg/revision/latest?cb=20200122152304", "credit": "Carte : carte papier du jeu (Bethesda), via le wiki Elder Scrolls (Fandom)"}, "credit": "Panoramas : Skyrim Panoramas, par Snakebyte Studios", "source": "https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/"}
+  {"key": "skyrim", "t": "The Elder Scrolls V: Skyrim", "map": {"url": "https://static.wikia.nocookie.net/elderscrolls/images/4/4b/Skyrim_Map.jpg/revision/latest?cb=20200122152304", "credit": "Carte : carte papier du jeu (Bethesda), via le wiki Elder Scrolls (Fandom)"}, "credit": "Panoramas : Skyrim Panoramas, par Snakebyte Studios", "source": "https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/"},
+  {"key": "xcx", "t": "Xenoblade Chronicles X", "map": {"tiles": "https://frontiernav.net/files/games/xenoblade-chronicles-x/maps/tiles/mira/{z}/tile_{x}_{y}.png", "z": 3, "crop": [0.03, 0.06, 0.95, 0.99], "credit": "Carte : FrontierNav (CC BY-SA 4.0)"}, "credit": "Panoramas : FrontierNav (CC BY-SA 4.0)", "source": "https://frontiernav.net/wiki/xenoblade-chronicles-x/visualisations/panoramas"}
  ],
  "scenes": [
   {"id": "botw-hyrule-field-1", "game": "botw", "place": "Hyrule Field", "x": 0.35, "y": 0.6, "url": "https://i.ibb.co/Jz1db1T/1.png"},
@@ -68,6 +71,9 @@ window.REAL_PACK = /*JSON*/{
   {"id": "skyrim-yngvild", "game": "skyrim", "place": "Yngvild (île à l'est d'Aubétoile)", "x": 0.6016, "y": 0.1823, "url": "https://www.snakebytestudios.com/media/2014/05/yngvild.jpg"},
   {"id": "skyrim-castle-volkhir", "game": "skyrim", "place": "Château Volkihar", "x": 0.0781, "y": 0.2083, "url": "https://www.snakebytestudios.com/media/2014/05/castle_volkhir.jpg"},
   {"id": "skyrim-fort-dawnguard", "game": "skyrim", "place": "Fort de la Garde de l'aube", "x": 0.9258, "y": 0.625, "url": "https://www.snakebytestudios.com/media/2014/05/fort_dawnguard.jpg"},
-  {"id": "skyrim-mzulft", "game": "skyrim", "place": "Mzulft", "x": 0.8398, "y": 0.5417, "url": "https://www.snakebytestudios.com/media/2014/05/mzulft.jpg"}
+  {"id": "skyrim-mzulft", "game": "skyrim", "place": "Mzulft", "x": 0.8398, "y": 0.5417, "url": "https://www.snakebytestudios.com/media/2014/05/mzulft.jpg"},
+  {"id": "xcx-talon-rock-summit", "game": "xcx", "place": "Talon Rock Summit (Primordia)", "x": 0.3864, "y": 0.8119, "multires": "https://frontiernav.net/files/games/xenoblade-chronicles-x/panoramas/talon-rock-summit"},
+  {"id": "xcx-silent-mire", "game": "xcx", "place": "Silent Mire (Primordia)", "x": 0.4905, "y": 0.8284, "multires": "https://frontiernav.net/files/games/xenoblade-chronicles-x/panoramas/silent-mire"},
+  {"id": "xcx-dopang-caravan", "game": "xcx", "place": "Dopang Caravan (Sylvalum)", "x": 0.7028, "y": 0.4556, "multires": "https://frontiernav.net/files/games/xenoblade-chronicles-x/panoramas/dopang-caravan"}
  ]
 }/*FIN*/;

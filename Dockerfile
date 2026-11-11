@@ -4,7 +4,7 @@
 
 # 1. Téléchargement et réduction des images du pack « Vrais jeux »
 FROM python:3.12-slim AS images
-RUN pip install --no-cache-dir pillow==11.0.0
+RUN pip install --no-cache-dir pillow==11.0.0 numpy==2.1.3
 WORKDIR /src
 COPY packs/vrais-jeux.js packs/
 COPY tools/fetch_packs.py tools/
