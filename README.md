@@ -123,7 +123,14 @@ Après un changement du `.env`, `docker compose up -d` suffit (pas besoin de `--
 ```bash
 python3 tools/diag_acces.py     # code HTTP par site, avec Python, curl et wget
 ```
-Si même `curl` reçoit 403, c'est l'adresse IP du serveur qui est bloquée : télécharge alors les images depuis ton ordinateur et copie-les sur le serveur, la construction les reprendra.
+Si même `curl` reçoit 403, c'est l'adresse IP du serveur qui est bloquée (cas des wikis Fandom avec certains hébergeurs). Les images déjà téléchargées sont alors disponibles dans le dépôt **privé** `Taumoutsh/quel-jeu-images`, à cloner à la place de `packs/img/` ; la construction les reprend :
+```bash
+cd ~/quel-jeu
+git clone https://github.com/Taumoutsh/quel-jeu-images.git packs/img
+docker compose up -d --build
+# mises à jour : git pull && git -C packs/img pull && docker compose up -d --build
+```
+Autre possibilité : télécharger les images depuis ton ordinateur et les copier sur le serveur.
 ```bash
 # sur ton ordinateur (Python 3)
 git clone https://github.com/taumoutsh/quel-jeu.git && cd quel-jeu
