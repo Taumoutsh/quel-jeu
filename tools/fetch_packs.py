@@ -19,6 +19,9 @@ import json
 import math
 import os
 import sys
+import time
+import urllib.error
+import urllib.parse
 import urllib.request
 
 import numpy as np
@@ -36,10 +39,37 @@ def load_pack():
     return json.loads(s.split("/*JSON*/", 1)[1].split("/*FIN*/", 1)[0])
 
 
+UA = "quel-jeu-fetch/1.1 (jeu privé entre amis)"
+PAUSE = 0.4          # secondes minimum entre deux requêtes vers un même site
+RETRIES = 5          # nouvelles tentatives sur 429, 5xx et erreurs réseau
+_last = {}
+
+
 def fetch(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "quel-jeu-fetch/1.0"})
-    with urllib.request.urlopen(req, timeout=120) as r:
-        return r.read()
+    host = urllib.parse.urlparse(url).hostname
+    for attempt in range(RETRIES + 1):
+        wait = PAUSE - (time.time() - _last.get(host, 0))
+        if wait > 0:
+            time.sleep(wait)
+        _last[host] = time.time()
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "image/avif,image/webp,image/png,image/jpeg,*/*"})
+            with urllib.request.urlopen(req, timeout=120) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            if e.code not in (408, 425, 429, 500, 502, 503, 504) or attempt == RETRIES:
+                raise
+            delay = 2 ** (attempt + 1)
+            ra = e.headers.get("Retry-After") if e.headers else None
+            if ra and ra.isdigit():
+                delay = max(delay, min(int(ra), 120))
+            print("  %s : HTTP %d, nouvel essai dans %d s" % (host, e.code, delay))
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+            if attempt == RETRIES:
+                raise
+            delay = 2 ** (attempt + 1)
+            print("  %s : %s, nouvel essai dans %d s" % (host, getattr(e, "reason", e), delay))
+        time.sleep(delay)
 
 
 def load_image(url):
@@ -142,13 +172,20 @@ def main():
         new[name] = sig
         return save(src, os.path.join(OUT, name), max_w, force or old.get(name) != sig)
 
+    failed = []
+
+    def fail(what, src, e):
+        u = src.get("url") or src.get("multires") or src.get("tiles") or ""
+        failed.append((urllib.parse.urlparse(u).hostname or "?", what, str(e)))
+        print("ÉCHEC", what, e)
+
     for g in pack["games"]:
         try:
             w, h = get("map-" + g["key"] + ".jpg", g["map"], MAP_W)
             dispo["maps"][g["key"]] = [w, h]
             print("carte", g["key"], w, h)
         except Exception as e:  # noqa: BLE001
-            print("ÉCHEC carte", g["key"], e)
+            fail("carte " + g["key"] + " (jeu ignoré)", g["map"], e)
     for i, sc in enumerate(pack["scenes"]):
         if sc["game"] not in dispo["maps"]:
             continue
@@ -157,7 +194,7 @@ def main():
             dispo["scenes"][sc["id"]] = [w, h]
             print("%d/%d" % (i + 1, len(pack["scenes"])), sc["id"], w, h)
         except Exception as e:  # noqa: BLE001
-            print("ÉCHEC", sc["id"], e)
+            fail(sc["id"], sc, e)
     # les images qui ne sont plus dans le pack sont supprimées
     gone = [f for f in os.listdir(OUT) if f.endswith(".jpg") and f not in new]
     for f in gone:
@@ -167,6 +204,17 @@ def main():
     with open(os.path.join(OUT, "dispo.js"), "w", encoding="utf-8") as f:
         f.write("/* Généré par tools/fetch_packs.py : images disponibles [largeur, hauteur]. */\n")
         f.write("window.REAL_PACK_DISPO = " + json.dumps(dispo) + ";\n")
+    if failed:
+        print("\n=== %d téléchargement(s) en échec ===" % len(failed))
+        by_host = {}
+        for host, what, err in failed:
+            by_host.setdefault(host, []).append((what, err))
+        for host, items in by_host.items():
+            print("%s : %d échec(s), ex. %s → %s" % (host, len(items), items[0][0], items[0][1]))
+        skipped = [g["key"] for g in pack["games"] if g["key"] not in dispo["maps"]]
+        if skipped:
+            print("Jeux absents faute de carte : " + ", ".join(skipped))
+        print("Relancer la construction réessaiera seulement ce qui manque.\n")
     reused = sum(1 for k, v in new.items() if old.get(k) == v)
     print("%d vues, %d cartes disponibles (%d images réutilisées, %d supprimées)" % (len(dispo["scenes"]), len(dispo["maps"]), reused if not force else 0, len(gone)))
 
