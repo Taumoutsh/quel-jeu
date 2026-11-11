@@ -9,7 +9,8 @@ Projet : « Quel Jeu ? », clone en français du concept GameGuessr (devine le j
 - Tests navigateur : `python3 -m http.server 8765` puis `python3 tests/e2e.py /tmp/x` (solo) `python3 tests/e2e_multi.py /tmp/x` (2 joueurs, salle simulée par `tests/mock-room.js`) et `node tests/e2e_real.js /tmp/x` (pack Vrais jeux).
 - Publié en artefact claude.ai (slug 519da436-4dfc-4802-87c9-66a555f0524e), **sans capacités déclarées** : le propriétaire a refusé l'activation pour l'instant. Seuls le mode solo, le pack démo et le pack « Vrais jeux » y fonctionnent (version 2 : publiée avec `packs/` et `packs/img/` comme fichiers). Capacités prévues : `{"room": {}, "db": {"rules": [{"path": "", "read": "view", "write": "admin"}]}, "assets": {}, "user": {}}`.
 
-- Docker : `docker compose up -d --build` (nginx, les images sont téléchargées à la construction), port 6103, mode solo.
+- Docker : `docker compose up -d --build`, port 6103 (images téléchargées à la construction). Servi par `server/server.js` (Node sans dépendance) qui fournit aussi les salles multijoueur (`/api/rooms`, SSE) ; `js/room-server.js` s'active seulement si la page contient `<meta name="qj-server">` (ajoutée par le serveur), donc rien ne change sur claude.ai. Test : `node tests/e2e_server.js /tmp/x`. La bibliothèque (db/assets) reste réservée à claude.ai.
+- Pack par défaut : « Vrais jeux » (réglage enregistré basculé une fois via `cfgV`).
 
 ## Pistes envisagées (pas encore faites)
 - Pack « jeux libres » (SuperTuxKart, 0 A.D., Veloren…) à partir d'images sous licence libre (le mode « capture plate » existe maintenant).

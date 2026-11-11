@@ -1,6 +1,6 @@
-# Quel Jeu ? en site statique (mode solo : pack démo + pack « Vrais jeux »).
+# Quel Jeu ? auto-hébergé : site + multijoueur (salles servies par server/server.js, sans dépendance).
 #   docker compose up -d --build   puis http://localhost:6103
-# Le multijoueur et la bibliothèque ont besoin de l'hébergement des artefacts Claude.
+# La bibliothèque d'images (ajout de vues depuis la page) reste propre aux artefacts Claude.
 
 # 1. Téléchargement et réduction des images du pack « Vrais jeux »
 FROM python:3.12-slim AS images
@@ -12,10 +12,15 @@ COPY packs/vrais-jeux.js packs/
 COPY tools/fetch_packs.py tools/
 RUN python3 tools/fetch_packs.py
 
-# 2. Serveur web
-FROM nginx:1.27-alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY index.html style.css /usr/share/nginx/html/
-COPY js /usr/share/nginx/html/js
-COPY packs/vrais-jeux.js /usr/share/nginx/html/packs/
-COPY --from=images /src/packs/img /usr/share/nginx/html/packs/img
+# 2. Serveur Node (fichiers statiques + salles multijoueur)
+FROM node:22-alpine
+WORKDIR /app
+COPY index.html style.css ./
+COPY js js
+COPY server server
+COPY packs/vrais-jeux.js packs/
+COPY --from=images /src/packs/img packs/img
+ENV PORT=8080
+EXPOSE 8080
+USER node
+CMD ["node", "server/server.js"]

@@ -26,13 +26,16 @@
   const A = {
     name: LS.get("name", ""),
     color: LS.get("color", COLORS[(Math.random() * COLORS.length) | 0]),
-    cfg: Object.assign({ rounds: 5, time: 120, tries: 3, hints: 1, pack: "demo" }, LS.get("cfg", {})),
+    cfg: Object.assign({ rounds: 5, time: 120, tries: 3, hints: 1, pack: "real" }, LS.get("cfg", {})),
     caps: { db: null, room: null, assets: null, user: null },
     lib: { scenes: {}, maps: {}, games: {} }, libReady: false,
     matcher: null,
     mode: null, nroom: null, code: null, st: null, gen: null, res: [], peers: [],
     R: null, shownReveal: -1, shownFinal: false, sawHost: false,
   };
+
+  // réglages enregistrés avant l'arrivée du pack « Vrais jeux » : on bascule une fois sur ce pack
+  if (LS.get("cfgV", 0) < 2) { A.cfg.pack = "real"; LS.set("cfg", A.cfg); LS.set("cfgV", 2); }
 
   function rebuildMatcher() {
     const extra = DEMO.GAMES.map((g) => ({ id: g.id, t: g.t, a: g.a, s: g.s, sa: g.sa }));

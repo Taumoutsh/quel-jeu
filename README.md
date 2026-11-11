@@ -32,8 +32,8 @@ Avec les suggestions activées, une liste de choix s'affiche quand il faut préc
 - L'hôte règle la partie et la lance. Tout le monde joue la même vue en même temps. La manche se termine quand tout le monde a fini ou quand le temps est écoulé. L'hôte peut aussi la terminer à la main.
 - Si l'hôte part, un autre joueur peut reprendre le rôle.
 
-Le multijoueur utilise la capacité « room » des artefacts Claude : chaque joueur publie son état (sa présence) dans une salle nommée `qj-<code>`. L'hôte publie l'état de la partie, les autres le suivent. Rien n'est stocké côté serveur.
-Pour jouer ensemble, tes amis doivent pouvoir ouvrir l'artefact : partage-le avec eux depuis claude.ai.
+Le multijoueur utilise la capacité « room » des artefacts Claude, ou les salles du serveur Docker (`server/server.js`) quand le site est auto-hébergé : chaque joueur publie son état (sa présence) dans une salle nommée `qj-<code>`. L'hôte publie l'état de la partie, les autres le suivent. Rien n'est stocké durablement côté serveur.
+Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact (partagé depuis claude.ai) ou ton site Docker.
 
 ## Images
 
@@ -90,6 +90,8 @@ js/mapview.js     carte zoomable avec repères
 js/app.js         déroulement, points, multijoueur, éditeur
 packs/            pack « Vrais jeux » : données (versionnées) et images (packs/img/, téléchargées)
 tools/            fetch_packs.py : téléchargement des images du pack
+server/           server.js : site + salles multijoueur pour l'auto-hébergement (Docker)
+js/room-server.js capacité « room » adossée à server.js (inactive sur claude.ai)
 tests/            tests de reconnaissance (node) et de bout en bout (Playwright)
 ```
 
@@ -114,7 +116,9 @@ cd quel-jeu
 git pull
 docker compose up -d --build
 ```
-L'image télécharge elle-même les images du pack « Vrais jeux » à la construction. Comme en local, seul le mode solo fonctionne hors des artefacts Claude.
+L'image télécharge elle-même les images du pack « Vrais jeux » à la construction (quelques minutes). Elle tourne avec `server/server.js` (Node, sans dépendance), qui sert le site **et les parties à plusieurs** : les salles passent par `/api/rooms` (flux SSE) au lieu de la capacité « room » de claude.ai. La page le détecte toute seule (balise `<meta name="qj-server">` ajoutée par le serveur). Seule la bibliothèque d'images (ajout de vues depuis la page) reste propre aux artefacts Claude.
+
+Sans Docker : `node server/server.js` (port 8080, `PORT=…` pour en changer), après `python3 tools/fetch_packs.py`.
 
 Tests :
 ```bash
@@ -122,6 +126,7 @@ node tests/matcher.test.js
 python3 tests/e2e.py /tmp/captures        # partie solo complète (Chrome headless)
 python3 tests/e2e_multi.py /tmp/captures  # partie à deux avec une salle simulée
 node tests/e2e_real.js /tmp/captures       # partie avec le pack Vrais jeux (après fetch_packs.py)
+node tests/e2e_server.js /tmp/captures     # partie à deux contre server/server.js (deux navigateurs)
 ```
 
 ## Ajouter des jeux à la base
