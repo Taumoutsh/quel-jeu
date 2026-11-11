@@ -55,12 +55,33 @@
     });
   }
 
+  // ------------------------------------------------------------------ pack « Vrais jeux »
+  // Données : packs/vrais-jeux.js (versionné). Images : packs/img/ (tools/fetch_packs.py), listées dans dispo.js.
+  const REAL = (function () {
+    const P = window.REAL_PACK, D = window.REAL_PACK_DISPO;
+    const out = { scenes: {}, maps: {}, games: {} };
+    if (!P || !D) return out;
+    for (const g of P.games) {
+      const m = D.maps[g.key];
+      if (!m) continue;
+      const id = Matcher.slug(g.t);
+      out.games[g.key] = Object.assign({ id }, g);
+      out.maps[id] = { url: "packs/img/map-" + g.key + ".jpg", w: m[0], h: m[1] };
+    }
+    for (const sc of P.scenes) {
+      const g = out.games[sc.game];
+      if (g && D.scenes[sc.id]) out.scenes[sc.id] = { game: g.id, x: sc.x, y: sc.y, place: sc.place, credit: g.credit, source: g.source, url: "packs/img/" + sc.id + ".jpg" };
+    }
+    return out;
+  })();
+
   // ------------------------------------------------------------------ scènes et cartes
   const demoMapUrl = {};
   function sceneInfo(sid) {
     if (!sid) return null;
     if (sid.startsWith("d-")) { const sc = DEMO.SCENES.find((s) => s.id === sid); return sc ? { sid, kind: "demo", game: sc.game, x: sc.x, y: sc.y, sc } : null; }
-    if (sid.startsWith("l-")) { const sc = A.lib.scenes[sid.slice(2)]; return sc ? { sid, kind: "lib", game: sc.game, x: sc.x, y: sc.y, asset: sc.asset } : null; }
+    if (sid.startsWith("l-")) { const sc = A.lib.scenes[sid.slice(2)]; return sc ? { sid, kind: "lib", game: sc.game, x: sc.x, y: sc.y, asset: sc.asset, url: "/_blob/" + sc.asset } : null; }
+    if (sid.startsWith("r-")) { const sc = REAL.scenes[sid.slice(2)]; return sc ? Object.assign({ sid, kind: "real" }, sc) : null; }
     return null;
   }
   function mapInfo(gameId) {
@@ -68,6 +89,7 @@
       if (!demoMapUrl[gameId]) demoMapUrl[gameId] = DEMO.renderMap(gameId).toDataURL("image/jpeg", 0.88);
       return { url: demoMapUrl[gameId], w: DEMO.MAP_W, h: DEMO.MAP_H };
     }
+    if (REAL.maps[gameId]) return REAL.maps[gameId];
     const m = A.lib.maps[gameId];
     return m ? { url: "/_blob/" + m.asset, w: m.w, h: m.h } : null;
   }
@@ -75,14 +97,16 @@
   function pool(pack) {
     const d = DEMO.SCENES.map((s) => s.id);
     const l = Object.keys(A.lib.scenes).filter((id) => A.lib.maps[A.lib.scenes[id].game]).map((id) => "l-" + id);
-    return pack === "demo" ? d : pack === "lib" ? l : d.concat(l);
+    const r = Object.keys(REAL.scenes).map((id) => "r-" + id);
+    return pack === "demo" ? d : pack === "lib" ? l : pack === "real" ? r : d.concat(l, r);
   }
   function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
   function buildSeq(cfg) {
     let src;
     if (cfg.pack === "mix") {
-      const d = shuffle(pool("demo")), l = shuffle(pool("lib")); src = [];
-      while (d.length || l.length) { if (l.length) src.push(l.shift()); if (d.length) src.push(d.shift()); }
+      // alterne les sources : vrais jeux, bibliothèque, démo
+      const ls = [shuffle(pool("real")), shuffle(pool("lib")), shuffle(pool("demo"))]; src = [];
+      while (ls.some((x) => x.length)) for (const x of ls) if (x.length) src.push(x.shift());
     } else src = shuffle(pool(cfg.pack));
     const out = [], usedGames = {};
     while (out.length < cfg.rounds && src.length) {
@@ -137,7 +161,8 @@
   }
   function renderLibInfo() {
     const n = Object.keys(A.lib.scenes).length;
-    $("libInfo").textContent = "Pack démo : 6 jeux fictifs, " + DEMO.SCENES.length + " vues · Ma bibliothèque : " + n + " vue" + (n > 1 ? "s" : "") + (A.caps.db ? "" : " (indisponible ici)");
+    const rn = Object.keys(REAL.scenes).length, rg = Object.keys(REAL.maps).length;
+    $("libInfo").textContent = "Pack démo : 6 jeux fictifs, " + DEMO.SCENES.length + " vues · Vrais jeux : " + (rn ? rg + " jeux, " + rn + " vues" : "images non installées") + " · Ma bibliothèque : " + n + " vue" + (n > 1 ? "s" : "") + (A.caps.db ? "" : " (indisponible ici)");
   }
 
   // ------------------------------------------------------------------ multijoueur (présence dans un salon nommé)
@@ -312,8 +337,9 @@
   }
   function renderSettings() {
     const cfg = curCfg();
-    const libN = pool("lib").length;
-    if (A.mode !== "guest" && cfg.pack !== "demo" && !libN) { cfg.pack = "demo"; }
+    const avail = { demo: true, lib: pool("lib").length > 0, real: pool("real").length > 0 };
+    avail.mix = avail.lib || avail.real;
+    if (A.mode !== "guest" && !avail[cfg.pack]) { cfg.pack = "demo"; }
     const max = Math.max(1, Math.min(15, pool(cfg.pack).length));
     if (A.mode !== "guest" && cfg.rounds > max) cfg.rounds = max;
     $("sRounds").textContent = cfg.rounds;
@@ -322,7 +348,7 @@
       const k = seg.dataset.k;
       for (const b of seg.children) {
         b.classList.toggle("on", String(cfg[k]) === b.dataset.v);
-        if (k === "pack") b.disabled = b.dataset.v !== "demo" && !libN;
+        if (k === "pack") b.disabled = !avail[b.dataset.v];
       }
     }
   }
@@ -370,11 +396,11 @@
       const img = new Image();
       img.onload = () => { if (A.R && A.R.sid === sid) { pano.setImage(img); done(); } };
       img.onerror = () => { $("panoLoad").innerHTML = "Image introuvable — passe la manche."; };
-      img.src = "/_blob/" + info.asset;
+      img.src = info.url;
     }
     // préchargement de la manche suivante
     const nx = sceneInfo(st.seq[i + 1]);
-    if (nx && nx.kind === "lib") { const im = new Image(); im.src = "/_blob/" + nx.asset; }
+    if (nx && nx.url) { const im = new Image(); im.src = nx.url; }
     // déjà terminé (rechargement) ?
     if (A.res[i] && A.res[i][0] >= 2) { A.R.phase = "done"; showWait("Manche terminée", "En attente des autres joueurs…", fmt(A.res[i][1] + A.res[i][2]) + " pts"); }
     else showNamePanel();
@@ -505,7 +531,9 @@
     A.shownReveal = i; show("reveal");
     const info = sceneInfo(A.st.seq[i]);
     $("rvRound").innerHTML = "<small>Manche</small>" + (i + 1) + "/" + A.st.seq.length;
-    $("rvAnswer").innerHTML = "<small>C'était</small>" + esc(info ? gameTitle(info.game) : "Vue indisponible");
+    $("rvAnswer").innerHTML = "<small>C'était</small>" + esc(info ? gameTitle(info.game) : "Vue indisponible") +
+      (info && info.place ? "<span class='place'>" + esc(info.place) + "</span>" : "");
+    $("rvCredit").innerHTML = info && info.credit ? esc(info.credit) + (info.source ? " · <a href='" + esc(info.source) + "' target='_blank' rel='noopener'>source</a>" : "") : "";
     const last = i + 1 >= A.st.seq.length;
     $("bNext").textContent = last ? "Voir le classement" : "Manche suivante";
     $("bNext").classList.toggle("hidden", !isHost());

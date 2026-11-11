@@ -130,6 +130,10 @@ input.code { font-family: var(--fd); text-transform: uppercase; letter-spacing: 
 .reveal-map { height: 46vh; min-height: 260px; border-radius: var(--r); overflow: hidden; border: 1px solid var(--line); }
 .answer { font-family: var(--fd); font-size: 24px; line-height: 1.15; }
 .answer small { display: block; font-family: var(--fb); color: var(--mut); font-size: 13px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.answer .place { display: block; font-family: var(--fb); font-size: 15px; color: var(--mut); margin-top: 4px; }
+.credit { margin: -4px 0 0; }
+.credit:empty { display: none; }
+.credit a { color: inherit; }
 table.sc { width: 100%; border-collapse: collapse; font-size: 14px; }
 table.sc th { text-align: left; color: var(--mut); font-weight: 600; font-size: 12px; text-transform: uppercase; padding: 6px 4px; }
 table.sc td { padding: 9px 4px; border-top: 1px solid var(--line); }

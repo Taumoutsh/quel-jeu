@@ -93,7 +93,7 @@
         </div>
         <div>
           <div class="lab"><span>Images</span></div>
-          <div class="seg" data-k="pack"><button data-v="demo">Pack démo</button><button data-v="lib">Ma bibliothèque</button><button data-v="mix">Mélange</button></div>
+          <div class="seg" data-k="pack"><button data-v="demo">Pack démo</button><button data-v="real">Vrais jeux</button><button data-v="lib">Ma bibliothèque</button><button data-v="mix">Mélange</button></div>
         </div>
       </div>
     </div>
@@ -150,6 +150,7 @@
 <section id="reveal" class="screen hidden">
   <div class="wrap wide">
     <div class="row"><div class="answer grow" id="rvAnswer"></div><div class="pill" id="rvRound"></div></div>
+    <p class="mut small credit" id="rvCredit"></p>
     <div class="reveal-map"><div id="rvMap" class="mapview"></div></div>
     <div class="card"><table class="sc" id="rvTable"></table></div>
     <button class="btn pri block" id="bNext">Manche suivante</button>
@@ -229,6 +230,8 @@
 <script src="js/games.js"></script>
 <script src="js/matcher.js"></script>
 <script src="js/demo.js"></script>
+<script src="packs/vrais-jeux.js"></script>
+<script src="packs/img/dispo.js" onerror="void 0"></script>
 <script src="js/pano.js"></script>
 <script src="js/mapview.js"></script>
 <script src="js/app.js"></script>

@@ -4,7 +4,7 @@
 (function (root) {
   const VS = "attribute vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }";
   const FS = `precision highp float;
-uniform sampler2D tex; uniform vec2 res; uniform float yaw, pitch, fov;
+uniform sampler2D tex; uniform vec2 res; uniform float yaw, pitch, fov, vspan;
 const float PI = 3.14159265;
 void main(){
   vec2 q = (gl_FragCoord.xy / res) * 2.0 - 1.0;
@@ -17,21 +17,23 @@ void main(){
   d = vec3(d.x * cy + d.z * sy, d.y, -d.x * sy + d.z * cy);
   float lon = atan(d.x, -d.z);
   float lat = asin(clamp(d.y, -1.0, 1.0));
-  vec2 uv = vec2(fract(lon / (2.0 * PI) + 0.5), 0.5 - lat / PI);
+  vec2 uv = vec2(fract(lon / (2.0 * PI) + 0.5), 0.5 - lat / vspan);
+  // panorama partiel (pas de ciel ni de sol) : bandes sombres au-delà de l'image
+  if (uv.y < 0.0 || uv.y > 1.0) { gl_FragColor = vec4(vec3(0.07, 0.07, 0.1) * (1.0 - abs(d.y) * 0.5), 1.0); return; }
   gl_FragColor = texture2D(tex, uv);
 }`;
 
   class Pano {
     constructor(canvas) {
       this.c = canvas;
-      this.yaw = 0; this.pitch = 0; this.fov = 1.35;
+      this.yaw = 0; this.pitch = 0; this.fov = 1.35; this.vspan = Math.PI;
       this.vy = 0;
       const gl = (this.gl = canvas.getContext("webgl", { antialias: false, preserveDrawingBuffer: false }) || canvas.getContext("experimental-webgl"));
       if (!gl) { this.failed = true; return; }
       const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
       const pr = gl.createProgram();
       gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr); gl.useProgram(pr);
-      this.u = {}; for (const n of ["tex", "res", "yaw", "pitch", "fov"]) this.u[n] = gl.getUniformLocation(pr, n);
+      this.u = {}; for (const n of ["tex", "res", "yaw", "pitch", "fov", "vspan"]) this.u[n] = gl.getUniformLocation(pr, n);
       const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
       const loc = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
@@ -52,6 +54,11 @@ void main(){
       const gl = this.gl;
       let src = img;
       const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+      // Un équirectangulaire complet fait 2:1. Plus large : panorama à 360° qui ne couvre pas
+      // tout le haut et le bas (photos assemblées) ; on lui donne la hauteur angulaire qui
+      // correspond à son format. Jusqu'à 2,6:1 on l'étire, comme le font les visionneuses habituelles.
+      const ratio = w / h;
+      this.vspan = ratio > 2.6 ? (2 * Math.PI) / ratio : Math.PI;
       const lim = Math.min(this.maxTex, 8192);
       if (w > lim || h > lim) {
         const k = Math.min(lim / w, lim / h);
@@ -102,7 +109,7 @@ void main(){
       const w = Math.max(1, Math.round(c.clientWidth * dpr)), h = Math.max(1, Math.round(c.clientHeight * dpr));
       if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
       gl.viewport(0, 0, w, h);
-      gl.uniform2f(this.u.res, w, h); gl.uniform1f(this.u.yaw, this.yaw); gl.uniform1f(this.u.pitch, this.pitch); gl.uniform1f(this.u.fov, this.fov);
+      gl.uniform2f(this.u.res, w, h); gl.uniform1f(this.u.yaw, this.yaw); gl.uniform1f(this.u.pitch, this.pitch); gl.uniform1f(this.u.fov, this.fov); gl.uniform1f(this.u.vspan, this.vspan);
       gl.uniform1i(this.u.tex, 0);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }

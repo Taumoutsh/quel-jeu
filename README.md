@@ -38,6 +38,12 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir l'artefact : partage-le ave
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
+- **Vrais jeux** : 60 vues à 360° de vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`).
+  - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
+  - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios). Positions relevées sur la carte papier du jeu et recoupées avec le wiki Elder Scrolls.
+
+  Les images ne sont **pas** dans le dépôt (il est public) : `python3 tools/fetch_packs.py` les télécharge depuis leurs sources dans `packs/img/` (ignoré par git), les réduit à 4096 px et écrit `packs/img/dispo.js`. Sans ce dossier, le bouton « Vrais jeux » reste grisé. Les crédits et le lien vers la source s'affichent à la révélation.
+  Les panoramas Skyrim font 360° en largeur mais ne couvrent pas tout le haut et le bas : la visionneuse le détecte au format de l'image (plus large que 2,6:1) et affiche des bandes sombres au-delà.
 - **Ma bibliothèque** : le propriétaire de l'artefact (et ses éditeurs) peuvent ajouter de vraies vues 360° de jeux depuis l'écran « Bibliothèque » :
   1. le titre du jeu (reconnu dans la base de ~320 jeux, ou nouveau jeu avec ses alias et sa série) ;
   2. une capture **équirectangulaire 2:1**. Exemples : le mode photo 360° de certains jeux, des outils comme Ansel/NVIDIA, des captures « photosphère » trouvées en ligne ;
@@ -46,7 +52,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir l'artefact : partage-le ave
 
   Les images sont compressées (4096 px pour la vue, 2400 px pour la carte) puis stockées avec l'artefact (`assets`). Les fiches sont dans sa base (`db` : `scenes/`, `maps/`, `games/`).
 
-Aucune image de jeu commercial n'est fournie : ce sont des œuvres protégées. Ajoute les tiens pour jouer entre amis.
+Pour d'autres jeux, ajoute tes propres vues via la bibliothèque, ou complète `packs/vrais-jeux.js` (voir plus bas).
 
 ## Structure
 
@@ -59,6 +65,8 @@ js/demo.js        jeux fictifs, cartes et panoramas générés
 js/pano.js        visionneuse 360° en WebGL pur (sans bibliothèque)
 js/mapview.js     carte zoomable avec repères
 js/app.js         déroulement, points, multijoueur, éditeur
+packs/            pack « Vrais jeux » : données (versionnées) et images (packs/img/, téléchargées)
+tools/            fetch_packs.py : téléchargement des images du pack
 tests/            tests de reconnaissance (node) et de bout en bout (Playwright)
 ```
 
@@ -75,8 +83,17 @@ Tests :
 node tests/matcher.test.js
 python3 tests/e2e.py /tmp/captures        # partie solo complète (Chrome headless)
 python3 tests/e2e_multi.py /tmp/captures  # partie à deux avec une salle simulée
+node tests/e2e_real.js /tmp/captures       # partie avec le pack Vrais jeux (après fetch_packs.py)
 ```
 
 ## Ajouter des jeux à la base
 
 Dans `js/games.js`, ajoute une série `{ s: "Nom de série", a: ["alias"], g: [["Titre officiel", "alias 1", "alias 2"]] }` ou un jeu isolé dans le bloc `s: null`. Puis relance `node tests/matcher.test.js`.
+
+## Ajouter des vues au pack « Vrais jeux »
+
+Dans `packs/vrais-jeux.js` :
+- un jeu : `{"key": "...", "t": "Titre exact de js/games.js", "map": {"url": "...", "credit": "..."}, "credit": "...", "source": "..."}` ;
+- une vue : `{"id": "cle-unique", "game": "key du jeu", "place": "Nom du lieu", "x": 0.42, "y": 0.31, "url": "..."}`, avec `x`, `y` entre 0 et 1 depuis le coin haut gauche de la carte.
+
+Puis relance `python3 tools/fetch_packs.py`. Sources essayées sans succès : le site Elden Ring Street View du même auteur a disparu ; on ne trouve pas de panoramas 360° prêts à l'emploi pour GTA V, Red Dead Redemption 2 ou Cyberpunk 2077, sans position connue (il faut les faire soi-même : mod « panorama » de GTA V, Ansel de NVIDIA pour The Witcher 3…).
