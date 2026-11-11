@@ -39,7 +39,10 @@ def fetch(url):
 
 
 def load_image(url):
-    return Image.open(io.BytesIO(fetch(url))).convert("RGB")
+    im = Image.open(io.BytesIO(fetch(url)))
+    if im.mode == "P":  # PNG à palette avec transparence (tuiles de carte) : passage par RGBA
+        im = im.convert("RGBA")
+    return im.convert("RGB")
 
 
 def multires_to_equirect(base, out_w=PANO_W):
