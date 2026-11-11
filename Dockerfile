@@ -1,5 +1,5 @@
 # Quel Jeu ? en site statique (mode solo : pack démo + pack « Vrais jeux »).
-#   docker compose up -d --build   puis http://localhost:8080
+#   docker compose up -d --build   puis http://localhost:6103
 # Le multijoueur et la bibliothèque ont besoin de l'hébergement des artefacts Claude.
 
 # 1. Téléchargement et réduction des images du pack « Vrais jeux »

@@ -104,7 +104,7 @@ En local, seul le mode solo avec le pack démo fonctionne : le multijoueur et la
 Avec Docker (sur ton serveur) :
 ```bash
 docker compose up -d --build
-# puis http://<serveur>:8080
+# puis http://<serveur>:6103
 ```
 L'image télécharge elle-même les images du pack « Vrais jeux » à la construction. Comme en local, seul le mode solo fonctionne hors des artefacts Claude.
 

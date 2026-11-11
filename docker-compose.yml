@@ -3,5 +3,5 @@ services:
     build: .
     image: quel-jeu
     ports:
-      - "8080:80"
+      - "6103:80"
     restart: unless-stopped
