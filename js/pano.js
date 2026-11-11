@@ -1,14 +1,21 @@
 /* Visionneuse 360° (projection équirectangulaire) en WebGL pur, sans bibliothèque.
  * new Pano(canvas).setImage(imageOuCanvas) — glisser pour regarder, molette / pincement pour zoomer.
+ * setImage(img, { flat: true }) : capture plate (simple image), qu'on déplace et agrandit de la même façon.
  */
 (function (root) {
   const VS = "attribute vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }";
   const FS = `precision highp float;
-uniform sampler2D tex; uniform vec2 res; uniform float yaw, pitch, fov, vspan;
+uniform sampler2D tex; uniform vec2 res; uniform float yaw, pitch, fov, vspan, plate; uniform vec2 fc, fs;
 const float PI = 3.14159265;
 void main(){
   vec2 q = (gl_FragCoord.xy / res) * 2.0 - 1.0;
   q.x *= res.x / res.y;
+  if (plate > 0.5) {
+    // capture plate : centre fc et échelle fs en coordonnées de texture
+    vec2 t = fc + vec2(q.x * fs.x, -q.y * fs.y);
+    if (t.x < 0.0 || t.x > 1.0 || t.y < 0.0 || t.y > 1.0) { gl_FragColor = vec4(0.04, 0.04, 0.06, 1.0); return; }
+    gl_FragColor = texture2D(tex, t); return;
+  }
   float f = 1.0 / tan(fov * 0.5);
   vec3 d = normalize(vec3(q.x, q.y, -f));
   float cp = cos(pitch), sp = sin(pitch);
@@ -27,13 +34,14 @@ void main(){
     constructor(canvas) {
       this.c = canvas;
       this.yaw = 0; this.pitch = 0; this.fov = 1.35; this.vspan = Math.PI;
+      this.flat = false; this.iasp = 1; this.cx = 0.5; this.cy = 0.5;
       this.vy = 0;
       const gl = (this.gl = canvas.getContext("webgl", { antialias: false, preserveDrawingBuffer: false }) || canvas.getContext("experimental-webgl"));
       if (!gl) { this.failed = true; return; }
       const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
       const pr = gl.createProgram();
       gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr); gl.useProgram(pr);
-      this.u = {}; for (const n of ["tex", "res", "yaw", "pitch", "fov", "vspan"]) this.u[n] = gl.getUniformLocation(pr, n);
+      this.u = {}; for (const n of ["tex", "res", "yaw", "pitch", "fov", "vspan", "plate", "fc", "fs"]) this.u[n] = gl.getUniformLocation(pr, n);
       const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
       const loc = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
@@ -49,11 +57,12 @@ void main(){
       this.dirty = true;
       requestAnimationFrame(this._loop);
     }
-    setImage(img) {
+    setImage(img, opts) {
       if (this.failed) return;
       const gl = this.gl;
       let src = img;
       const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+      this.flat = !!(opts && opts.flat); this.iasp = w / h; this.cx = 0.5; this.cy = 0.5;
       // Un équirectangulaire complet fait 2:1. Plus large : panorama à 360° qui ne couvre pas
       // tout le haut et le bas (photos assemblées) ; on lui donne la hauteur angulaire qui
       // correspond à son format. Jusqu'à 2,6:1 on l'étire, comme le font les visionneuses habituelles.
@@ -71,6 +80,19 @@ void main(){
       this.yaw = Math.random() * Math.PI * 2; this.pitch = 0; this.fov = 1.35; this.vy = 0;
       this.dirty = true;
     }
+    // capture plate : demi-étendue visible (en coordonnées de texture) pour l'écran actuel.
+    // À fov = 1,35 l'image couvre tout l'écran ; plus petit = zoom avant.
+    _flatScale() {
+      const sa = this.c.clientWidth / Math.max(1, this.c.clientHeight), z = this.fov / 1.35;
+      const sy = Math.min(0.5, (0.5 * this.iasp) / sa) * z;
+      return [sy / this.iasp, sy, sa];
+    }
+    _clampFlat() {
+      const [sx, sy, sa] = this._flatScale();
+      const hx = sx * sa, hy = sy;
+      this.cx = hx >= 0.5 ? 0.5 : Math.max(hx, Math.min(1 - hx, this.cx));
+      this.cy = hy >= 0.5 ? 0.5 : Math.max(hy, Math.min(1 - hy, this.cy));
+    }
     _bind() {
       const c = this.c, ptrs = new Map();
       let lastX = 0, lastY = 0, pinch0 = 0, fov0 = 0, lastT = 0;
@@ -85,18 +107,23 @@ void main(){
         ptrs.set(e.pointerId, [e.clientX, e.clientY]);
         if (ptrs.size === 2) {
           const [a, b] = [...ptrs.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-          if (pinch0) this.fov = Math.max(0.45, Math.min(1.75, fov0 * pinch0 / d));
+          if (pinch0) this.fov = Math.max(this.flat ? 0.3 : 0.45, Math.min(this.flat ? 1.35 : 1.75, fov0 * pinch0 / d));
           this.dirty = true; return;
         }
         const dx = e.clientX - lastX, dy = e.clientY - lastY; lastX = e.clientX; lastY = e.clientY;
         const now = performance.now(), dt = Math.max(1, now - lastT); lastT = now;
-        this.yaw += dx * k(); this.pitch = Math.max(-1.45, Math.min(1.45, this.pitch + dy * k()));
-        this.vy = (dx * k()) / dt * 16;
+        if (this.flat) {
+          const [sx, sy] = this._flatScale(), px = 2 / Math.max(1, c.clientHeight);
+          this.cx -= dx * px * sx; this.cy -= dy * px * sy; this._clampFlat(); this.vy = 0;
+        } else {
+          this.yaw += dx * k(); this.pitch = Math.max(-1.45, Math.min(1.45, this.pitch + dy * k()));
+          this.vy = (dx * k()) / dt * 16;
+        }
         this.dirty = true;
       });
       const up = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch0 = 0; if (performance.now() - lastT > 60) this.vy = 0; };
       c.addEventListener("pointerup", up); c.addEventListener("pointercancel", up);
-      c.addEventListener("wheel", (e) => { e.preventDefault(); this.fov = Math.max(0.45, Math.min(1.75, this.fov * Math.exp(e.deltaY * 0.001))); this.dirty = true; }, { passive: false });
+      c.addEventListener("wheel", (e) => { e.preventDefault(); this.fov = Math.max(this.flat ? 0.3 : 0.45, Math.min(this.flat ? 1.35 : 1.75, this.fov * Math.exp(e.deltaY * 0.001))); this.dirty = true; }, { passive: false });
       window.addEventListener("resize", () => (this.dirty = true));
       if (root.ResizeObserver) new ResizeObserver(() => (this.dirty = true)).observe(c);
     }
@@ -110,6 +137,8 @@ void main(){
       if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
       gl.viewport(0, 0, w, h);
       gl.uniform2f(this.u.res, w, h); gl.uniform1f(this.u.yaw, this.yaw); gl.uniform1f(this.u.pitch, this.pitch); gl.uniform1f(this.u.fov, this.fov); gl.uniform1f(this.u.vspan, this.vspan);
+      gl.uniform1f(this.u.plate, this.flat ? 1 : 0);
+      if (this.flat) { this._clampFlat(); const [sx, sy] = this._flatScale(); gl.uniform2f(this.u.fc, this.cx, this.cy); gl.uniform2f(this.u.fs, sx, sy); }
       gl.uniform1i(this.u.tex, 0);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }

@@ -86,9 +86,6 @@ def tiles_to_map(spec):
     for x in range(n):
         for y in range(n):
             im.paste(first if x == y == 0 else load_image(spec["tiles"].format(z=z, x=x, y=y)), (x * t, y * t))
-    if "crop" in spec:
-        c = spec["crop"]
-        im = im.crop((round(c[0] * im.width), round(c[1] * im.height), round(c[2] * im.width), round(c[3] * im.height)))
     return im
 
 
@@ -102,6 +99,9 @@ def save(src, path, max_w, force):
         im = tiles_to_map(src)
     else:
         im = load_image(src["url"])
+    if "crop" in src:  # recadrage normalisé [x0, y0, x1, y1]
+        c = src["crop"]
+        im = im.crop((round(c[0] * im.width), round(c[1] * im.height), round(c[2] * im.width), round(c[3] * im.height)))
     if im.width < 1000:  # image disparue remplacée par une vignette d'erreur
         raise ValueError("image trop petite (%dx%d)" % im.size)
     if im.width > max_w:

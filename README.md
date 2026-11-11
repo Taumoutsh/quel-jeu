@@ -1,6 +1,6 @@
 # Quel Jeu ?
 
-Un jeu de devinettes en français, inspiré de GameGuessr : une **vue à 360°** prise dans un jeu vidéo s'affiche.
+Un jeu de devinettes en français, inspiré de GameGuessr : une **vue** prise dans un jeu vidéo s'affiche (panorama à 360° ou capture d'écran).
 1. Trouve **le nom du jeu**.
 2. Une fois le jeu trouvé, sa **carte** s'ouvre : place ton repère à l'endroit où la vue a été prise.
 
@@ -38,11 +38,28 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir l'artefact : partage-le ave
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 63 vues à 360° de vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`).
-  - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
-  - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios). Positions relevées sur la carte papier du jeu et recoupées avec le wiki Elder Scrolls.
+- **Vrais jeux** : 114 vues de 14 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+  - **Panoramas 360°** :
+    - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
+    - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
+    - *Xenoblade Chronicles X* : 3 vues du wiki [FrontierNav](https://frontiernav.net/wiki/xenoblade-chronicles-x/visualisations/panoramas) (CC BY-SA 4.0), avec la carte de Mira et la position exacte de chaque vue (cubes en tuiles convertis en équirectangulaire).
+  - **Captures plates** (wikis Fandom : une capture par lieu connu, placée sur la carte du jeu du même wiki) :
+    | Jeu | Vues |
+    |---|---|
+    | Grand Theft Auto V | Del Perro Pier, Vespucci Beach, aéroport, Maze Bank Arena, hippodrome de Vinewood (carte de Los Santos) |
+    | Grand Theft Auto: San Andreas | The Strip, Gant Bridge, Mount Chiliad, Zone 69, Santa Maria Beach |
+    | Red Dead Redemption 2 | Valentine, Strawberry, Rhodes, Tumbleweed, Van Horn |
+    | Red Dead Redemption | Armadillo, Blackwater, MacFarlane's Ranch, Tumbleweed, Chuparosa |
+    | Elden Ring | Église d'Elleh, Leyndell, château de Redmane, manoir du Volcan, manoir de Caria |
+    | Genshin Impact | Port de Liyue, Inazuma, Sumeru, repaire de Stormterror, Dosdragon |
+    | Assassin's Creed Odyssey | Athènes, Olympie, Cnossos, Mykonos, Argos |
+    | Assassin's Creed Origins | Memphis, Gizeh, Siwa, Cyrène, Fayoum |
+    | Assassin's Creed IV: Black Flag | La Havane, Kingston, Nassau, Great Inagua |
+    | Fallout: New Vegas | Le Strip, Goodsprings, barrage Hoover, Primm |
+    | Cyberpunk 2077 | Marché de Kabuki, Wellsprings, Grand Imperial Mall (position au quartier près) |
 
-  - *Xenoblade Chronicles X* : 3 vues (Talon Rock Summit, Silent Mire, Dopang Caravan) du wiki [FrontierNav](https://frontiernav.net/wiki/xenoblade-chronicles-x/visualisations/panoramas) (CC BY-SA 4.0), avec la carte de Mira et la position exacte de chaque vue. Les panoramas y sont des cubes en tuiles : le script les assemble et les convertit en équirectangulaire.
+    Les captures portant le logo ou le nom du jeu ont été écartées. Les positions ont été relevées à la main sur les cartes (noms de lieux quand la carte en a, sinon repères visibles) : elles sont justes à quelques pourcents de la carte.
+  - La visionneuse affiche une capture plate en plein écran ; on la déplace en glissant et on zoome comme pour un 360°.
 
   Les images ne sont **pas** dans le dépôt (il est public) : `python3 tools/fetch_packs.py` les télécharge depuis leurs sources dans `packs/img/` (ignoré par git), les réduit à 4096 px et écrit `packs/img/dispo.js`. Sans ce dossier, le bouton « Vrais jeux » reste grisé. Les crédits et le lien vers la source s'affichent à la révélation.
   Les panoramas Skyrim font 360° en largeur mais ne couvrent pas tout le haut et le bas : la visionneuse le détecte au format de l'image (plus large que 2,6:1) et affiche des bandes sombres au-delà.
@@ -105,6 +122,6 @@ Dans `packs/vrais-jeux.js` :
 - un jeu : `{"key": "...", "t": "Titre exact de js/games.js", "map": {"url": "...", "credit": "..."}, "credit": "...", "source": "..."}` ;
 - une vue : `{"id": "cle-unique", "game": "key du jeu", "place": "Nom du lieu", "x": 0.42, "y": 0.31, "url": "..."}`, avec `x`, `y` entre 0 et 1 depuis le coin haut gauche de la carte.
 
-Une vue peut aussi pointer vers un panorama Pannellum en tuiles (`"multires": "<dossier contenant config.json>"`) et une carte vers des tuiles Leaflet (`"tiles": ".../{z}/tile_{x}_{y}.png", "z": 3, "crop": [x0, y0, x1, y1]`).
+Ajoute `"flat": true` pour une capture plate (et éventuellement `"source"`, lien vers la page d'origine). Une vue peut aussi pointer vers un panorama Pannellum en tuiles (`"multires": "<dossier contenant config.json>"`) et une carte vers des tuiles Leaflet (`"tiles": ".../{z}/tile_{x}_{y}.png", "z": 3`). `"crop": [x0, y0, x1, y1]` recadre une carte.
 
 Puis relance `python3 tools/fetch_packs.py`. Sources essayées sans succès : le site Elden Ring Street View du même auteur a disparu ; on ne trouve pas de panoramas 360° prêts à l'emploi pour GTA V, Red Dead Redemption 2 ou Cyberpunk 2077, sans position connue (il faut les faire soi-même : mod « panorama » de GTA V, Ansel de NVIDIA pour The Witcher 3…). Flickr a des panoramas de Final Fantasy XIV, GTA V, PUBG, Guild Wars 2 ou The Witcher 3, mais presque tous limités à 1024 px en public, trop flous pour une vue 360°. Kuula (4096 px) n'est pas indexé par les moteurs de recherche ; AzerothGPS StreetView (World of Warcraft) est sur CurseForge, inaccessible aux scripts ; l'archive d'Elden Ring Street View est sur la Wayback Machine.

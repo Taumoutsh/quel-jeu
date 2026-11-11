@@ -70,7 +70,7 @@
     }
     for (const sc of P.scenes) {
       const g = out.games[sc.game];
-      if (g && D.scenes[sc.id]) out.scenes[sc.id] = { game: g.id, x: sc.x, y: sc.y, place: sc.place, credit: g.credit, source: g.source, url: "packs/img/" + sc.id + ".jpg" };
+      if (g && D.scenes[sc.id]) out.scenes[sc.id] = { game: g.id, x: sc.x, y: sc.y, place: sc.place, flat: !!sc.flat, credit: sc.credit || g.credit, source: sc.source || g.source, url: "packs/img/" + sc.id + ".jpg" };
     }
     return out;
   })();
@@ -108,6 +108,12 @@
       const ls = [shuffle(pool("real")), shuffle(pool("lib")), shuffle(pool("demo"))]; src = [];
       while (ls.some((x) => x.length)) for (const x of ls) if (x.length) src.push(x.shift());
     } else src = shuffle(pool(cfg.pack));
+    // chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues :
+    // on regroupe par jeu (ordre des jeux au hasard) puis on prend une vue de chaque jeu à tour de rôle
+    const byGame = new Map();
+    for (const sid of src) { const g = sceneInfo(sid).game; if (!byGame.has(g)) byGame.set(g, []); byGame.get(g).push(sid); }
+    const groups = shuffle([...byGame.values()]); src = [];
+    while (groups.some((x) => x.length)) for (const x of groups) if (x.length) src.push(x.shift());
     const out = [], usedGames = {};
     while (out.length < cfg.rounds && src.length) {
       // évite deux fois le même jeu d'affilée et limite les répétitions d'un même jeu
@@ -394,7 +400,7 @@
       setTimeout(() => { if (A.R && A.R.sid === sid) { pano.setImage(DEMO.renderPano(info.sc)); done(); } }, 30);
     } else {
       const img = new Image();
-      img.onload = () => { if (A.R && A.R.sid === sid) { pano.setImage(img); done(); } };
+      img.onload = () => { if (A.R && A.R.sid === sid) { pano.setImage(img, { flat: !!info.flat }); done(); } };
       img.onerror = () => { $("panoLoad").innerHTML = "Image introuvable — passe la manche."; };
       img.src = info.url;
     }
