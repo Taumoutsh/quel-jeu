@@ -117,7 +117,7 @@ docker compose up -d --build
 
 Après un changement du `.env`, `docker compose up -d` suffit (pas besoin de `--build`). Sur le site déployé, le choix « Images » des réglages et le bloc « Bibliothèque » de l'accueil n'apparaissent pas.
 
-**Derrière un CDN (Cloudflare…)** : le serveur ajoute une empreinte de contenu à chaque fichier appelé par la page (`app.js?v=…`, images comprises), et la page elle-même n'est jamais mise en cache. Une mise à jour est donc visible tout de suite, sans purger le cache du CDN.
+**Derrière un CDN (Cloudflare…)** : la page, les scripts et les styles sont envoyés en `Cache-Control: no-store` (jamais gardés, ni par le CDN ni par le navigateur) ; les images sont gardées longtemps, CDN compris, et leur adresse porte une empreinte de contenu (`?v=…`) pour qu'une image refaite soit rechargée. Une mise à jour est donc visible tout de suite, sans purger le cache du CDN.
 
 Au démarrage, `docker compose logs quel-jeu` affiche les images réellement servies, par exemple `Vrais jeux : 18 jeux, 133 vues (botw 47, skyrim 13, …)`.
 

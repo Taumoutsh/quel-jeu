@@ -150,10 +150,13 @@ function serveFile(req, res, url) {
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) { res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }); return res.end("Introuvable"); }
     const ext = path.extname(file).toLowerCase();
-    // adresse versionnée (?v=…) : contenu figé, cache long ; sinon on fait revérifier
-    const versioned = url.searchParams.has("v");
+    // Cache : la page, les scripts, les styles et les données (html, css, js, json) ne sont jamais gardés,
+    // ni par le navigateur ni par un CDN comme Cloudflare (no-store) : une mise à jour se voit tout de suite.
+    // Les images, elles, se gardent longtemps (CDN compris) ; leur adresse porte une empreinte (?v=…)
+    // quand elle change, donc une image refaite est quand même rechargée.
+    const IMG = /^\.(jpe?g|png|webp|svg|ico)$/.test(ext);
     const headers = { "Content-Type": TYPES[ext] || "application/octet-stream", "Content-Length": st.size,
-      "Cache-Control": versioned ? "public, max-age=31536000, immutable" : "no-cache" };
+      "Cache-Control": !IMG ? "no-store" : url.searchParams.has("v") ? "public, max-age=31536000, immutable" : "public, max-age=86400" };
     if (rel === "/index.html") {
       // signale à la page qu'elle est servie par ce serveur : le multijoueur passe alors par /api/rooms
       const meta = '<meta name="qj-server" content="1" data-images="' + IMAGES + '" data-jeux="' + JEUX.join(",") + '">';
