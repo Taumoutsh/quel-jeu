@@ -5,8 +5,12 @@ Les images ne sont pas versionnées : ce sont des captures de jeux commerciaux, 
 leurs auteurs. Ce script les récupère depuis leurs sources, les réduit et écrit packs/img/dispo.js
 (liste des vues réellement disponibles), que le jeu lit au démarrage.
 
-    python3 tools/fetch_packs.py            # télécharge ce qui manque
+    python3 tools/fetch_packs.py            # télécharge ce qui manque ou a changé
     python3 tools/fetch_packs.py --force    # retélécharge tout
+
+Une image déjà présente est réutilisée tant que sa source (url, crop…) n'a pas changé
+(empreintes dans sources.json). Les images qui ne sont plus dans le pack sont supprimées.
+QJ_OUT=dossier change le dossier de sortie (cache de construction Docker).
 
 Nécessite Pillow et NumPy (pip install pillow numpy).
 """
@@ -23,7 +27,7 @@ from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACK = os.path.join(ROOT, "packs", "vrais-jeux.js")
-OUT = os.path.join(ROOT, "packs", "img")
+OUT = os.environ.get("QJ_OUT") or os.path.join(ROOT, "packs", "img")
 PANO_W, MAP_W = 4096, 2400  # mêmes limites que la bibliothèque
 
 
@@ -92,6 +96,14 @@ def tiles_to_map(spec):
     return im
 
 
+SOURCE_KEYS = ("url", "multires", "tiles", "z", "crop")
+
+
+def signature(src):
+    """Empreinte de la source d'une image : si elle change, l'image est retéléchargée."""
+    return json.dumps({k: src[k] for k in SOURCE_KEYS if k in src}, sort_keys=True)
+
+
 def save(src, path, max_w, force):
     if os.path.exists(path) and not force:
         im = Image.open(path)
@@ -118,9 +130,21 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     pack = load_pack()
     dispo = {"maps": {}, "scenes": {}}
+    man_path = os.path.join(OUT, "sources.json")
+    try:
+        old = json.load(open(man_path, encoding="utf-8"))
+    except (OSError, ValueError):
+        old = {}
+    new = {}
+
+    def get(name, src, max_w):
+        sig = signature(src)
+        new[name] = sig
+        return save(src, os.path.join(OUT, name), max_w, force or old.get(name) != sig)
+
     for g in pack["games"]:
         try:
-            w, h = save(g["map"], os.path.join(OUT, "map-" + g["key"] + ".jpg"), MAP_W, force)
+            w, h = get("map-" + g["key"] + ".jpg", g["map"], MAP_W)
             dispo["maps"][g["key"]] = [w, h]
             print("carte", g["key"], w, h)
         except Exception as e:  # noqa: BLE001
@@ -129,15 +153,22 @@ def main():
         if sc["game"] not in dispo["maps"]:
             continue
         try:
-            w, h = save(sc, os.path.join(OUT, sc["id"] + ".jpg"), PANO_W, force)
+            w, h = get(sc["id"] + ".jpg", sc, PANO_W)
             dispo["scenes"][sc["id"]] = [w, h]
             print("%d/%d" % (i + 1, len(pack["scenes"])), sc["id"], w, h)
         except Exception as e:  # noqa: BLE001
             print("ÉCHEC", sc["id"], e)
+    # les images qui ne sont plus dans le pack sont supprimées
+    gone = [f for f in os.listdir(OUT) if f.endswith(".jpg") and f not in new]
+    for f in gone:
+        os.remove(os.path.join(OUT, f))
+    with open(man_path, "w", encoding="utf-8") as f:
+        json.dump(new, f, indent=0)
     with open(os.path.join(OUT, "dispo.js"), "w", encoding="utf-8") as f:
         f.write("/* Généré par tools/fetch_packs.py : images disponibles [largeur, hauteur]. */\n")
         f.write("window.REAL_PACK_DISPO = " + json.dumps(dispo) + ";\n")
-    print("%d vues, %d cartes disponibles" % (len(dispo["scenes"]), len(dispo["maps"])))
+    reused = sum(1 for k, v in new.items() if old.get(k) == v)
+    print("%d vues, %d cartes disponibles (%d images réutilisées, %d supprimées)" % (len(dispo["scenes"]), len(dispo["maps"]), reused if not force else 0, len(gone)))
 
 
 if __name__ == "__main__":

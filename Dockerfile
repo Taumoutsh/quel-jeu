@@ -10,7 +10,11 @@ RUN pip install --no-cache-dir pillow==11.0.0 numpy==2.1.3
 WORKDIR /src
 COPY packs/vrais-jeux.js packs/
 COPY tools/fetch_packs.py tools/
-RUN python3 tools/fetch_packs.py
+# Les images sont gardées dans un cache de construction (BuildKit) qui survit aux reconstructions :
+# seules les vues nouvelles ou modifiées sont téléchargées, même quand le pack change.
+RUN --mount=type=cache,id=quel-jeu-images,target=/cache \
+    QJ_OUT=/cache python3 tools/fetch_packs.py \
+    && mkdir -p packs/img && cp /cache/*.jpg /cache/dispo.js packs/img/
 
 # 2. Serveur Node (fichiers statiques + salles multijoueur)
 FROM node:22-alpine
