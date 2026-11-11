@@ -115,7 +115,9 @@ docker compose up -d --build
 - `QJ_IMAGES` : `real` (vrais jeux, par défaut), `demo` (jeux fictifs) ou `mix` (les deux) ;
 - `QJ_JEUX` : jeux du pack « Vrais jeux » à garder, séparés par des virgules (vide = tous). Clés : `botw skyrim xcx gtav gtasa gta4 gtavc rdr2 rdr1 er gi aco acor ac4 acu acs fnv cp`.
 
-Après un changement du `.env`, `docker compose up -d` suffit (pas besoin de `--build`).
+Après un changement du `.env`, `docker compose up -d` suffit (pas besoin de `--build`). Sur le site déployé, le choix « Images » des réglages et le bloc « Bibliothèque » de l'accueil n'apparaissent pas.
+
+Au démarrage, `docker compose logs quel-jeu` affiche les images réellement servies, par exemple `Vrais jeux : 18 jeux, 133 vues (botw 47, skyrim 13, …)`.
 
 **Reconstructions rapides** : les images téléchargées sont gardées dans un cache de construction Docker (BuildKit, `id=quel-jeu-images`). Un `docker compose up -d --build` après un `git pull` ne télécharge que les vues nouvelles ou dont la source a changé ; le reste de l'image vient du cache habituel de Docker. Seule la toute première construction télécharge tout (quelques minutes). `docker builder prune` vide ce cache.
 

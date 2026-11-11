@@ -91,6 +91,8 @@
     return out;
   })();
   if (SERVER) A.cfg.pack = SERVER.images; // imposé par le .env
+  // site auto-hébergé : les images se règlent dans le .env, la bibliothèque (propre à claude.ai) disparaît
+  if (SERVER) { const lc = document.getElementById("libCard"); if (lc) lc.classList.add("hidden"); }
 
   // ------------------------------------------------------------------ scènes et cartes
   const demoMapUrl = {};

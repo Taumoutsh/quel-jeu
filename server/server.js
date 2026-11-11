@@ -149,5 +149,21 @@ const server = http.createServer((req, res) => {
   } else if (req.method === "GET" || req.method === "HEAD") serveFile(req, res, url);
   else { res.writeHead(405); res.end(); }
 });
-server.listen(PORT, () => console.log("Quel Jeu ? sur http://localhost:" + PORT + " (dossier " + ROOT + ") · images : " + IMAGES + (JEUX.length ? " · jeux : " + JEUX.join(", ") : "")));
+// bilan des images réellement présentes (packs/img/dispo.js), pour vérifier un déploiement d'un coup d'œil
+function imagesReport() {
+  try {
+    const txt = fs.readFileSync(path.join(ROOT, "packs", "img", "dispo.js"), "utf8");
+    const d = JSON.parse(txt.slice(txt.indexOf("=") + 1).trim().replace(/;$/, ""));
+    const per = {};
+    for (const id of Object.keys(d.scenes || {})) { const k = id.split("-")[0]; per[k] = (per[k] || 0) + 1; }
+    const keys = Object.keys(d.maps || {}).filter((k) => !JEUX.length || JEUX.includes(k));
+    return "Vrais jeux : " + keys.length + " jeux, " + keys.reduce((n, k) => n + (per[k] || 0), 0) + " vues (" + keys.map((k) => k + " " + (per[k] || 0)).join(", ") + ")";
+  } catch (e) {
+    return "Vrais jeux : AUCUNE image (packs/img/dispo.js absent) — seul le pack démo est jouable";
+  }
+}
+server.listen(PORT, () => {
+  console.log("Quel Jeu ? sur http://localhost:" + PORT + " (dossier " + ROOT + ") · images : " + IMAGES + (JEUX.length ? " · jeux : " + JEUX.join(", ") : ""));
+  console.log(imagesReport());
+});
 process.on("SIGTERM", () => server.close(() => process.exit(0)));
