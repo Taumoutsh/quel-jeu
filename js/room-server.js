@@ -22,26 +22,29 @@
       const fire = () => { const ps = snap(); for (const h of hs) { try { h({ peers: ps, joined: [], left: [], updated: [] }); } catch (e) { console.error(e); } } };
       const post = (what, body) => fetch(base + what + "?peer=" + me, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}), keepalive: what === "leave" });
 
-      let es = null, lostT = null;
-      const apply = (d) => {
+      let es = null, lostT = null, firstMsg = null;
+      // lagging : la relecture a apporté du neuf que le flux n'avait pas livré (flux retenu par un antivirus,
+      // un proxy d'opérateur…) : on relit alors chaque seconde, jusqu'à ce que le flux redevienne le plus rapide
+      let lagging = false;
+      const apply = (d, fromStream) => {
         lastMsg = Date.now();
+        if (firstMsg) { firstMsg(); firstMsg = null; }
         if (!d || typeof d !== "object") return;
         // salle recréée (serveur redémarré, salle vidée puis rouverte) : on repart de zéro
         if (d.rid && d.rid !== lastRid) { lastRid = d.rid; lastV = -1; }
         // déjà reçu, ou plus ancien que ce qu'on a (le flux et la relecture peuvent se croiser)
         if (typeof d.v === "number" && d.v <= lastV) return;
-        if (typeof d.v === "number") lastV = d.v;
+        if (typeof d.v === "number") { if (lastV >= 0) lagging = !fromStream; lastV = d.v; }
         const next = new Map();
         for (const [peer, pr] of Object.entries(d.peers || {})) if (peer !== me) next.set(peer, pr || {});
         others = next; meta = d.meta || {}; fire();
       };
       const pollNow = () => fetch(base + "state?peer=" + me, { cache: "no-store" }).then((r) => r.json()).then(apply).catch(() => {});
       // flux en direct ; recréé quand le navigateur l'a fermé (page mise de côté sur téléphone, réseau coupé…)
-      let firstMsg = null;
       const connect = () => {
         if (es) { es.onmessage = es.onopen = es.onerror = null; es.close(); }
         es = new EventSource(base + "events?peer=" + me);
-        es.onmessage = (e) => { let d; try { d = JSON.parse(e.data); } catch (err) { return; } apply(d); if (firstMsg) { firstMsg(); firstMsg = null; } };
+        es.onmessage = (e) => { let d; try { d = JSON.parse(e.data); } catch (err) { return; } apply(d, true); };
         es.onopen = () => {
           clearTimeout(lostT); lostT = null;
           // après une reconnexion, le serveur a pu oublier notre présence : on la renvoie
@@ -55,6 +58,7 @@
         };
       };
       connect();
+      pollNow(); // état de la salle tout de suite, même si un intermédiaire retient le début du flux
       // retour sur la page (application rouverte, onglet revenu au premier plan, page restaurée, réseau revenu) :
       // flux rouvert si besoin, présence renvoyée et état de la salle relu tout de suite, sans attendre
       const wake = () => {
@@ -67,14 +71,15 @@
       window.addEventListener("pageshow", wake);
       window.addEventListener("online", wake);
       window.addEventListener("focus", wake);
-      // secours : si un proxy retient le flux en direct, on relit l'état de la salle (au plus toutes les 2,5 s)
+      // secours : si le flux en direct se tait (chaque joueur publie un signal toutes les 2 s, il ne devrait
+      // jamais se taire 2,5 s) ou s'il est en retard sur la relecture, on relit l'état de la salle
       const poll = setInterval(() => {
         if (closed) return clearInterval(poll);
         if (document.visibilityState === "hidden") return;
         if (es && es.readyState === 2) connect();
-        if (Date.now() - lastMsg < 2500) return;
+        if (Date.now() - lastMsg < (lagging ? 900 : 2500)) return;
         pollNow();
-      }, 2500);
+      }, 1000);
       // page fermée pour de bon : on prévient le serveur ; page mise de côté (persisted, téléphone qui change
       // d'application, retour possible) : on ne dit rien, le délai de grâce et le signal de vie s'en chargent
       const bye = (e) => { if (closed || (e && e.persisted)) return; navigator.sendBeacon && navigator.sendBeacon(base + "leave?peer=" + me, new Blob(["{}"], { type: "application/json" })); };

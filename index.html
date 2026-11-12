@@ -50,6 +50,7 @@
         <input type="text" class="code grow" id="joinCode" maxlength="5" placeholder="CODE" autocomplete="off">
         <button class="btn caps" id="bJoin">Rejoindre</button>
       </div>
+      <div class="notice small bad hidden" id="joinErr" role="alert"></div>
       <div class="notice small hidden" id="noRoom">Le multijoueur n'est pas disponible ici : il faut ouvrir l'artefact sur claude.ai (connecté) ou le site déployé avec Docker.</div>
     </div>
 
@@ -117,7 +118,7 @@
     </div>
 
     <button class="btn pri block" id="bStart">Lancer la partie</button>
-    <p class="mut small hidden" id="waitHost" style="text-align:center"><span class="spin" style="vertical-align:middle"></span>&nbsp; En attente du lancement par l'hôte…</p>
+    <p class="mut small hidden" id="waitHost" style="text-align:center"><span class="spin" style="vertical-align:middle"></span>&nbsp; <span id="waitHostTxt">En attente du lancement par l'hôte…</span></p>
   </div>
 </section>
 

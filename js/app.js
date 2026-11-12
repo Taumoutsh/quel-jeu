@@ -192,7 +192,7 @@
     A.resume = s; // réponses à reprendre si la partie est toujours la même (même génération)
     $("joinCode").value = s.code;
     toast("Reconnexion à la partie " + s.code + "…");
-    await startJoin();
+    await startJoin(true);
   }
   async function initCaps() {
     let tries = 0;
@@ -333,7 +333,11 @@
   function checkHost() {
     if (!A.nroom || (A.mode !== "host" && A.mode !== "guest")) return;
     const now = Date.now();
-    const hosts = A.peers.filter((p) => !p.sameTab && p.presence && p.presence.h === 1 && p.presence.st && active(p));
+    // pendant une manche ou ses résultats, un hôte passé sur une autre application bloque la partie : il est
+    // remplacé ; dans le salon (partage du code par message…) ou au classement final, seul son départ compte
+    const busy = !!A.st && (A.st.ph === "play" || A.st.ph === "rev");
+    const avail = (p) => (busy ? active(p) : alive(p));
+    const hosts = A.peers.filter((p) => !p.sameTab && p.presence && p.presence.h === 1 && p.presence.st && avail(p));
     const rank = (p) => [-((p.presence.st && p.presence.st.term) || 0), p.peer];
     hosts.sort((a, b) => { const x = rank(a), y = rank(b); return x[0] - y[0] || (x[1] < y[1] ? -1 : 1); });
     const best = hosts[0];
@@ -349,7 +353,7 @@
     if (best) {
       if (A.hostPeer && A.hostPeer !== best.peer) {
         const old = A.peers.find((p) => p.peer === A.hostPeer);
-        toast((old && active(old) ? "" : "L'hôte a quitté la partie : ") + (best.presence.n || "un joueur") + " est maintenant l'hôte.", 5000);
+        toast((old && avail(old) ? "" : "L'hôte a quitté la partie : ") + (best.presence.n || "un joueur") + " est maintenant l'hôte.", 5000);
       }
       A.hostPeer = best.peer; A.sawHost = true; A.hostLostAt = 0;
       applyState(best.presence.st);
@@ -359,7 +363,7 @@
     if (!A.hostLostAt) { A.hostLostAt = now; toast("L'hôte a quitté la partie : un autre joueur prend le relais…", 5000); }
     if (now - A.hostLostAt < HOST_WAIT_MS) return;
     if (document.visibilityState === "hidden") return; // pas de relève prise par une page cachée
-    const cands = A.peers.filter((p) => (p.sameTab || (active(p) && p.presence && p.presence.n && p.presence.g === A.gen)))
+    const cands = A.peers.filter((p) => (p.sameTab || (avail(p) && p.presence && p.presence.n && p.presence.g === A.gen)))
       .map((p) => ({ peer: p.peer, me: !!p.sameTab, since: p.since || 0 }))
       .sort((a, b) => (a.since - b.since) || (a.peer < b.peer ? -1 : 1));
     if (cands.length && cands[0].me) becomeHost();
@@ -370,6 +374,8 @@
     // la partie reprend où elle en était : manche en cours, résultats affichés ou classement
     if (A.st.ph === "rev") A.shownReveal = -1;
     if (A.st.ph === "end") A.shownFinal = false;
+    // invité qui attendait la partie suivante dans le salon : il la prépare lui-même, avec le même code
+    if (A.st.ph === "end" && A.screen === "lobby") { hostReplay(); toast("L'hôte a quitté la partie : tu es maintenant l'hôte.", 5000); return; }
     hostRecordGone(); publish(); route();
     if (A.screen === "lobby") showLobby();
     toast("L'hôte a quitté la partie : tu es maintenant l'hôte.", 5000);
@@ -499,17 +505,52 @@
     try { history.replaceState(null, "", "#partie-" + code.toLowerCase()); } catch (e) { /* ignore */ }
     publish(); route();
   }
-  async function startJoin() {
-    ensureName();
+  // rejoindre : on se connecte à la salle sans s'y montrer, on vérifie qu'un hôte y tient une partie, et
+  // seulement alors on y entre ; sinon on repart et on le dit. Le bouton montre le chargement entre-temps.
+  function joinError(msg) { $("joinErr").textContent = msg || ""; $("joinErr").classList.toggle("hidden", !msg); }
+  function joinBusy(on) {
+    $("bJoin").disabled = $("joinCode").disabled = $("bHost").disabled = on;
+    $("bJoin").innerHTML = on ? '<span class="spin"></span>Connexion…' : "Rejoindre";
+    $("bJoin").setAttribute("aria-busy", on ? "true" : "false");
+  }
+  const hostIn = (peers) => peers.some((p) => !p.sameTab && p.presence && p.presence.h === 1 && p.presence.st);
+  async function waitHost() {
+    // salle vide : inutile d'attendre longtemps ; salle occupée : on laisse à l'hôte le temps d'apparaître
+    const t0 = Date.now();
+    while (A.nroom) {
+      const ps = A.nroom.peers();
+      if (hostIn(ps)) return true;
+      if (Date.now() - t0 > (ps.some((p) => !p.sameTab) ? 5000 : 1500)) return false;
+      await new Promise((r) => setTimeout(r, 150));
+    }
+    return false;
+  }
+  let joining = false;
+  async function startJoin(resume) {
+    if (joining) return;
+    ensureName(); joinError("");
     const code = $("joinCode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (code.length !== 5) { toast("Le code fait 5 caractères."); return; }
-    await leaveRoom();
-    try { await joinRoom(code); } catch (e) { toast("Impossible de rejoindre : " + (e.code || e.message), 5000); return; }
+    if (code.length !== 5) { joinError("Le code fait 5 caractères."); return; }
+    joining = true; joinBusy(true);
+    let ok = false, err = null;
+    try {
+      await leaveRoom();
+      A.mode = null; A.st = null;
+      await joinRoom(code);
+      ok = await waitHost();
+    } catch (e) { err = e; }
+    joining = false; joinBusy(false);
+    if (!ok) {
+      await leaveRoom();
+      if (resume === true) { SS.clear(); A.resume = null; }
+      joinError(err ? "Impossible de rejoindre : " + (err.code || err.message)
+        : resume === true ? "La partie " + code + " n'existe plus." : "Aucune partie en cours avec le code " + code + ". Vérifie le code auprès de l'hôte.");
+      return;
+    }
     A.mode = "guest"; A.st = null; A.gen = null; A.res = []; A.sawHost = false; A._stjs = null;
     try { history.replaceState(null, "", "#partie-" + code.toLowerCase()); } catch (e) { /* ignore */ }
     publish();
     showLobby();
-    setTimeout(() => { if (A.mode === "guest" && !A.sawHost && A.code === code) toast("Aucune partie trouvée pour l'instant avec le code " + code + ". Vérifie le code ou attends l'hôte.", 5000); }, 7000);
     onPeers();
   }
   async function leaveRoom() {
@@ -551,6 +592,7 @@
     $("codeBox").textContent = A.code || "-----";
     $("bStart").classList.toggle("hidden", A.mode === "guest");
     $("waitHost").classList.toggle("hidden", A.mode !== "guest");
+    $("waitHostTxt").textContent = A.st && A.st.ph === "end" ? "Partie terminée : en attente que l'hôte relance une partie…" : "En attente du lancement par l'hôte…";
     $("settings").classList.toggle("locked", A.mode === "guest");
     renderSettings(); renderPlayers();
   }
@@ -967,7 +1009,12 @@
       $("finTable").innerHTML = "<tr><th>#</th><th>Jeu</th><th class='n'>Nom</th><th class='n'>Position</th></tr>" +
         A.st.seq.map((sid, k) => { const info = sceneInfo(sid), x = A.res[k]; return "<tr><td>" + (k + 1) + "</td><td>" + esc(info ? gameTitle(info.game) : "?") + "</td><td class='n'>" + (x && x[0] !== 3 ? fmt(x[1]) : "<span style='color:var(--bad)'>✗</span>") + "</td><td class='n'>" + (x && x[0] === 2 ? fmt(x[2]) : "—") + "</td></tr>"; }).join("");
     }
-    $("bAgain").classList.toggle("hidden", !isHost());
+    $("bAgain").classList.toggle("hidden", !(isHost() || A.mode === "guest"));
+  }
+  // invité : « Rejouer » l'emmène dans le salon de la même partie (même code), où il attend que l'hôte relance
+  function guestAgain() {
+    if (!A.nroom) { goHome(); return; }
+    showLobby();
   }
 
   // ------------------------------------------------------------------ bibliothèque (éditeur)
@@ -1088,7 +1135,7 @@
     $("bHost").onclick = startHost;
     $("bJoin").onclick = startJoin;
     $("joinCode").addEventListener("keydown", (e) => { if (e.key === "Enter") startJoin(); });
-    $("joinCode").addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); });
+    $("joinCode").addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); joinError(""); });
     $("bLib").onclick = openLibrary;
     $("bReport").onclick = openReport;
     for (const b of $("rpKind").children) b.onclick = () => setReportKind(b.dataset.v);
@@ -1115,7 +1162,7 @@
     $("bForce").onclick = hostForceEnd;
     $("bQuit").onclick = async () => { if (await confirmBox("Quitter la partie ?", "Quitter")) goHome(); };
     $("bNext").onclick = hostNext;
-    $("bAgain").onclick = hostReplay;
+    $("bAgain").onclick = () => (isHost() ? hostReplay() : guestAgain());
     $("bHome").onclick = goHome;
 
     // éditeur
