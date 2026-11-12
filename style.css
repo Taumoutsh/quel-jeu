@@ -203,7 +203,23 @@ table.sc th { text-align: left; color: var(--mut); font-weight: 600; font-size: 
 table.sc td { padding: 9px 4px; border-top: 1px solid var(--line-soft); }
 table.sc td.n { text-align: right; font-family: var(--fd); font-size: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 table.sc th.n { text-align: right; }
-.podium { display: flex; justify-content: center; align-items: flex-end; gap: 10px; padding: 10px 0; }
+.podium { position: relative; z-index: 2; display: flex; justify-content: center; align-items: flex-end; gap: 10px; padding: 26px 0 10px; }
+.pod.p1 .pod-ava { width: 68px; height: 68px; }
+.pod-ava { position: relative; }
+.crown { position: absolute; left: 50%; top: -25px; width: 28px; transform: translateX(-50%) rotate(-8deg); }
+.pod .bar { transform-origin: bottom; }
+.confetti { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.confetti i { position: absolute; top: 0; width: 7px; height: 11px; border-radius: 2px; opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .podium.anim .bar { transform: scaleY(0); animation: podGrow .55s cubic-bezier(.2, .9, .3, 1.12) var(--d) forwards; }
+  .podium.anim .pod-ava, .podium.anim .nm, .podium.anim .pt { opacity: 0; animation: podPop .5s cubic-bezier(.2, .9, .3, 1.35) calc(var(--d) + .45s) forwards; }
+  .podium.anim .p1 .pod-ava { animation: podPop .5s cubic-bezier(.2, .9, .3, 1.35) calc(var(--d) + .45s) forwards, podHop .5s ease-in-out 2.1s 3; }
+  .confetti i { animation: confetti var(--t) cubic-bezier(.3, .6, .6, 1) var(--dl) forwards; }
+}
+@keyframes podGrow { to { transform: scaleY(1); } }
+@keyframes podPop { from { opacity: 0; transform: translateY(-28px) scale(.6); } to { opacity: 1; transform: none; } }
+@keyframes podHop { 50% { transform: translateY(-10px); } }
+@keyframes confetti { 0% { opacity: 1; transform: translate(0, -30px) rotate(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--x), 380px) rotate(var(--r)); } }
 .pod { flex: 1; max-width: 150px; text-align: center; }
 .pod .bar { border-radius: 12px 12px 0 0; display: flex; align-items: flex-start; justify-content: center; font-family: var(--fd); font-size: 34px; padding-top: 8px; color: var(--acc-ink); }
 .pod .nm { font-weight: 700; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

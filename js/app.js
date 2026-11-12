@@ -321,7 +321,6 @@
     const o = AV.parse(A.avatar), col = AV.COULEURS[o.c];
     $("avaPrev").innerHTML = AV.svg(A.avatar);
     $("avaPrev").style.setProperty("--c", col);
-    $("avaName").textContent = AV.TENUES.find((t) => t.id === o.t).nom;
     const choice = (box, items, isOn, make, label) => {
       const el = $(box); el.innerHTML = "";
       items.forEach((it, i) => {
@@ -647,19 +646,55 @@
 
   // ------------------------------------------------------------------ fin de partie
   function showFinal() { A.shownFinal = true; show("final"); renderFinal(); }
+  // podium de fin de partie : les marches montent (3e, 2e puis 1re), les joueurs s'y posent, les scores
+  // défilent, puis confettis pour le gagnant. Animé une seule fois par partie ; ensuite simple mise à jour.
+  function renderPodium(ps) {
+    const top = ps.slice(0, 3);
+    const key = A.gen + "|" + top.map((x) => x.p.name + ":" + x.tot + ":" + x.p.avatar).join(",");
+    if (key === A.podKey) return;
+    const anim = A.podGen !== A.gen;
+    A.podKey = key; A.podGen = A.gen;
+    const order = [1, 0, 2].filter((k) => top[k]);
+    const hgt = { 0: 120, 1: 86, 2: 64 }, col = { 0: "var(--acc)", 1: "#cfd9e2", 2: "#d9935a" }, delay = { 0: 0.95, 1: 0.55, 2: 0.15 };
+    const crown = "<svg class='crown' viewBox='0 0 32 20' aria-hidden='true'><path d='M2 18 L4 5 L11 11 L16 2 L21 11 L28 5 L30 18 Z' fill='var(--acc)' stroke='#14181f' stroke-width='1.5' stroke-linejoin='round'/></svg>";
+    const el = $("podium");
+    el.classList.toggle("anim", anim);
+    el.innerHTML = order.map((k) => "<div class='pod p" + (k + 1) + "' style='--d:" + delay[k] + "s'>"
+      + "<div class='pod-ava'>" + (k === 0 ? crown : "") + (avaOK(top[k].p.avatar) ? window.avatarSVG(top[k].p.avatar) : "") + "</div>"
+      + "<div class='nm'>" + esc(top[k].p.name) + "</div><div class='pt' data-to='" + top[k].tot + "' data-d='" + delay[k] + "'>" + fmt(anim ? 0 : top[k].tot) + "</div>"
+      + "<div class='bar' style='height:" + hgt[k] + "px;background:" + col[k] + "'>" + (k + 1) + "</div></div>").join("") + "<div class='confetti' aria-hidden='true'></div>";
+    const still = !anim || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+    if (still) { for (const pt of el.querySelectorAll(".pt")) pt.textContent = fmt(+pt.dataset.to); return; }
+    // défilement des scores, une fois le joueur posé sur sa marche
+    const t0 = performance.now();
+    const pts = [...el.querySelectorAll(".pt")];
+    const tick = (now) => {
+      let busy = false;
+      for (const pt of pts) {
+        const t = (now - t0) / 1000 - (+pt.dataset.d + 0.45), u = Math.max(0, Math.min(1, t / 0.9));
+        pt.textContent = fmt(+pt.dataset.to * (1 - Math.pow(1 - u, 3)));
+        if (u < 1) busy = true;
+      }
+      if (busy && el.isConnected) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    // confettis aux couleurs des avatars
+    const cf = el.querySelector(".confetti"), cols = (AV && AV.COULEURS) || ["#f4b740", "#4cc9c0", "#ff7b72"];
+    for (let i = 0; i < 46; i++) {
+      const c = document.createElement("i");
+      c.style.cssText = "left:" + (8 + Math.random() * 84) + "%;background:" + cols[i % cols.length] + ";--x:" + Math.round(Math.random() * 140 - 70) + "px;--r:" + Math.round(Math.random() * 720 - 360) + "deg;--t:" + (1.6 + Math.random()).toFixed(2) + "s;--dl:" + (1.55 + Math.random() * 0.5).toFixed(2) + "s";
+      cf.append(c);
+    }
+    setTimeout(() => { if (cf.isConnected) cf.innerHTML = ""; }, 4800);
+  }
   function renderFinal() {
     if (!A.st) return;
     const n = A.st.seq.length, max = n * (NAME_MAX + LOC_MAX);
     const ps = players(true).map((p) => ({ p, tot: totalOf(p.r), found: (p.r || []).filter((x) => x && x[0] >= 1 && x[0] <= 2).length })).sort((a, b) => b.tot - a.tot);
     const multi = ps.length > 1;
-    $("podium").classList.toggle("hidden", !multi);
     const mine = ps.find((x) => x.p.me) || ps[0];
     $("finSolo").innerHTML = "<div class='bigscore'>" + fmt(mine.tot) + "</div><p class='mut' style='text-align:center;margin:8px 0 0'>sur " + fmt(max) + " points possibles · " + mine.found + "/" + n + " jeu" + (n > 1 ? "x" : "") + " trouvé" + (mine.found > 1 ? "s" : "") + "</p>";
-    if (multi) {
-      const order = [1, 0, 2].filter((k) => ps[k]);
-      const hgt = { 0: 120, 1: 86, 2: 64 }, col = { 0: "var(--acc)", 1: "#cfd9e2", 2: "#d9935a" };
-      $("podium").innerHTML = order.map((k) => "<div class='pod'>" + (avaOK(ps[k].p.avatar) ? "<div class='pod-ava'>" + window.avatarSVG(ps[k].p.avatar) + "</div>" : "") + "<div class='nm'>" + esc(ps[k].p.name) + "</div><div class='pt'>" + fmt(ps[k].tot) + "</div><div class='bar' style='height:" + hgt[k] + "px;background:" + col[k] + "'>" + (k + 1) + "</div></div>").join("");
-    }
+    renderPodium(ps);
     if (multi) {
       $("finTable").innerHTML = "<tr><th>#</th><th>Joueur</th><th class='n'>Jeux trouvés</th><th class='n'>Total</th></tr>" +
         ps.map((x, k) => "<tr><td>" + (k + 1) + "</td><td class='who'>" + ava(x.p, 24) + " " + esc(x.p.name) + (x.p.me ? " <span class='tag'>toi</span>" : "") + "</td><td class='n'>" + x.found + "/" + n + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>").join("");
