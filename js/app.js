@@ -645,6 +645,23 @@
   }
 
   // ------------------------------------------------------------------ fin de partie
+  // détail d'un joueur : jeu de chaque manche, points du nom (et erreurs), points de la position
+  function playerDetail(p) {
+    const rows = A.st.seq.map((sid, k) => {
+      const info = sceneInfo(sid), x = (p.r || [])[k];
+      const game = esc(info ? gameTitle(info.game) : "?") + (info && info.place ? "<span class='mut pl'> · " + esc(info.place) + "</span>" : "");
+      let nm, loc, tot;
+      if (!x) { nm = loc = tot = "<span class='mut'>—</span>"; }
+      else if (x[0] === 3) { nm = "<span class='ko'>✗</span>"; loc = "<span class='mut'>—</span>"; tot = "0"; }
+      else {
+        nm = fmt(x[1]) + (x[3] > 0 ? "<br><span class='mut small'>" + x[3] + " erreur" + (x[3] > 1 ? "s" : "") + "</span>" : "");
+        loc = x[0] === 2 ? fmt(x[2]) : "<span class='mut'>—</span>";
+        tot = "<b>" + fmt(x[1] + (x[0] === 2 ? x[2] : 0)) + "</b>";
+      }
+      return "<tr><td class='mut'>" + (k + 1) + "</td><td>" + game + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'>" + tot + "</td></tr>";
+    }).join("");
+    return "<table class='sc det'><tr><th>#</th><th>Jeu</th><th class='n'>Nom</th><th class='n'>Pos.</th><th class='n'>Total</th></tr>" + rows + "</table>";
+  }
   function showFinal() { A.shownFinal = true; show("final"); renderFinal(); }
   // podium de fin de partie : les marches montent (3e, 2e puis 1re), les joueurs s'y posent, les scores
   // défilent, puis confettis pour le gagnant. Animé une seule fois par partie ; ensuite simple mise à jour.
@@ -696,8 +713,20 @@
     $("finSolo").innerHTML = "<div class='bigscore'>" + fmt(mine.tot) + "</div><p class='mut' style='text-align:center;margin:8px 0 0'>sur " + fmt(max) + " points possibles · " + mine.found + "/" + n + " jeu" + (n > 1 ? "x" : "") + " trouvé" + (mine.found > 1 ? "s" : "") + "</p>";
     renderPodium(ps);
     if (multi) {
+      // chaque joueur se déplie pour montrer le détail de sa partie, manche par manche
+      A.finOpen = A.finOpen || {};
       $("finTable").innerHTML = "<tr><th>#</th><th>Joueur</th><th class='n'>Jeux trouvés</th><th class='n'>Total</th></tr>" +
-        ps.map((x, k) => "<tr><td>" + (k + 1) + "</td><td class='who'>" + ava(x.p, 24) + " " + esc(x.p.name) + (x.p.me ? " <span class='tag'>toi</span>" : "") + "</td><td class='n'>" + x.found + "/" + n + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>").join("");
+        ps.map((x, k) => {
+          const id = String(x.p.peer), open = !!A.finOpen[id];
+          return "<tr class='fin-pl" + (open ? " open" : "") + "' data-pl='" + esc(id) + "'><td>" + (k + 1) + "</td><td class='who'><button type='button' class='fin-tog' aria-expanded='" + open + "' aria-label='Détail de la partie de " + esc(x.p.name) + "'>▸</button>" + ava(x.p, 24) + " " + esc(x.p.name) + (x.p.me ? " <span class='tag'>toi</span>" : "") + "</td><td class='n'>" + x.found + "/" + n + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>"
+            + "<tr class='fin-det" + (open ? "" : " hidden") + "'><td colspan='4'>" + playerDetail(x.p) + "</td></tr>";
+        }).join("");
+      for (const tr of $("finTable").querySelectorAll("tr.fin-pl")) tr.onclick = () => {
+        const id = tr.dataset.pl, open = !A.finOpen[id];
+        A.finOpen[id] = open;
+        tr.classList.toggle("open", open); tr.querySelector(".fin-tog").setAttribute("aria-expanded", open);
+        tr.nextElementSibling.classList.toggle("hidden", !open);
+      };
     } else {
       $("finTable").innerHTML = "<tr><th>#</th><th>Jeu</th><th class='n'>Nom</th><th class='n'>Position</th></tr>" +
         A.st.seq.map((sid, k) => { const info = sceneInfo(sid), x = A.res[k]; return "<tr><td>" + (k + 1) + "</td><td>" + esc(info ? gameTitle(info.game) : "?") + "</td><td class='n'>" + (x && x[0] !== 3 ? fmt(x[1]) : "<span style='color:var(--bad)'>✗</span>") + "</td><td class='n'>" + (x && x[0] === 2 ? fmt(x[2]) : "—") + "</td></tr>"; }).join("");
