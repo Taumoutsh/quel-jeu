@@ -1,5 +1,6 @@
 __pycache__/
 *.png
+!/apple-touch-icon.png
 .DS_Store
 packs/img/
 .env
