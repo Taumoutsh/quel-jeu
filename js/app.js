@@ -26,9 +26,9 @@
     const asp = h / w;
     return Math.hypot(a.x - b.x, (a.y - b.y) * asp) / Math.hypot(1, asp);
   }
-  // position : plein score à moins de 2 % de la diagonale, puis décroissance douce
-  // (≈ 835 à 5 %, ≈ 620 à 10 %, ≈ 340 à 20 %, ≈ 100 à 40 %) ; beaucoup de repères sont placés au niveau du quartier ou de la région
-  const LOC_FULL = 0.02, LOC_K = 6;
+  // position : plein score à moins de 4 % de la diagonale, puis décroissance douce
+  // (≈ 787 à 10 %, ≈ 527 à 20 %, ≈ 353 à 30 %, ≈ 159 à 50 %) ; beaucoup de repères sont placés au niveau du quartier ou de la région
+  const LOC_FULL = 0.04, LOC_K = 4;
   const locPoints = (d) => (d <= LOC_FULL ? LOC_MAX : Math.round(LOC_MAX * Math.exp(-LOC_K * (d - LOC_FULL))));
 
   // ------------------------------------------------------------------ état
