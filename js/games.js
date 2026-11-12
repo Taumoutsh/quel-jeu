@@ -66,6 +66,8 @@
       ["Grand Theft Auto III", "gta 3"],
       ["Grand Theft Auto: Vice City", "gta vice city", "vice city", "gta vc"],
       ["Grand Theft Auto: San Andreas", "gta san andreas", "san andreas", "gta sa"],
+      ["Grand Theft Auto: Liberty City Stories", "gta lcs", "liberty city stories"],
+      ["Grand Theft Auto: Vice City Stories", "gta vcs", "vice city stories"],
       ["Grand Theft Auto IV", "gta 4"],
       ["Grand Theft Auto V", "gta 5", "gta online"],
       ["Grand Theft Auto VI", "gta 6"],
@@ -97,6 +99,7 @@
     ]},
     { s: null, g: [["Cyberpunk 2077", "cyberpunk"]] },
     { s: null, g: [["RuneScape", "runescape 3", "rs3"], ["Old School RuneScape", "osrs", "old school runescape"]] },
+    { s: null, g: [["Guild Wars 2", "gw2", "guild wars"], ["The Crew 2", "crew 2", "the crew"], ["Bully", "canis canem edit", "bully scholarship edition"]] },
     { s: "Mass Effect", a: [], g: [
       ["Mass Effect", "mass effect 1"], ["Mass Effect 2"], ["Mass Effect 3"], ["Mass Effect: Andromeda", "andromeda"],
     ]},
@@ -238,7 +241,7 @@
       ["Immortals Fenyx Rising", "fenyx rising"], ["Days Gone"], ["Prey (2017)", "prey"],
       ["Path of Exile 2", "poe2"], ["Helldivers 2"], ["Lethal Company"], ["Phasmophobia"], ["Rust"],
       ["DayZ"], ["Escape from Tarkov", "tarkov"], ["Satisfactory"], ["Factorio"], ["Microsoft Flight Simulator", "flight simulator", "msfs"],
-      ["Euro Truck Simulator 2", "ets2"], ["Spore"], ["Grounded"], ["The Forest"], ["Sons of the Forest"],
+      ["Euro Truck Simulator 2", "ets2"], ["American Truck Simulator", "ats", "american truck sim"], ["Spore"], ["Grounded"], ["The Forest"], ["Sons of the Forest"],
       ["Death's Door"], ["Ico"], ["Jak and Daxter"], ["Spyro Reignited Trilogy", "spyro"],
     ]},
   ];

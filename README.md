@@ -38,7 +38,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 201 vues de 34 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 300 vues de 57 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
@@ -68,7 +68,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Yakuza Kiwami 2 | Theater Square, Millennium Tower, Pink Street, Tenkaichi Street, Nakamichi Street (Kamurocho) |
     | The Elder Scrolls Online | Daggerfall, Wayrest, Elden Root, Mournhold, Vivec |
     | World of Warcraft | Hurlevent, Forgefer, Baie-du-Butin, ruines de Lordaeron |
-    | Mafia: Definitive Edition | Little Italy, Chinatown, Works Quarter, hôtel de ville |
+    | Mafia: Definitive Edition | Bar de Salieri, aéroport, Works Quarter, hôtel de ville |
     | Mafia III | Opéra, hôtel de ville, églises de Frisco Fields et de Pointe Verdun, fresque de Delray Hollow |
     | Sleeping Dogs | Business District, North Point, Kennedy Town, Aberdeen |
     | Assassin's Creed Brotherhood | Colisée, arc de Constantin, Panthéon (Rome) |
@@ -77,6 +77,29 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Final Fantasy XIV | Limsa Lominsa, Gridania, Ul'dah, Mor Dhona |
     | Sea of Thieves | Plunder, Sanctuary, Ancient Spire, Golden Sands |
     | RuneScape | Lumbridge, Varrock, Falador, Al Kharid, East Ardougne |
+    | Pokémon Épée et Bouclier | Circhester, Motostoke |
+    | Kingdom Come: Deliverance | Rattay, Sasau, Skalitz, Talmberg |
+    | Dark Souls | Sanctuaire de Lige-Feu, Bourg des Morts-Vivants, Forteresse de Sen, Jardin de Noiracine |
+    | Guild Wars 2 | Divinity's Reach, Lion's Arch, Rata Sum, Hoelbrak, Citadelle noire |
+    | Fallout 76 | Charleston, Flatwoods, Morgantown, Watoga, Whitespring |
+    | Bloodborne | Yharnam central, quartier de la cathédrale, Vieux Yharnam, Hemwick, château de Cainhurst |
+    | L.A. Noire | Grauman's Chinese Theatre, décor d'Intolérance, Hall of Records, MacArthur Park, Angels Flight |
+    | Batman: Arkham City | Palais de justice, Park Row |
+    | Just Cause 3 | Mines de Cava Montana, province de Prospere, monastère |
+    | Grand Theft Auto III | Red Light District, Callahan Bridge, Belleville Park, Torrington, Cochrane Dam |
+    | Grand Theft Auto: Liberty City Stories | Fort Staunton, Saint Mark's, Chinatown, Wichita Gardens, Bedford Point |
+    | Grand Theft Auto: Vice City Stories | Little Havana, Ocean Beach, Starfish Island, aéroport, Vice Point |
+    | Watch Dogs: Legion | Tour de Londres, Trafalgar Square, Big Ben, Buckingham, Tate Modern |
+    | Need for Speed: Most Wanted | Campus de Rosewood, Highlander Stadium, Century Square, Riverfront Stadium, aéroport |
+    | Far Cry 6 | Esperanza, port de La Joya, Sierra Perdida, Conuco |
+    | The Crew 2 | Central Park, South Beach, le Strip, Millennium Park, Seattle |
+    | Bully | Bullworth Academy, Bullworth Town |
+    | DayZ | Chernogorsk, Elektrozavodsk, Berezino, Novodmitrovsk |
+    | PUBG: Battlegrounds | Pochinki, Georgopol, Yasnaya Polyana, Primorsk, base militaire (Erangel) |
+    | Call of Duty: Warzone | Station TV, aéroport, port, carrière, fermes (Verdansk) |
+    | Tom Clancy's The Division 2 | Capitole, Federal Triangle, Downtown East, Lincoln Memorial |
+    | Euro Truck Simulator 2 | Londres, Paris, Berlin, Prague, Vienne |
+    | American Truck Simulator | Los Angeles, Las Vegas, San Francisco, Phoenix, Sacramento |
 
     Les captures portant le logo ou le nom du jeu ont été écartées. Les positions ont été relevées à la main sur les cartes (noms de lieux quand la carte en a, sinon repères visibles) : elles sont justes à quelques pourcents de la carte.
   - La visionneuse affiche une capture plate en plein écran ; on la déplace en glissant et on zoome comme pour un 360°.
