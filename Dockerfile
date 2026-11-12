@@ -23,7 +23,7 @@ RUN --mount=type=cache,id=quel-jeu-images,target=/cache \
 # 2. Serveur Node (fichiers statiques + salles multijoueur)
 FROM node:22-alpine
 WORKDIR /app
-COPY index.html admin.html style.css admin.css ./
+COPY index.html admin.html style.css admin.css favicon.svg favicon.ico apple-touch-icon.png ./
 COPY js js
 COPY server server
 COPY packs/vrais-jeux.js packs/

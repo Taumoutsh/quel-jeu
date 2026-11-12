@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- GameSpotter : « G » clair et « S » souci sur fond nuit, lettres anguleuses comme la police du titre -->
+  <rect width="64" height="64" rx="14" fill="#0c141d"/>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="12.5" fill="none" stroke="#1d2d3d" stroke-width="3"/>
+  <path d="M30 18.5 H12.5 V45.5 H27.5 V33 H20.5" fill="none" stroke="#e9eff2" stroke-width="7" stroke-linejoin="bevel"/>
+  <path d="M55 18.5 H37.5 V32 H51.5 V45.5 H34" fill="none" stroke="#f4b740" stroke-width="7" stroke-linejoin="bevel"/>
+</svg>
