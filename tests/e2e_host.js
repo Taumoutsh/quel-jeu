@@ -69,10 +69,11 @@ async function until(fn, ms, step) { const t0 = Date.now(); while (Date.now() - 
     const rows = await L.p.$$eval("#finTable tr.fin-pl", (trs) => trs.map((tr) => tr.innerText.replace(/\s+/g, " ")));
     const row = (n) => rows.find((r) => r.includes(n)) || "";
     console.log("     " + rows.join("\n     "));
-    check(/parti pendant la manche 2/.test(row("Bruno")) && /1\/3/.test(row("Bruno")), "classement : Bruno parti pendant la manche 2, 1 manche jouée");
-    check(/parti/.test(row("Hôte")) && /1\/3/.test(row("Hôte")), "classement : l'ancien hôte noté parti, 1 manche jouée");
-    check(/arrivé à la manche 2/.test(row("Léa")) && /2\/3/.test(row("Léa")) && !/parti/.test(row("Léa")), "classement : Léa arrivée à la manche 2, 2 manches jouées");
-    check(!/parti|arrivé/.test(row("Alice")) && /3\/3/.test(row("Alice")), "classement : Alice, partie complète");
+    check(/ 1\/1 /.test(row("Bruno")), "classement : Bruno (parti) 1/1 jeu trouvé sur ses manches jouées");
+    check(/ 1\/1 /.test(row("Hôte")), "classement : l'ancien hôte (parti) 1/1");
+    check(/ 2\/2 /.test(row("Léa")), "classement : Léa (arrivée à la manche 2) 2/2");
+    check(/ 3\/3 /.test(row("Alice")), "classement : Alice 3/3");
+    check(!rows.some((r) => /parti|arrivé/.test(r)), "pas de mention parti / arrivé");
 
     // l'ancien hôte revient : il redevient simple joueur
     await H.ctx.setOffline(false);

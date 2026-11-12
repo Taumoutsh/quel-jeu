@@ -894,14 +894,13 @@
     if (multi) {
       // chaque joueur se déplie pour montrer le détail de sa partie, manche par manche
       A.finOpen = A.finOpen || {};
-      // arrivé en cours de partie, ou parti avant la fin : mentionné, avec le nombre de manches jouées
-      const note = (p) => (p.j > 0 ? "<span class='fin-note'>arrivé à la manche " + (p.j + 1) + "</span>" : "")
-        + (p.gone ? "<span class='fin-note bad'>parti " + (p.left != null && p.left >= 0 ? "pendant la manche " + (p.left + 1) : "en cours de partie") + "</span>" : "");
-      $("finTable").innerHTML = "<tr><th>#</th><th>Joueur</th><th class='n'>Manches</th><th class='n'>Jeux trouvés</th><th class='n'>Total</th></tr>" +
+      // jeux trouvés sur les manches jouées : un joueur arrivé en cours de partie ou parti avant la fin
+      // n'est compté que sur les manches auxquelles il a participé
+      $("finTable").innerHTML = "<tr><th>#</th><th>Joueur</th><th class='n'>Jeux trouvés</th><th class='n'>Total</th></tr>" +
         ps.map((x, k) => {
           const id = String(x.p.peer), open = !!A.finOpen[id];
-          return "<tr class='fin-pl" + (open ? " open" : "") + (x.p.gone ? " gone" : "") + "' data-pl='" + esc(id) + "'><td>" + (k + 1) + "</td><td class='who'><button type='button' class='fin-tog' aria-expanded='" + open + "' aria-label='Détail de la partie de " + esc(x.p.name) + "'>▸</button>" + ava(x.p, 24) + " " + esc(x.p.name) + (x.p.me ? " <span class='tag'>toi</span>" : "") + note(x.p) + "</td><td class='n'>" + x.played + "/" + n + "</td><td class='n'>" + x.found + "/" + n + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>"
-            + "<tr class='fin-det" + (open ? "" : " hidden") + "'><td colspan='5'>" + playerDetail(x.p) + "</td></tr>";
+          return "<tr class='fin-pl" + (open ? " open" : "") + (x.p.gone ? " gone" : "") + "' data-pl='" + esc(id) + "'><td>" + (k + 1) + "</td><td class='who'><button type='button' class='fin-tog' aria-expanded='" + open + "' aria-label='Détail de la partie de " + esc(x.p.name) + "'>▸</button>" + ava(x.p, 24) + " " + esc(x.p.name) + (x.p.me ? " <span class='tag'>toi</span>" : "") + "</td><td class='n'>" + x.found + "/" + x.played + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>"
+            + "<tr class='fin-det" + (open ? "" : " hidden") + "'><td colspan='4'>" + playerDetail(x.p) + "</td></tr>";
         }).join("");
       for (const tr of $("finTable").querySelectorAll("tr.fin-pl")) tr.onclick = () => {
         const id = tr.dataset.pl, open = !A.finOpen[id];

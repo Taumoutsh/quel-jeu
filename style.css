@@ -301,10 +301,7 @@ table.det .ko { color: var(--bad); }
 textarea { background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; color: var(--txt); font: inherit; font-size: 16px; resize: vertical; outline: none; }
 textarea:focus { border-color: var(--acc); }
 
-/* classement final : arrivées et départs en cours de partie */
-.fin-note { display: block; font-size: 11px; color: var(--mut); margin: 2px 0 0 52px; font-weight: 500; }
-.fin-note.bad { color: var(--bad); }
+/* classement final : joueur parti en cours de partie */
 tr.fin-pl.gone td { opacity: .75; }
 .tag.bad { background: rgba(255, 123, 114, .15); color: var(--bad); }
-@media (max-width: 600px) { .fin-note { margin-left: 46px; } }
 
