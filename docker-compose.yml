@@ -2,10 +2,21 @@ services:
   quel-jeu:
     build: .
     image: quel-jeu
+    container_name: gamespotter
+    # accessible seulement depuis le serveur lui-même (vérifications) ; le public passe par le proxy
     ports:
-      - "6103:8080"
+      - "127.0.0.1:${QJ_PORT:-6103}:8080"
     environment:
       # réglés dans le fichier .env (voir .env.example)
       QJ_IMAGES: ${QJ_IMAGES:-real}
       QJ_JEUX: ${QJ_JEUX:-}
+    networks:
+      - proxy
     restart: unless-stopped
+
+networks:
+  # réseau Docker du reverse proxy (Nginx Proxy Manager…), créé par lui : le proxy joint le site
+  # par son nom « gamespotter », port 8080, sans passer par l'IP publique
+  proxy:
+    external: true
+    name: ${QJ_NETWORK:-npm_default}

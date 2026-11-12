@@ -126,11 +126,13 @@ git clone https://github.com/taumoutsh/quel-jeu.git
 cd quel-jeu
 cp .env.example .env      # puis ajuster le choix des images
 docker compose up -d --build
-# puis http://<serveur>:6103
+# puis, dans Nginx Proxy Manager : hôte gamespotter, port 8080
 ```
 **Choix des images** : sur le site déployé, il ne se fait pas dans les réglages de la page mais dans `.env` :
 - `QJ_IMAGES` : `real` (vrais jeux, par défaut), `demo` (jeux fictifs) ou `mix` (les deux) ;
 - `QJ_JEUX` : jeux du pack « Vrais jeux » à garder, séparés par des virgules (vide = tous). Clés : `botw skyrim xcx gtav gtasa gta4 gtavc rdr2 rdr1 er gi aco acor ac4 acu acs fnv cp`.
+
+**Derrière Nginx Proxy Manager (ou un autre proxy en conteneur)** : le site rejoint le réseau Docker du proxy (`QJ_NETWORK` dans `.env`, `npm_default` par défaut) et n'ouvre son port qu'en local (`127.0.0.1:6103`). Dans NPM, l'hôte de destination est `gamespotter`, port `8080`, schéma `http`. Le nom du réseau se trouve avec `docker inspect <conteneur NPM> --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}'`.
 
 Après un changement du `.env`, `docker compose up -d` suffit (pas besoin de `--build`). Sur le site déployé, le choix « Images » des réglages et le bloc « Bibliothèque » de l'accueil n'apparaissent pas.
 
