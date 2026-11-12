@@ -35,6 +35,9 @@ Avec les suggestions activées, une liste de choix s'affiche quand il faut préc
 Le multijoueur utilise la capacité « room » des artefacts Claude, ou les salles du serveur Docker (`server/server.js`) quand le site est auto-hébergé : chaque joueur publie son état (sa présence) dans une salle nommée `qj-<code>`. L'hôte publie l'état de la partie, les autres le suivent. Rien n'est stocké durablement côté serveur.
 Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact (partagé depuis claude.ai) ou ton site Docker.
 
+- Si l'hôte quitte ou ne répond plus (téléphone verrouillé, réseau coupé), le joueur arrivé le plus tôt devient hôte automatiquement après une quinzaine de secondes et la partie continue ; l'ancien hôte qui revient redevient simple joueur. Un joueur qui ne répond plus ne bloque pas la fin d'une manche.
+- Le classement final garde les joueurs partis en cours de partie (« parti pendant la manche N ») et signale ceux arrivés en cours de route, avec le nombre de manches jouées.
+
 ## Signalements et administration (site Docker)
 - Sur l'écran de résultat d'une manche, **« Signaler une erreur »** : position fausse (on peut toucher la carte au bon endroit), mauvais jeu, image inadaptée ou autre, avec un commentaire facultatif. Le bouton n'apparaît que sur le site auto-hébergé (le serveur garde les signalements), pour les vues du pack « Vrais jeux ».
 - **Page `/admin`**, protégée par le mot de passe `QJ_ADMIN_PASSWORD` du `.env` (vide = désactivée ; 8 essais ratés par quart d'heure et par adresse) : liste des signalements par vue, capture, carte avec la position actuelle, l'originale et celles proposées par les joueurs. On peut changer le jeu, le nom du lieu et la position (toucher la carte, ou « Utiliser sa position »), rétablir l'original, supprimer la vue, et marquer chaque signalement résolu ou ignoré. L'onglet « Toutes les vues » permet de corriger n'importe quelle vue.

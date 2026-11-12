@@ -209,7 +209,7 @@
 
   // ------------------------------------------------------------------ multijoueur (présence dans un salon nommé)
   function players(forScore) {
-    const me = { me: true, name: A.name, color: A.color, avatar: A.avatar, r: A.res, host: A.mode === "host" || A.mode === "solo", peer: "me" };
+    const me = { me: true, name: A.name, color: A.color, avatar: A.avatar, r: A.res, host: A.mode === "host" || A.mode === "solo", peer: "me", j: A.j || 0, alive: true };
     if (!A.nroom) return [me];
     const out = []; let sawMe = false;
     for (const p of A.peers) {
@@ -217,7 +217,7 @@
       if (!pr.n) continue;
       if (p.sameTab) { sawMe = true; out.push(me); continue; }
       if (forScore && pr.g !== A.gen) continue;
-      out.push({ me: false, name: String(pr.n).slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(pr.c) ? pr.c : "#ffffff", avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], host: pr.h === 1, peer: p.peer });
+      out.push({ me: false, name: String(pr.n).slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(pr.c) ? pr.c : "#ffffff", avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], host: pr.h === 1, peer: p.peer, j: pr.j | 0, alive: alive(p) });
     }
     if (!sawMe) out.unshift(me);
     return out;
@@ -227,7 +227,7 @@
     if (!A.nroom) return;
     clearTimeout(pubT);
     pubT = setTimeout(() => {
-      const p = { v: 1, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null) };
+      const p = { v: 1, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null), hb: A.hb || 0, j: A.j || 0 };
       p.st = A.mode === "host" ? A.st : null;
       A.nroom.presence(p).catch((e) => console.warn("presence", e));
     }, 40);
@@ -239,21 +239,99 @@
     A.nroom = nr; A.code = code; A.peers = nr.peers();
     A.unPeers = nr.onPeers((ch) => { A.peers = ch.peers; onPeers(); }, (e) => toast("Connexion à la partie perdue (" + e.code + ")", 5000));
   }
-  function onPeers() {
-    if (A.mode === "guest") {
-      const host = A.peers.find((p) => !p.sameTab && p.presence && p.presence.h === 1 && p.presence.st);
-      if (host) { A.sawHost = true; A.hostGoneShown = false; applyState(host.presence.st); }
-      else if (A.sawHost && !A.hostGoneShown) {
-        A.hostGoneShown = true;
-        setTimeout(async () => {
-          const still = !A.peers.find((p) => p.presence && p.presence.h === 1);
-          if (still && A.mode === "guest" && A.st && (await confirmBox("<b>L'hôte a quitté la partie.</b><br><span class='mut'>Veux-tu reprendre le rôle d'hôte pour continuer ?</span>", "Devenir l'hôte"))) {
-            A.mode = "host"; publish(); route(); toast("Tu es maintenant l'hôte");
-          }
-        }, 4000);
-      }
+  // ---- vie des joueurs : chacun publie un signal (hb) toutes les 4 s ; un joueur dont le signal ne change plus
+  // depuis 12 s, ou que le serveur voit déconnecté, est considéré absent (téléphone verrouillé, onglet fermé…)
+  const HB_MS = 4000, DEAD_MS = 12000, HOST_WAIT_MS = 5000;
+  A.seen = {}; A.track = {};
+  function refreshSeen() {
+    const now = Date.now();
+    for (const p of A.peers) {
+      if (p.sameTab) { A.myPeer = p.peer; A.mySince = p.since || 0; continue; }
+      const pr = p.presence || {}, s = A.seen[p.peer];
+      if (!s || s.hb !== pr.hb) A.seen[p.peer] = { hb: pr.hb, at: now };
     }
-    if (A.mode === "host") hostCheck();
+  }
+  function alive(p) {
+    if (!p || p.sameTab) return true;
+    const s = A.seen[p.peer];
+    return p.online !== false && !!s && Date.now() - s.at < DEAD_MS;
+  }
+  // joueurs de la partie en cours (même génération), gardés même après leur départ pour le classement final
+  function trackPlayers() {
+    if (!A.gen) return;
+    const here = new Set();
+    for (const p of A.peers) {
+      if (p.sameTab) continue;
+      const pr = p.presence || {};
+      here.add(p.peer);
+      if (pr.n && pr.g === A.gen) A.track[p.peer] = { peer: p.peer, name: String(pr.n).slice(0, 16), color: pr.c, avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], j: pr.j | 0, gen: A.gen, absent: false };
+    }
+    for (const t of Object.values(A.track)) if (t.gen !== A.gen) delete A.track[t.peer]; else if (!here.has(t.peer)) t.absent = true;
+  }
+  // l'hôte note dans l'état de la partie les joueurs partis (pour le classement final de tout le monde)
+  function hostRecordGone() {
+    if (A.mode !== "host" || !A.st || A.st.ph === "lobby" || !A.gen) return;
+    const gone = (A.st.gone || []).slice();
+    // joueurs encore là et qui répondent (un joueur figé, réseau coupé ou téléphone verrouillé, compte comme parti)
+    const live = players(true).filter((p) => !p.me && p.alive !== false), liveNames = new Set(live.map((p) => p.name).concat([A.name]));
+    const livePeers = new Set(live.map((p) => p.peer));
+    let changed = false;
+    for (const t of Object.values(A.track)) {
+      if (livePeers.has(t.peer) || gone.some((g) => g.peer === t.peer)) continue;
+      if (!t.r.some((x) => x)) continue; // parti sans avoir joué une manche
+      gone.push({ peer: t.peer, name: t.name, color: t.color, avatar: t.avatar, r: t.r, j: t.j, left: A.st.i });
+      changed = true;
+    }
+    const keep = gone.filter((g) => !livePeers.has(g.peer) && !liveNames.has(g.name)); // revenu : il reprend sa place
+    if (keep.length !== gone.length) changed = true;
+    if (changed) { A.st = Object.assign({}, A.st, { gone: keep }); publish(); }
+  }
+  // un seul hôte : le plus récent mandat (term) l'emporte ; s'il n'y a plus d'hôte vivant, le joueur arrivé le plus tôt
+  // parmi ceux qui restent le devient, sans rien demander
+  function checkHost() {
+    if (!A.nroom || (A.mode !== "host" && A.mode !== "guest")) return;
+    const now = Date.now();
+    const hosts = A.peers.filter((p) => !p.sameTab && p.presence && p.presence.h === 1 && p.presence.st && alive(p));
+    const rank = (p) => [-((p.presence.st && p.presence.st.term) || 0), p.peer];
+    hosts.sort((a, b) => { const x = rank(a), y = rank(b); return x[0] - y[0] || (x[1] < y[1] ? -1 : 1); });
+    const best = hosts[0];
+    if (A.mode === "host") {
+      const mine = (A.st && A.st.term) || 0, theirs = best ? best.presence.st.term || 0 : -1;
+      if (best && (theirs > mine || (theirs === mine && A.myPeer && best.peer < A.myPeer))) {
+        A.mode = "guest"; A._stjs = null; A.hostPeer = best.peer; A.sawHost = true;
+        applyState(best.presence.st); publish();
+        toast((best.presence.n || "Un joueur") + " est l'hôte de la partie.");
+      }
+      return;
+    }
+    if (best) {
+      if (A.hostPeer && A.hostPeer !== best.peer) toast((best.presence.n || "Un joueur") + " est maintenant l'hôte.");
+      A.hostPeer = best.peer; A.sawHost = true; A.hostLostAt = 0;
+      applyState(best.presence.st);
+      return;
+    }
+    if (!A.sawHost || !A.st) return;
+    if (!A.hostLostAt) A.hostLostAt = now;
+    if (now - A.hostLostAt < HOST_WAIT_MS) return;
+    const cands = A.peers.filter((p) => (p.sameTab || (alive(p) && p.presence && p.presence.n && p.presence.g === A.gen)))
+      .map((p) => ({ peer: p.peer, me: !!p.sameTab, since: p.since || 0 }))
+      .sort((a, b) => (a.since - b.since) || (a.peer < b.peer ? -1 : 1));
+    if (cands.length && cands[0].me) becomeHost();
+  }
+  function becomeHost() {
+    A.mode = "host"; A.hostLostAt = 0; A.hostPeer = null;
+    A.st = Object.assign({}, A.st, { term: ((A.st && A.st.term) || 0) + 1 });
+    // la partie reprend où elle en était : manche en cours, résultats affichés ou classement
+    if (A.st.ph === "rev") A.shownReveal = -1;
+    if (A.st.ph === "end") A.shownFinal = false;
+    hostRecordGone(); publish(); route();
+    if (A.screen === "lobby") showLobby();
+    toast("L'hôte est parti : tu es maintenant l'hôte.", 4000);
+  }
+  function onPeers() {
+    refreshSeen(); trackPlayers();
+    checkHost();
+    if (A.mode === "host") { hostRecordGone(); hostCheck(); }
     renderPlayers();
     if (A.screen === "reveal") renderRevealTable();
     if (A.screen === "final") renderFinal();
@@ -263,7 +341,11 @@
     const js = JSON.stringify(st);
     if (A._stjs === js) return;
     A._stjs = js;
-    if (st.gen !== A.gen) { A.gen = st.gen; A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false; publish(); }
+    if (st.gen !== A.gen) {
+      A.gen = st.gen; A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false;
+      A.j = st.ph === "lobby" ? 0 : st.ph === "play" ? st.i : st.ph === "rev" ? st.i + 1 : st.seq.length; // arrivé en cours de partie ?
+      publish();
+    }
     A.st = st;
     route();
   }
@@ -284,14 +366,15 @@
     const seq = buildSeq(cfg);
     if (!seq.length) { toast("Aucune vue disponible pour ce choix d'images."); return; }
     cfg.rounds = seq.length;
-    A.gen = rid(8); A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false;
-    A.st = { gen: A.gen, ph: "play", cfg, seq, i: 0, dl: newDeadline(cfg) };
+    A.gen = rid(8); A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false; A.j = 0; A.track = {};
+    A.st = { gen: A.gen, ph: "play", cfg, seq, i: 0, dl: newDeadline(cfg), term: (A.st && A.st.term) || 0, gone: [] };
     publish(); route();
   }
   function hostCheck() {
     if (!isHost() || !A.st || A.st.ph !== "play") return;
     const i = A.st.i, ps = players(true);
-    const allDone = ps.length > 0 && ps.every((p) => p.r[i] && p.r[i][0] >= 2);
+    const live = ps.filter((p) => p.alive !== false);
+    const allDone = live.length > 0 && live.every((p) => p.r[i] && p.r[i][0] >= 2);
     const timeUp = A.st.dl && Date.now() > A.st.dl + 1200;
     if (allDone || timeUp) { A.st = Object.assign({}, A.st, { ph: "rev" }); publish(); route(); }
   }
@@ -303,8 +386,8 @@
     publish(); route();
   }
   function hostReplay() {
-    A.gen = rid(8); A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false;
-    A.st = { gen: A.gen, ph: "lobby", cfg: Object.assign({}, A.cfg), seq: [], i: -1, dl: 0 };
+    A.gen = rid(8); A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false; A.j = 0; A.track = {};
+    A.st = { gen: A.gen, ph: "lobby", cfg: Object.assign({}, A.cfg), seq: [], i: -1, dl: 0, term: (A.st && A.st.term) || 0 };
     publish(); route();
   }
 
@@ -449,7 +532,7 @@
     if (A.screen === "lobby" && !(A.editName && $("plName"))) {
       $("nPlayers").textContent = "(" + ps.length + ")";
       $("playersList").innerHTML = ps.map((p) => {
-        const tags = (p.host && A.nroom ? '<span class="tag acc">Hôte</span>' : "") + (p.me ? '<span class="tag">Toi</span>' : "");
+        const tags = (p.alive === false ? '<span class="tag bad">Absent</span>' : "") + (p.host && A.nroom ? '<span class="tag acc">Hôte</span>' : "") + (p.me ? '<span class="tag">Toi</span>' : "");
         if (p.me && A.editName) return '<form class="pl me" id="plNameForm">' + ava(p, 30) + '<input type="text" id="plName" class="grow" maxlength="16" value="' + esc(p.name) + '" autocomplete="off" enterkeyhint="done" aria-label="Ton pseudo">'
           + '<button class="btn icon sm on" type="submit" title="Valider" aria-label="Valider le pseudo">' + ICON_OK + "</button></form>";
         return '<div class="pl' + (p.me ? " me" : "") + '">' + ava(p, 30) + '<b class="grow">' + esc(p.name) + "</b>"
@@ -498,6 +581,8 @@
     // préchargement de la manche suivante
     const nx = sceneInfo(st.seq[i + 1]);
     if (nx && nx.url) { const im = new Image(); im.src = nx.url; }
+    const nm = nx && mapInfo(nx.game);
+    if (nm && nm.url && !nm.url.startsWith("data:")) { const im2 = new Image(); im2.src = nm.url; }
     // déjà terminé (rechargement) ?
     if (A.res[i] && A.res[i][0] >= 2) { A.R.phase = "done"; showWait("Manche terminée", "En attente des autres joueurs…", fmt(A.res[i][1] + A.res[i][2]) + " pts"); }
     else showNamePanel();
@@ -797,7 +882,11 @@
   function renderFinal() {
     if (!A.st) return;
     const n = A.st.seq.length, max = n * (NAME_MAX + LOC_MAX);
-    const ps = players(true).map((p) => ({ p, tot: totalOf(p.r), found: (p.r || []).filter((x) => x && x[0] >= 1 && x[0] <= 2).length })).sort((a, b) => b.tot - a.tot);
+    // joueurs encore là + joueurs partis en cours de partie (notés par l'hôte dans st.gone)
+    const goneList = A.st.gone || [], gonePeers = new Set(goneList.map((g) => g.peer));
+    const here = players(true).filter((p) => !gonePeers.has(p.peer)), names = new Set(here.map((p) => p.name));
+    const gone = goneList.filter((g) => !names.has(g.name)).map((g) => ({ me: false, name: g.name, color: g.color || "#8b9fb1", avatar: avaOK(g.avatar) ? g.avatar : null, r: g.r || [], j: g.j | 0, gone: true, left: g.left, peer: "g-" + g.peer }));
+    const ps = here.concat(gone).map((p) => ({ p, tot: totalOf(p.r), found: (p.r || []).filter((x) => x && x[0] >= 1 && x[0] <= 2).length, played: (p.r || []).filter((x) => x).length })).sort((a, b) => b.tot - a.tot);
     const multi = ps.length > 1;
     const mine = ps.find((x) => x.p.me) || ps[0];
     $("finSolo").innerHTML = "<div class='bigscore'>" + fmt(mine.tot) + "</div><p class='mut' style='text-align:center;margin:8px 0 0'>sur " + fmt(max) + " points possibles · " + mine.found + "/" + n + " jeu" + (n > 1 ? "x" : "") + " trouvé" + (mine.found > 1 ? "s" : "") + "</p>";
@@ -805,11 +894,14 @@
     if (multi) {
       // chaque joueur se déplie pour montrer le détail de sa partie, manche par manche
       A.finOpen = A.finOpen || {};
-      $("finTable").innerHTML = "<tr><th>#</th><th>Joueur</th><th class='n'>Jeux trouvés</th><th class='n'>Total</th></tr>" +
+      // arrivé en cours de partie, ou parti avant la fin : mentionné, avec le nombre de manches jouées
+      const note = (p) => (p.j > 0 ? "<span class='fin-note'>arrivé à la manche " + (p.j + 1) + "</span>" : "")
+        + (p.gone ? "<span class='fin-note bad'>parti " + (p.left != null && p.left >= 0 ? "pendant la manche " + (p.left + 1) : "en cours de partie") + "</span>" : "");
+      $("finTable").innerHTML = "<tr><th>#</th><th>Joueur</th><th class='n'>Manches</th><th class='n'>Jeux trouvés</th><th class='n'>Total</th></tr>" +
         ps.map((x, k) => {
           const id = String(x.p.peer), open = !!A.finOpen[id];
-          return "<tr class='fin-pl" + (open ? " open" : "") + "' data-pl='" + esc(id) + "'><td>" + (k + 1) + "</td><td class='who'><button type='button' class='fin-tog' aria-expanded='" + open + "' aria-label='Détail de la partie de " + esc(x.p.name) + "'>▸</button>" + ava(x.p, 24) + " " + esc(x.p.name) + (x.p.me ? " <span class='tag'>toi</span>" : "") + "</td><td class='n'>" + x.found + "/" + n + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>"
-            + "<tr class='fin-det" + (open ? "" : " hidden") + "'><td colspan='4'>" + playerDetail(x.p) + "</td></tr>";
+          return "<tr class='fin-pl" + (open ? " open" : "") + (x.p.gone ? " gone" : "") + "' data-pl='" + esc(id) + "'><td>" + (k + 1) + "</td><td class='who'><button type='button' class='fin-tog' aria-expanded='" + open + "' aria-label='Détail de la partie de " + esc(x.p.name) + "'>▸</button>" + ava(x.p, 24) + " " + esc(x.p.name) + (x.p.me ? " <span class='tag'>toi</span>" : "") + note(x.p) + "</td><td class='n'>" + x.played + "/" + n + "</td><td class='n'>" + x.found + "/" + n + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>"
+            + "<tr class='fin-det" + (open ? "" : " hidden") + "'><td colspan='5'>" + playerDetail(x.p) + "</td></tr>";
         }).join("");
       for (const tr of $("finTable").querySelectorAll("tr.fin-pl")) tr.onclick = () => {
         const id = tr.dataset.pl, open = !A.finOpen[id];
@@ -996,6 +1088,8 @@
     $("eSave").onclick = saveScene;
 
     setInterval(() => { hostCheck(); tickTimer(); }, 250);
+    setInterval(() => { if (A.nroom) { A.hb = ((A.hb || 0) + 1) % 1e6; publish(); } }, HB_MS);
+    setInterval(() => { if (A.nroom) { checkHost(); if (A.mode === "host") hostRecordGone(); renderPlayers(); } }, 1000);
 
     const m = /^#partie-([a-z0-9]{5})$/i.exec(location.hash);
     if (m) $("joinCode").value = m[1].toUpperCase();

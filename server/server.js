@@ -105,14 +105,16 @@ const reportsByIP = new Map();
 // rooms : nom → Map(peer → { presence, clients:Set(res), timer })
 const rooms = new Map();
 
+// état d'une salle : présences, plus pour chaque joueur s'il est connecté (on) et depuis quand il est là (t)
 function snapshot(room) {
-  const out = {};
-  for (const [peer, p] of room) out[peer] = p.presence;
-  return JSON.stringify({ peers: out });
+  const out = {}, meta = {};
+  for (const [peer, p] of room) { out[peer] = p.presence; meta[peer] = { on: p.clients.size ? 1 : 0, t: p.since }; }
+  return JSON.stringify({ peers: out, meta, v: room.v || 0 });
 }
 function broadcast(name) {
   const room = rooms.get(name);
   if (!room) return;
+  room.v = (room.v || 0) + 1;
   const data = "data: " + snapshot(room) + "\n\n";
   for (const p of room.values()) for (const res of p.clients) res.write(data);
 }
@@ -125,7 +127,7 @@ function getPeer(name, peer, create) {
   let p = room.get(peer);
   if (!p) {
     if (!create || room.size >= MAX_PEERS) return null;
-    p = { presence: {}, clients: new Set(), timer: null }; room.set(peer, p);
+    p = { presence: {}, clients: new Set(), timer: null, since: Date.now() }; room.set(peer, p);
   }
   return p;
 }
@@ -218,7 +220,7 @@ async function reportApi(req, res) {
 }
 
 async function api(req, res, url) {
-  const m = url.pathname.match(/^\/api\/rooms\/([^/]+)\/(events|presence|leave)$/);
+  const m = url.pathname.match(/^\/api\/rooms\/([^/]+)\/(events|presence|leave|state)$/);
   if (url.pathname === "/api/ping") return json(res, 200, { ok: true });
   if (url.pathname === "/api/reports") return reportApi(req, res);
   if (url.pathname.startsWith("/api/admin/")) return adminApi(req, res, url);
@@ -230,15 +232,19 @@ async function api(req, res, url) {
     const p = getPeer(name, peer, true);
     if (!p) return json(res, 503, { error: "salle pleine" });
     clearTimeout(p.timer); p.timer = null;
-    res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store", "Connection": "keep-alive", "X-Accel-Buffering": "no" });
-    res.write("retry: 2000\n\n");
+    // flux en direct : ni mise en tampon (Nginx : X-Accel-Buffering), ni compression ou transformation par un CDN
+    // comme Cloudflare (no-transform, identity), qui retiendrait les messages ; un commentaire de 2 Ko force le départ.
+    res.writeHead(200, { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache, no-store, no-transform", "Content-Encoding": "identity", "Connection": "keep-alive", "X-Accel-Buffering": "no" });
+    res.write(":" + " ".repeat(2048) + "\nretry: 2000\n\n");
     p.clients.add(res);
     res.write("data: " + snapshot(rooms.get(name)) + "\n\n");
-    const ping = setInterval(() => res.write(": ping\n\n"), 20000);
+    broadcast(name); // les autres voient tout de suite que ce joueur est (re)connecté
+    const ping = setInterval(() => res.write(": ping\n\n"), 15000);
     req.on("close", () => {
       clearInterval(ping); p.clients.delete(res);
       if (!p.clients.size && rooms.get(name) && rooms.get(name).get(peer) === p) {
         p.timer = setTimeout(() => removePeer(name, peer), GRACE_MS);
+        broadcast(name); // signale la déconnexion (le joueur reste dans la salle pendant le délai de grâce)
       }
     });
     return;
@@ -252,6 +258,13 @@ async function api(req, res, url) {
     p.presence = Object.assign({}, p.presence, body);
     broadcast(name);
     return json(res, 200, { ok: true });
+  }
+  // secours si le flux en direct est retenu par un proxy : l'état de la salle à la demande
+  if (action === "state" && req.method === "GET") {
+    const room = rooms.get(name);
+    if (!room) return json(res, 200, { peers: {}, meta: {}, v: 0 });
+    res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store, no-transform" });
+    return res.end(snapshot(room));
   }
   if (action === "leave" && req.method === "POST") {
     removePeer(name, peer);

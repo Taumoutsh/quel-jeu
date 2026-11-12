@@ -13,23 +13,37 @@
     async join(name) {
       const me = rid();
       const base = "api/rooms/" + encodeURIComponent(name) + "/";
-      let pres = {}, others = new Map(), closed = false;
+      let pres = {}, others = new Map(), meta = {}, closed = false, lastV = -1, lastMsg = Date.now();
       const hs = [], errs = [];
-      const snap = () => [{ peer: me, sameTab: true, isMe: true, presence: pres },
-        ...[...others].map(([peer, pr]) => ({ peer, sameTab: false, isMe: false, presence: pr }))];
+      // online : connecté au serveur (sinon : coupé, en délai de grâce) ; since : arrivée dans la salle (ms)
+      const info = (peer) => ({ online: !meta[peer] || meta[peer].on !== 0, since: meta[peer] ? meta[peer].t : 0 });
+      const snap = () => [Object.assign({ peer: me, sameTab: true, isMe: true, presence: pres }, info(me)),
+        ...[...others].map(([peer, pr]) => Object.assign({ peer, sameTab: false, isMe: false, presence: pr }, info(peer)))];
       const fire = () => { const ps = snap(); for (const h of hs) { try { h({ peers: ps, joined: [], left: [], updated: [] }); } catch (e) { console.error(e); } } };
       const post = (what, body) => fetch(base + what + "?peer=" + me, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}), keepalive: what === "leave" });
 
       const es = new EventSource(base + "events?peer=" + me);
       let lostT = null;
-      es.onmessage = (e) => {
-        let d; try { d = JSON.parse(e.data); } catch (err) { return; }
+      const apply = (d) => {
+        lastMsg = Date.now();
+        if (!d || typeof d !== "object") return;
+        // déjà reçu, ou plus ancien que ce qu'on a (le flux et la relecture peuvent se croiser)
+        if (typeof d.v === "number" && d.v <= lastV) return;
+        if (typeof d.v === "number") lastV = d.v;
         const next = new Map();
         for (const [peer, pr] of Object.entries(d.peers || {})) if (peer !== me) next.set(peer, pr || {});
-        others = next; fire();
+        others = next; meta = d.meta || {}; fire();
       };
+      es.onmessage = (e) => { let d; try { d = JSON.parse(e.data); } catch (err) { return; } apply(d); };
+      // secours : si un proxy retient le flux en direct, on relit l'état de la salle (au plus toutes les 2,5 s)
+      const poll = setInterval(() => {
+        if (closed) return clearInterval(poll);
+        if (Date.now() - lastMsg < 2500) return;
+        fetch(base + "state?peer=" + me, { cache: "no-store" }).then((r) => r.json()).then(apply).catch(() => {});
+      }, 2500);
       es.onopen = () => {
         clearTimeout(lostT); lostT = null;
+        lastV = -1; // (re)connexion : le serveur a pu redémarrer et repartir de zéro
         // après une reconnexion, le serveur a pu oublier notre présence : on la renvoie
         if (Object.keys(pres).length) post("presence", pres).catch(() => {});
       };
@@ -53,7 +67,7 @@
           if (!r.ok) throw Object.assign(new Error("présence refusée"), { code: String(r.status) });
         },
         async leave() {
-          closed = true; es.close(); window.removeEventListener("pagehide", bye);
+          closed = true; es.close(); clearInterval(poll); window.removeEventListener("pagehide", bye);
           try { await post("leave"); } catch (e) { /* hors ligne */ }
         },
       };
