@@ -392,8 +392,19 @@
 
   // ------------------------------------------------------------------ salon / réglages
   function curCfg() { return A.mode === "guest" ? (A.st && A.st.cfg) || A.cfg : A.cfg; }
+  // pseudo modifiable depuis le salon : enregistré et transmis aux autres joueurs pendant la saisie
+  let nameT = null;
+  function setName(raw, final) {
+    let n = String(raw).trim().replace(/\s+/g, " ").slice(0, 16);
+    if (!n) { if (!final) return; n = A.name || "Joueur " + (10 + ((Math.random() * 89) | 0)); }
+    if (final) $("lobbyName").value = n;
+    if (n === A.name) return;
+    A.name = n; LS.set("name", n); $("pseudo").value = n;
+    publish(); renderPlayers();
+  }
   function showLobby() {
     show("lobby");
+    $("lobbyName").value = A.name;
     const multi = A.mode === "host" || A.mode === "guest";
     $("codeCard").classList.toggle("hidden", !multi);
     $("playersCard").classList.toggle("hidden", !multi);
@@ -925,6 +936,9 @@
     $("bAvaEdit").onclick = () => { const h = $("avaOpts").classList.toggle("hidden"); $("bAvaEdit").classList.toggle("on", !h); $("bAvaEdit").setAttribute("aria-expanded", h ? "false" : "true"); };
     $("bLibBack").onclick = () => show(A.mode ? "lobby" : "home");
     $("bLobbyBack").onclick = goHome;
+    $("lobbyName").oninput = () => { clearTimeout(nameT); nameT = setTimeout(() => setName($("lobbyName").value, false), 350); };
+    $("lobbyName").onchange = () => { clearTimeout(nameT); setName($("lobbyName").value, true); };
+    $("lobbyName").onkeydown = (e) => { if (e.key === "Enter") $("lobbyName").blur(); };
     $("bCopy").onclick = () => { navigator.clipboard.writeText(A.code).then(() => toast("Code copié : " + A.code), () => toast("Code : " + A.code)); };
     $("bStart").onclick = () => { if (isHost()) hostStart(); };
     for (const b of document.querySelectorAll("#settings [data-step]")) b.onclick = () => { const c = curCfg(); const max = Math.max(1, Math.min(15, pool(c.pack).length)); setCfg("rounds", Math.max(1, Math.min(max, c.rounds + +b.dataset.step))); };
