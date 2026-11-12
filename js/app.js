@@ -680,6 +680,9 @@
     const on = readyLobby();
     const b = $("bReady"), info = $("readyInfo");
     b.classList.toggle("hidden", !on); info.classList.toggle("hidden", !on);
+    // invité : bouton Prêt au-dessus des réglages (qu'il ne peut que consulter) ; hôte : en bas, près de « Lancer »
+    const setCard = $("settings").closest(".card"), anchor = A.mode === "guest" ? setCard : $("bStart");
+    if (b.nextElementSibling !== anchor) { anchor.before(info); anchor.before(b); }
     if (!on) { $("bStart").textContent = "Lancer la partie"; $("bStart").classList.add("pri"); return; }
     const { n, all } = readyCount();
     b.textContent = A.ready ? "Prêt ! (annuler)" : "Je suis prêt";

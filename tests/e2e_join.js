@@ -38,6 +38,10 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
   check(/0\/2/.test(await info(H)) && /0\/2/.test(await info(C)), "salon : Prêts 0/2 chez les deux");
   check(await H.isVisible("#bStart") && /sans attendre/i.test(await H.innerText("#bStart")), "l'hôte peut lancer sans attendre");
   check(!(await C.isVisible("#bStart")) && (await C.isVisible("#bReady")), "l'invité a le bouton Prêt, pas Lancer");
+  const above = (p) => p.evaluate("!!(document.getElementById('bReady').compareDocumentPosition(document.getElementById('settings')) & Node.DOCUMENT_POSITION_FOLLOWING)");
+  check(await above(C), "invité : bouton Prêt au-dessus des réglages");
+  check(!(await above(H)), "hôte : bouton Prêt en bas, près de « Lancer »");
+  await C.screenshot({ path: OUT + "/ready-guest.png" });
   await C.click("#bReady");
   check((await until(async () => /1\/2/.test(await info(H)) && /PRÊT/i.test(await H.innerText("#playersList")), 3000)) >= 0, "l'hôte voit l'invité prêt (1/2) en moins de 3 s");
   check(/annuler/i.test(await C.innerText("#bReady")), "bouton de l'invité : Prêt ! (annuler)");
