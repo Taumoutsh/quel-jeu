@@ -271,9 +271,10 @@
     A.nroom = nr; A.code = code; A.peers = nr.peers();
     A.unPeers = nr.onPeers((ch) => { A.peers = ch.peers; onPeers(); }, (e) => toast("Connexion à la partie perdue (" + e.code + ")", 5000));
   }
-  // ---- vie des joueurs : chacun publie un signal (hb) toutes les 4 s ; un joueur dont le signal ne change plus
-  // depuis 12 s, ou que le serveur voit déconnecté, est considéré absent (téléphone verrouillé, onglet fermé…)
-  const HB_MS = 4000, DEAD_MS = 12000, HOST_WAIT_MS = 5000;
+  // ---- vie des joueurs : chacun publie un signal (hb) toutes les 2 s ; un joueur dont le signal ne change plus
+  // depuis 6 s, ou que le serveur voit déconnecté, est considéré absent (téléphone verrouillé, onglet fermé…) ;
+  // l'hôte absent est remplacé 2 s plus tard (≈ 8 s au total s'il est figé, ≈ 2 s s'il a fermé la page)
+  const HB_MS = 2000, DEAD_MS = 6000, HOST_WAIT_MS = 2000;
   A.seen = {}; A.track = {};
   function refreshSeen() {
     const now = Date.now();
@@ -918,7 +919,7 @@
   }
   function renderFinal() {
     if (!A.st) return;
-    const n = A.st.seq.length, max = n * (NAME_MAX + LOC_MAX);
+    const n = A.st.seq.length;
     // joueurs encore là + joueurs partis en cours de partie (notés par l'hôte dans st.gone)
     const goneList = A.st.gone || [], gonePeers = new Set(goneList.map((g) => g.peer));
     const here = players(true).filter((p) => !gonePeers.has(p.peer)), names = new Set(here.map((p) => p.name));
@@ -926,7 +927,9 @@
     const ps = here.concat(gone).map((p) => ({ p, tot: totalOf(p.r), found: (p.r || []).filter((x) => x && x[0] >= 1 && x[0] <= 2).length, played: (p.r || []).filter((x) => x).length })).sort((a, b) => b.tot - a.tot);
     const multi = ps.length > 1;
     const mine = ps.find((x) => x.p.me) || ps[0];
-    $("finSolo").innerHTML = "<div class='bigscore'>" + fmt(mine.tot) + "</div><p class='mut' style='text-align:center;margin:8px 0 0'>sur " + fmt(max) + " points possibles · " + mine.found + "/" + n + " jeu" + (n > 1 ? "x" : "") + " trouvé" + (mine.found > 1 ? "s" : "") + "</p>";
+    // récapitulatif du joueur : sur les manches qu'il a jouées (arrivé en cours de partie : pas sur toute la partie)
+    const cnt = multi ? Math.max(mine.played, 1) : n, maxMine = cnt * (NAME_MAX + LOC_MAX);
+    $("finSolo").innerHTML = "<div class='bigscore'>" + fmt(mine.tot) + "</div><p class='mut' style='text-align:center;margin:8px 0 0'>sur " + fmt(maxMine) + " points possibles · " + mine.found + "/" + cnt + " jeu" + (cnt > 1 ? "x" : "") + " trouvé" + (mine.found > 1 ? "s" : "") + "</p>";
     renderPodium(ps);
     if (multi) {
       // chaque joueur se déplie pour montrer le détail de sa partie, manche par manche

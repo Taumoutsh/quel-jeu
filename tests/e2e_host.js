@@ -50,7 +50,7 @@ async function until(fn, ms, step) { const t0 = Date.now(); while (Date.now() - 
     // l'hôte ne répond plus (réseau coupé, comme un téléphone verrouillé) : Alice, arrivée la première, prend le relais
     await H.ctx.setOffline(true);
     const t = await until(() => G1.p.evaluate("QJ.A.mode === 'host'"), 30000, 500);
-    check(t >= 0, "nouvel hôte désigné automatiquement (Alice, en " + Math.round(t / 1000) + " s)");
+    check(t >= 0 && t < 12000, "nouvel hôte désigné automatiquement (Alice, en " + Math.round(t / 1000) + " s, moins de 12 s)");
     check((await L.p.evaluate("QJ.A.mode")) === "guest", "Léa reste invitée");
     check((await until(async () => (await L.p.evaluate("QJ.A.hostPeer")) && (await L.p.evaluate("QJ.A.peers.find(p => p.peer === QJ.A.hostPeer).presence.n")) === "Alice", 8000)) >= 0, "Léa suit le nouvel hôte");
 
@@ -74,6 +74,8 @@ async function until(fn, ms, step) { const t0 = Date.now(); while (Date.now() - 
     check(/ 2\/2 /.test(row("Léa")), "classement : Léa (arrivée à la manche 2) 2/2");
     check(/ 3\/3 /.test(row("Alice")), "classement : Alice 3/3");
     check(!rows.some((r) => /parti|arrivé/.test(r)), "pas de mention parti / arrivé");
+    const recap = (await L.p.innerText("#finSolo")).replace(/\s+/g, " ");
+    check(/sur 4\s?000 points possibles/.test(recap) && /2\/2 jeux trouvés/.test(recap), "récapitulatif de Léa (arrivée en cours) sur ses 2 manches : « " + recap + " »");
 
     // l'ancien hôte revient : il redevient simple joueur
     await H.ctx.setOffline(false);
