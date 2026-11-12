@@ -75,6 +75,18 @@ input.code { font-family: var(--fd); text-transform: uppercase; letter-spacing: 
 .btn.block { width: 100%; }
 
 .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.lab-ava { font-size: 13px; color: var(--mut); margin-top: 2px; }
+.avatars { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 480px) { .avatars { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.ava-pick { aspect-ratio: 1; max-width: 100%; padding: 4px; border-radius: 14px; border: 2px solid transparent; background: var(--well); cursor: pointer; transition: transform .12s, border-color .15s, background-color .15s; }
+.ava-pick svg { width: 100%; height: 100%; display: block; }
+.ava-pick:hover { transform: translateY(-2px); background: var(--panel3); }
+.ava-pick.on { border-color: var(--c); background: var(--panel3); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent); }
+.ava { display: inline-block; vertical-align: middle; flex: none; border-radius: 8px; background: var(--well); overflow: hidden; }
+.ava svg { width: 100%; height: 100%; display: block; }
+td.who { white-space: nowrap; }
+.pod-ava { width: 56px; height: 56px; margin: 0 auto 4px; }
+.pod-ava svg { width: 100%; height: 100%; display: block; }
 .swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform .12s; }
 .swatch:hover { transform: scale(1.08); }
 .swatch.on { border-color: var(--txt); box-shadow: 0 0 0 3px var(--bg) inset; }

@@ -104,6 +104,7 @@ js/demo.js        jeux fictifs, cartes et panoramas générés
 js/pano.js        visionneuse 360° en WebGL pur (sans bibliothèque)
 js/mapview.js     carte zoomable avec repères
 js/app.js         déroulement, points, multijoueur, éditeur
+js/avatars.js     figurines des joueurs (SVG originaux, archétypes du jeu vidéo)
 packs/            pack « Vrais jeux » : données (versionnées) et images (packs/img/, téléchargées)
 tools/            fetch_packs.py : téléchargement des images du pack
 server/           server.js : site + salles multijoueur pour l'auto-hébergement (Docker)

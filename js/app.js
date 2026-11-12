@@ -4,6 +4,12 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const COLORS = ["#f4b740", "#ff7b72", "#4cc9c0", "#9d8cff", "#6fd69b", "#ff9f5a", "#f07ac0", "#e3ecf2"]; // couleurs de joueur, accordées à la palette
+  const AVA_IDS = Object.keys(window.AVATARS || {}); // figurines (js/avatars.js), dans l'ordre des couleurs
+  const avaOK = (id) => typeof id === "string" && AVA_IDS.includes(id);
+  // petite figurine d'un joueur (repli : pastille de couleur si l'avatar est inconnu)
+  const ava = (p, size) => avaOK(p.avatar)
+    ? "<span class='ava' style='width:" + size + "px;height:" + size + "px'>" + window.avatarSVG(p.avatar) + "</span>"
+    : "<span class='dot' style='display:inline-block;vertical-align:middle;background:" + p.color + "'></span>";
   const CODE_ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   const LS = {
     get(k, d) { try { const v = localStorage.getItem("qj." + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -37,6 +43,10 @@
   // couleur choisie avec l'ancienne palette : on prend sa remplaçante
   const OLD_COLORS = ["#c6ff3d", "#ff5d8f", "#3de0ff", "#ffc94d", "#b48bff", "#ff8a3d", "#5dffb0", "#f2f2f2"];
   if (!COLORS.includes(A.color)) { const k = OLD_COLORS.indexOf(String(A.color).toLowerCase()); A.color = COLORS[k >= 0 ? k : 0]; LS.set("color", A.color); }
+  // avatar : choisi, sinon celui qui correspond à la couleur déjà choisie ; il fixe la couleur du joueur
+  A.avatar = LS.get("avatar", null);
+  if (!avaOK(A.avatar)) A.avatar = AVA_IDS[Math.max(0, COLORS.indexOf(A.color))] || null;
+  if (avaOK(A.avatar)) A.color = window.AVATARS[A.avatar].couleur;
 
   // réglages enregistrés avant l'arrivée du pack « Vrais jeux » : on bascule une fois sur ce pack
   if (LS.get("cfgV", 0) < 2) { A.cfg.pack = "real"; LS.set("cfg", A.cfg); LS.set("cfgV", 2); }
@@ -192,7 +202,7 @@
 
   // ------------------------------------------------------------------ multijoueur (présence dans un salon nommé)
   function players(forScore) {
-    const me = { me: true, name: A.name, color: A.color, r: A.res, host: A.mode === "host" || A.mode === "solo", peer: "me" };
+    const me = { me: true, name: A.name, color: A.color, avatar: A.avatar, r: A.res, host: A.mode === "host" || A.mode === "solo", peer: "me" };
     if (!A.nroom) return [me];
     const out = []; let sawMe = false;
     for (const p of A.peers) {
@@ -200,7 +210,7 @@
       if (!pr.n) continue;
       if (p.sameTab) { sawMe = true; out.push(me); continue; }
       if (forScore && pr.g !== A.gen) continue;
-      out.push({ me: false, name: String(pr.n).slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(pr.c) ? pr.c : "#ffffff", r: Array.isArray(pr.r) ? pr.r : [], host: pr.h === 1, peer: p.peer });
+      out.push({ me: false, name: String(pr.n).slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(pr.c) ? pr.c : "#ffffff", avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], host: pr.h === 1, peer: p.peer });
     }
     if (!sawMe) out.unshift(me);
     return out;
@@ -210,7 +220,7 @@
     if (!A.nroom) return;
     clearTimeout(pubT);
     pubT = setTimeout(() => {
-      const p = { v: 1, n: A.name, c: A.color, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null) };
+      const p = { v: 1, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null) };
       p.st = A.mode === "host" ? A.st : null;
       A.nroom.presence(p).catch((e) => console.warn("presence", e));
     }, 40);
@@ -295,9 +305,12 @@
   function renderHome() {
     $("pseudo").value = A.name;
     const sw = $("swatches"); sw.innerHTML = "";
-    for (const c of COLORS) {
-      const b = document.createElement("button"); b.className = "swatch" + (c === A.color ? " on" : ""); b.style.background = c; b.type = "button"; b.title = "Couleur";
-      b.onclick = () => { A.color = c; LS.set("color", c); renderHome(); };
+    for (const id of AVA_IDS) {
+      const a = window.AVATARS[id];
+      const b = document.createElement("button"); b.className = "ava-pick" + (id === A.avatar ? " on" : ""); b.type = "button";
+      b.title = a.nom; b.setAttribute("aria-label", a.nom); b.setAttribute("aria-pressed", id === A.avatar ? "true" : "false");
+      b.style.setProperty("--c", a.couleur); b.innerHTML = window.avatarSVG(id);
+      b.onclick = () => { A.avatar = id; A.color = a.couleur; LS.set("avatar", id); LS.set("color", a.couleur); renderHome(); publish(); };
       sw.append(b);
     }
   }
@@ -389,7 +402,7 @@
     const ps = players(false);
     if (A.screen === "lobby") {
       $("nPlayers").textContent = "(" + ps.length + ")";
-      $("playersList").innerHTML = ps.map((p) => '<div class="pl"><span class="dot" style="background:' + p.color + '"></span><b class="grow">' + esc(p.name) + "</b>" + (p.host ? '<span class="tag acc">Hôte</span>' : "") + (p.me ? '<span class="tag">Toi</span>' : "") + "</div>").join("");
+      $("playersList").innerHTML = ps.map((p) => '<div class="pl">' + ava(p, 30) + '<b class="grow">' + esc(p.name) + "</b>" + (p.host ? '<span class="tag acc">Hôte</span>' : "") + (p.me ? '<span class="tag">Toi</span>' : "") + "</div>").join("");
     }
     if (A.screen === "game") renderChips();
   }
@@ -542,7 +555,7 @@
     const ps = players(true);
     if (multi && A.st) {
       const i = A.st.i;
-      $("hChips").innerHTML = ps.map((p) => { const x = p.r[i]; const s = !x ? "…" : x[0] === 1 ? "🗺" : x[0] === 2 ? "<span class='ok'>✓</span>" : "<span class='ko'>✗</span>"; return "<span class='chip'><span class='dot' style='background:" + p.color + "'></span>" + esc(p.name) + " " + s + "</span>"; }).join("");
+      $("hChips").innerHTML = ps.map((p) => { const x = p.r[i]; const s = !x ? "…" : x[0] === 1 ? "🗺" : x[0] === 2 ? "<span class='ok'>✓</span>" : "<span class='ko'>✗</span>"; return "<span class='chip'>" + ava(p, 20) + esc(p.name) + " " + s + "</span>"; }).join("");
       if (A.R && A.R.phase === "done") {
         const waiting = ps.filter((p) => !(p.r[i] && p.r[i][0] >= 2)).map((p) => p.name);
         const extra = waiting.length ? "En attente de : " + waiting.join(", ") + "." : "Tout le monde a fini !";
@@ -591,7 +604,7 @@
     const rows = ps.map(({ p, x, tot }) => {
       const nm = !x ? "—" : x[0] === 3 ? "<span style='color:var(--bad)'>✗</span>" : "✓ " + fmt(x[1]) + (x[3] ? " <span class='mut small'>(" + x[3] + " err.)</span>" : "");
       const loc = !x || x[0] !== 2 ? "—" : fmt(x[2]);
-      return "<tr><td><span class='dot' style='display:inline-block;vertical-align:middle;background:" + p.color + "'></span> " + esc(p.name) + (p.me ? " <span class='tag'>toi</span>" : "") + "</td><td>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(x ? x[1] + x[2] : 0) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
+      return "<tr><td class='who'>" + ava(p, 24) + " " + esc(p.name) + (p.me ? " <span class='tag'>toi</span>" : "") + "</td><td>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(x ? x[1] + x[2] : 0) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
     }).join("");
     $("rvTable").innerHTML = "<tr><th>Joueur</th><th>Nom</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows;
     if (A.screen === "reveal") renderRevealPins();
@@ -610,11 +623,11 @@
     if (multi) {
       const order = [1, 0, 2].filter((k) => ps[k]);
       const hgt = { 0: 120, 1: 86, 2: 64 }, col = { 0: "var(--acc)", 1: "#cfd9e2", 2: "#d9935a" };
-      $("podium").innerHTML = order.map((k) => "<div class='pod'><div class='nm'>" + esc(ps[k].p.name) + "</div><div class='pt'>" + fmt(ps[k].tot) + "</div><div class='bar' style='height:" + hgt[k] + "px;background:" + col[k] + "'>" + (k + 1) + "</div></div>").join("");
+      $("podium").innerHTML = order.map((k) => "<div class='pod'>" + (avaOK(ps[k].p.avatar) ? "<div class='pod-ava'>" + window.avatarSVG(ps[k].p.avatar) + "</div>" : "") + "<div class='nm'>" + esc(ps[k].p.name) + "</div><div class='pt'>" + fmt(ps[k].tot) + "</div><div class='bar' style='height:" + hgt[k] + "px;background:" + col[k] + "'>" + (k + 1) + "</div></div>").join("");
     }
     if (multi) {
       $("finTable").innerHTML = "<tr><th>#</th><th>Joueur</th><th class='n'>Jeux trouvés</th><th class='n'>Total</th></tr>" +
-        ps.map((x, k) => "<tr><td>" + (k + 1) + "</td><td><span class='dot' style='display:inline-block;background:" + x.p.color + "'></span> " + esc(x.p.name) + (x.p.me ? " <span class='tag'>toi</span>" : "") + "</td><td class='n'>" + x.found + "/" + n + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>").join("");
+        ps.map((x, k) => "<tr><td>" + (k + 1) + "</td><td class='who'>" + ava(x.p, 24) + " " + esc(x.p.name) + (x.p.me ? " <span class='tag'>toi</span>" : "") + "</td><td class='n'>" + x.found + "/" + n + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>").join("");
     } else {
       $("finTable").innerHTML = "<tr><th>#</th><th>Jeu</th><th class='n'>Nom</th><th class='n'>Position</th></tr>" +
         A.st.seq.map((sid, k) => { const info = sceneInfo(sid), x = A.res[k]; return "<tr><td>" + (k + 1) + "</td><td>" + esc(info ? gameTitle(info.game) : "?") + "</td><td class='n'>" + (x && x[0] !== 3 ? fmt(x[1]) : "<span style='color:var(--bad)'>✗</span>") + "</td><td class='n'>" + (x && x[0] === 2 ? fmt(x[2]) : "—") + "</td></tr>"; }).join("");
