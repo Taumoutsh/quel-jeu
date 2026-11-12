@@ -11,7 +11,15 @@ const DATA = fs.mkdtempSync(path.join(os.tmpdir(), "qj-data-"));
 fs.mkdirSync(OUT, { recursive: true });
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg); if (!ok) process.exitCode = 1; };
-const packOf = async (page) => page.evaluate(async () => { const t = await (await fetch("packs/vrais-jeux.js?x=" + Math.random())).text(); return JSON.parse(t.slice(t.indexOf("/*JSON*/") + 8, t.indexOf("/*FIN*/"))); });
+// pack servi aux joueurs : vues sous un code, détails brouillés (z) ; on les décode comme la page
+const packOf = async (page) => page.evaluate(async () => {
+  const t = await (await fetch("packs/vrais-jeux.js?x=" + Math.random())).text();
+  const p = JSON.parse(t.slice(t.indexOf("/*JSON*/") + 8, t.indexOf("/*FIN*/")));
+  const un = (code, z) => { const bin = atob(z), b = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i) ^ code.charCodeAt(i % code.length); return JSON.parse(new TextDecoder().decode(b)); };
+  p.raw = t; p.scenes = p.scenes.map((s) => (s.z ? Object.assign({ id: s.id }, un(s.id, s.z)) : s));
+  return p;
+});
+const crypto = require("crypto");
 
 (async () => {
   const srv = spawn(process.execPath, [path.join(__dirname, "..", "server", "server.js")], { env: Object.assign({}, process.env, { PORT: String(PORT), QJ_ADMIN_PASSWORD: "motdepasse-test", QJ_DATA: DATA }), stdio: "inherit" });
@@ -39,7 +47,18 @@ const packOf = async (page) => page.evaluate(async () => { const t = await (awai
     await p.click("#rpYes"); await wait(600);
     check((await p.textContent("#bReport")).includes("signalée"), "signalement envoyé");
     const saved = JSON.parse(fs.readFileSync(path.join(DATA, "reports.json"), "utf8"));
-    check(saved.length === 1 && saved[0].sid === sid && saved[0].kind === "position" && saved[0].pin, "signalement gardé par le serveur (" + sid + ")");
+    const secret = fs.readFileSync(path.join(DATA, "secret.txt"), "utf8").trim();
+    const codeOf = (id) => crypto.createHmac("sha256", secret).update(id).digest("hex").slice(0, 12);
+    check(saved.length === 1 && codeOf(saved[0].sid) === sid && saved[0].kind === "position" && saved[0].pin, "signalement gardé par le serveur sous le vrai nom de la vue (" + saved[0].sid + ")");
+
+    // noms cachés : rien de lisible dans ce que reçoit le joueur
+    const net = await p.evaluate(() => performance.getEntriesByType("resource").map((e) => e.name).filter((u) => /packs\/img\//.test(u)));
+    check(net.length > 0 && net.every((u) => /packs\/img\/(x\/[0-9a-f]{12}\.jpg|dispo\.js)/.test(u)), "images chargées sous des codes neutres (" + net.length + ")");
+    const pk0 = await packOf(p), real = saved[0].sid;
+    check(!pk0.raw.includes(real) && /^[0-9a-f]{12}$/.test(pk0.scenes[0].id) && !("game" in JSON.parse(pk0.raw.slice(pk0.raw.indexOf("/*JSON*/") + 8, pk0.raw.indexOf("/*FIN*/"))).scenes[0]), "pack servi : ni nom de vue ni jeu en clair");
+    const dispo = await p.evaluate(async () => (await fetch("packs/img/dispo.js")).text());
+    check(!dispo.includes(real) && !/map-gtav/.test(dispo), "dispo.js servi : codes à la place des noms");
+    check((await p.evaluate("JSON.stringify(QJ.A.st.seq)")).match(/r-[0-9a-f]{12}/) && !(await p.evaluate("JSON.stringify(QJ.A.st.seq)")).includes(real), "liste des manches : codes seulement");
 
     // 2. page d'administration
     const a = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage();

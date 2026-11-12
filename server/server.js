@@ -72,11 +72,62 @@ function applyOverrides(pack) {
   });
   return pack;
 }
+// ------------------------------------------------------------------ noms cachés (anti-triche)
+// Les noms des vues (« gtav-vespucci-beach ») donnent la réponse : dans ce qui part vers les joueurs, chaque vue
+// prend un code neutre (HMAC d'une clé secrète gardée dans DATA, donc stable d'un redémarrage à l'autre),
+// ses détails (jeu, lieu, position) sont brouillés, et sa capture est servie sous packs/img/x/<code>.jpg.
+// Un joueur qui ouvre les outils du navigateur ne voit plus de nom lisible. (Le jeu reste vérifié dans le
+// navigateur : un tricheur très motivé pourrait encore décoder le pack, mais plus d'un simple coup d'œil.)
+function loadSecret() {
+  const file = path.join(DATA, "secret.txt");
+  try { const t = fs.readFileSync(file, "utf8").trim(); if (/^[0-9a-f]{32,}$/.test(t)) return t; } catch (e) { /* à créer */ }
+  const t = crypto.randomBytes(32).toString("hex");
+  try { fs.mkdirSync(DATA, { recursive: true }); fs.writeFileSync(file, t); } catch (e) { console.warn("clé des codes non enregistrée (" + e.message + ") : codes valables jusqu'au redémarrage"); }
+  return t;
+}
+const SECRET = loadSecret();
+const codeOf = (id) => crypto.createHmac("sha256", SECRET).update(id).digest("hex").slice(0, 12);
+const CODE_RE = /^[0-9a-f]{12}$/;
+let codeMap = null; // code → identifiant de vue
+function idOfCode(code) {
+  if (!codeMap) {
+    codeMap = new Map();
+    const pack = readPack().pack;
+    for (const sc of pack.scenes) codeMap.set(codeOf(sc.id), sc.id);
+    for (const g of pack.games) codeMap.set(codeOf("map-" + g.key), "map-" + g.key); // les cartes aussi
+  }
+  return codeMap.get(code) || null;
+}
+// brouillage des détails d'une vue : octets UTF-8 XOR le code, en base64 (le navigateur fait l'inverse)
+function scramble(code, obj) {
+  const b = Buffer.from(JSON.stringify(obj), "utf8");
+  for (let i = 0; i < b.length; i++) b[i] ^= code.charCodeAt(i % code.length);
+  return b.toString("base64");
+}
 function servedPack() {
   if (packCache) return packCache;
-  const p = readPack();
-  if (!Object.keys(overrides.scenes || {}).length) return (packCache = p.txt);
-  return (packCache = p.head + JSON.stringify(applyOverrides(p.pack)) + p.tail);
+  const p = readPack(), pack = applyOverrides(p.pack);
+  pack.scenes = pack.scenes.map((sc) => {
+    const code = codeOf(sc.id), d = Object.assign({}, sc); delete d.id;
+    return { id: code, z: scramble(code, d) };
+  });
+  codeMap = null;
+  return (packCache = p.head + JSON.stringify(pack) + p.tail);
+}
+// liste des images disponibles, avec les codes à la place des noms de vues
+let dispoCache = null;
+function servedDispo(file) {
+  const st = fs.statSync(file), key = st.mtimeMs + ":" + st.size;
+  if (dispoCache && dispoCache.key === key) return dispoCache.body;
+  const txt = fs.readFileSync(file, "utf8");
+  const d = JSON.parse(txt.slice(txt.indexOf("=") + 1).trim().replace(/;$/, ""));
+  const scenes = {};
+  for (const [id, v] of Object.entries(d.scenes || {})) scenes[codeOf(id)] = v;
+  const maps = {};
+  for (const [k, v] of Object.entries(d.maps || {})) maps[k] = v.concat([codeOf("map-" + k)]); // 4e valeur : code de la carte
+  const body = "window.REAL_PACK_DISPO = " + JSON.stringify({ maps, scenes, coded: 1 }) + ";\n";
+  dispoCache = { key, body };
+  return body;
 }
 
 // connexion administrateur : jetons en mémoire (12 h), essais ratés limités
@@ -208,6 +259,7 @@ async function reportApi(req, res) {
   if (limited(reportsByIP, ip, 30, 3600 * 1000)) return json(res, 429, { error: "trop de signalements, réessaie plus tard" });
   let b; try { b = await readJSON(req, 3000); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
   if (!b || typeof b.sid !== "string" || !KINDS.includes(b.kind)) return json(res, 400, { error: "signalement invalide" });
+  if (CODE_RE.test(b.sid)) b.sid = idOfCode(b.sid) || b.sid; // la page ne connaît que le code de la vue
   if (!readPack().pack.scenes.some((sc) => sc.id === b.sid)) return json(res, 404, { error: "vue inconnue" });
   if (reports.length >= 5000) return json(res, 507, { error: "trop de signalements en attente" });
   const r = { id: crypto.randomBytes(6).toString("hex"), at: new Date().toISOString(), sid: b.sid, kind: b.kind,
@@ -299,6 +351,8 @@ function versionAssets(html) {
 function serveFile(req, res, url) {
   let rel = decodeURIComponent(url.pathname);
   if (rel === "/admin" || rel === "/admin/") rel = "/admin.html";
+  const coded = /^\/packs\/img\/x\/([0-9a-f]{12})\.jpg$/.exec(rel);
+  if (coded) { const id = idOfCode(coded[1]); if (!id) { res.writeHead(404); return res.end("Introuvable"); } rel = "/packs/img/" + id + ".jpg"; }
   if (rel.endsWith("/")) rel += "index.html";
   if (PRIVATE.test(rel)) { res.writeHead(404); return res.end("Introuvable"); }
   const file = path.join(ROOT, rel);
@@ -313,6 +367,11 @@ function serveFile(req, res, url) {
     const IMG = /^\.(jpe?g|png|webp|svg|ico)$/.test(ext);
     const headers = { "Content-Type": TYPES[ext] || "application/octet-stream", "Content-Length": st.size,
       "Cache-Control": !IMG ? "no-store" : url.searchParams.has("v") ? "public, max-age=31536000, immutable" : "public, max-age=86400" };
+    if (rel === "/packs/img/dispo.js") {
+      let body; try { body = servedDispo(file); } catch (e) { body = fs.readFileSync(file, "utf8"); }
+      headers["Content-Length"] = Buffer.byteLength(body);
+      res.writeHead(200, headers); return res.end(req.method === "HEAD" ? undefined : body);
+    }
     if (rel === "/packs/vrais-jeux.js") {
       // pack « Vrais jeux » avec les corrections de l'administrateur
       let body; try { body = servedPack(); } catch (e) { body = fs.readFileSync(file, "utf8"); }

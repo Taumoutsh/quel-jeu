@@ -89,6 +89,14 @@
     const jeux = (m.dataset.jeux || "").split(",").filter(Boolean);
     return { images, jeux };
   })();
+  // inverse du brouillage du serveur (server.js, scramble) : base64 → octets XOR le code → JSON
+  function unscramble(code, z) {
+    try {
+      const bin = atob(z), b = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i) ^ code.charCodeAt(i % code.length);
+      return JSON.parse(new TextDecoder().decode(b));
+    } catch (e) { return null; }
+  }
   const REAL = (function () {
     const P = window.REAL_PACK, D = window.REAL_PACK_DISPO;
     const out = { scenes: {}, maps: {}, games: {} };
@@ -99,11 +107,17 @@
       if (SERVER && SERVER.jeux.length && !SERVER.jeux.includes(g.key)) continue;
       const id = Matcher.slug(g.t);
       out.games[g.key] = Object.assign({ id }, g);
-      out.maps[id] = { url: "packs/img/map-" + g.key + ".jpg" + (SERVER && m[2] ? "?v=" + m[2] : ""), w: m[0], h: m[1] };
+      // site Docker : carte servie sous un code neutre (4e valeur), pour que son adresse ne donne pas le jeu
+      const mapUrl = m[3] ? "packs/img/x/" + m[3] + ".jpg" : "packs/img/map-" + g.key + ".jpg";
+      out.maps[id] = { url: mapUrl + (SERVER && m[2] ? "?v=" + m[2] : ""), w: m[0], h: m[1] };
     }
-    for (const sc of P.scenes) {
-      const g = out.games[sc.game];
-      if (g && D.scenes[sc.id]) out.scenes[sc.id] = { game: g.id, x: sc.x, y: sc.y, place: sc.place, flat: !!sc.flat, credit: sc.credit || g.credit, source: sc.source || g.source, url: "packs/img/" + sc.id + ".jpg" + (SERVER && D.scenes[sc.id][2] ? "?v=" + D.scenes[sc.id][2] : "") };
+    for (const raw of P.scenes) {
+      // site Docker : la vue arrive sous un code, ses détails brouillés (z) ; on les décode ici
+      const sc = raw.z ? Object.assign({ id: raw.id }, unscramble(raw.id, raw.z)) : raw;
+      const g = sc && out.games[sc.game];
+      if (!g || !D.scenes[sc.id]) continue;
+      const url = (raw.z ? "packs/img/x/" : "packs/img/") + sc.id + ".jpg" + (SERVER && D.scenes[sc.id][2] ? "?v=" + D.scenes[sc.id][2] : "");
+      out.scenes[sc.id] = { game: g.id, x: sc.x, y: sc.y, place: sc.place, flat: !!sc.flat, credit: sc.credit || g.credit, source: sc.source || g.source, url };
     }
     return out;
   })();
