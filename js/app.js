@@ -26,7 +26,10 @@
     const asp = h / w;
     return Math.hypot(a.x - b.x, (a.y - b.y) * asp) / Math.hypot(1, asp);
   }
-  const locPoints = (d) => (d <= 0.008 ? LOC_MAX : Math.round(LOC_MAX * Math.exp(-11 * (d - 0.008))));
+  // position : plein score à moins de 2 % de la diagonale, puis décroissance douce
+  // (≈ 835 à 5 %, ≈ 620 à 10 %, ≈ 340 à 20 %, ≈ 100 à 40 %) ; beaucoup de repères sont placés au niveau du quartier ou de la région
+  const LOC_FULL = 0.02, LOC_K = 6;
+  const locPoints = (d) => (d <= LOC_FULL ? LOC_MAX : Math.round(LOC_MAX * Math.exp(-LOC_K * (d - LOC_FULL))));
 
   // ------------------------------------------------------------------ état
   const A = {
