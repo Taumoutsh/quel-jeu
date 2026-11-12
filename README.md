@@ -38,7 +38,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 471 vues de 95 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 564 vues de 115 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
@@ -138,6 +138,26 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Fallout 3 | Tenpenny Tower, Washington Monument, Big Town, Jefferson Memorial, Canterbury Commons |
     | Horizon Zero Dawn | Meridian, Cœur-de-la-Mère (terres des Nora), Sunfall, Pitchcliff, Maker's End |
     | Ghost of Tsushima | Sanctuaire du Sommet doré (Izuhara), Sanctuaire de la Roche guérisseuse, Sources chaudes d'Hiyoshi, Domaine du Vent salé, Pont de la rivière Kuta |
+    | The Witcher 3: Wild Hunt | Garnison nilfgaardienne (Vergers Blancs), Pont de Chantemalheur (Vergers Blancs), Moulin (Vergers Blancs), Village pillé (Vergers Blancs), Pont de Cackler (Vergers Blancs) |
+    | Subnautica | Épave de l'Aurora (zone du crash), Forêt de kelp, Hauts-fonds sûrs, Zone des bulbes, Plateaux herbeux |
+    | Fallout 4 | Sanctuary Hills, Diamond City, Le Château, Salem, Usine d'assemblage Corvega |
+    | Hogwarts Legacy | Vallée de Poudlard, Marais de la mer du Sud, Aranshire, Brocburrow, Irondale |
+    | Kenshi | The Hub, Squin, Heng, Black Desert City, World's End |
+    | Horizon Forbidden West | Barren Light, Scalding Spear, Salt Bite, Tide's Reach, Thornmarsh |
+    | God of War (2018) | Réserve de Fafnir, Conseil des Valkyries, Tour de guet |
+    | Kingdom Come: Deliverance II | Troskowitz, Semine, Forteresse de Nebakov, Auberge des charretiers de Zhelejov, Étang de Rocktower |
+    | Fortnite | Tilted Towers, Loot Lake, Pleasant Park, Snobby Shores, Dusty Divot |
+    | Dead Island 2 | Base avancée de Venice Beach (FOB), La Tour, Muscle Beach Gym, Ocean Walk Cafe, Brain Freeze |
+    | Fable III | Bowerstone, vieux quartier, Bowerstone, quartier industriel, Vallée de Mistpeak, Camp des Dwellers |
+    | Wuthering Waves | Avinoleum : tour de l'Ascension, Avinoleum : ruines de la salle d'escrime, Avinoleum : tour de l'Unité, Avinoleum : tour du Salut, Avinoleum : jardin de Zargon |
+    | Final Fantasy VII Rebirth | Kalm, Junon, Région de Nibelheim, Gongaga |
+    | Black Myth: Wukong | Montagne du Vent Noir : à l'orée de la forêt, Montagne du Vent Noir : temple de Guanyin, Montagne du Vent Noir : sentier du Serpent, Montagne du Vent Noir : devant la caverne, Montagne du Vent Noir : pic Bodhi |
+    | Infinity Nikki | Florawish : guilde des stylistes, Florawish : puits de la Fortune, Colline des Reliques |
+    | Firewatch | Hawk's Rest, Lac Jonesy, Thunder Canyon, Téléphérique de Thorofare, Beartooth Point |
+    | Life is Strange | Le phare, La casse (American Rust), Two Whales Diner, Blackwell Academy |
+    | Need for Speed Unbound | City Pier, Planque de Rüdiger, Garage Rydell's Rydes, Storm Drain, Dômes de la carrière |
+    | Need for Speed: Underground 2 | Aéroport international de Bayview, Beacon Hill East, City Center, Fort Union, Jackson Heights |
+    | Need for Speed: Hot Pursuit | Big Timber Forest, Barrage de Carson Ridge, Grand Ocean Coast, East Gorge Canyon, Boulder Desert |
 
     Les captures portant le logo ou le nom du jeu ont été écartées. Les positions ont été relevées à la main sur les cartes (noms de lieux quand la carte en a, sinon repères visibles) : elles sont justes à quelques pourcents de la carte.
   - La visionneuse affiche une capture plate en plein écran ; on la déplace en glissant et on zoome comme pour un 360°.
