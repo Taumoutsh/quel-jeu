@@ -38,6 +38,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 - Si l'hôte quitte ou ne répond plus (téléphone verrouillé, réseau coupé), le joueur arrivé le plus tôt devient hôte automatiquement après une quinzaine de secondes et la partie continue ; l'ancien hôte qui revient redevient simple joueur. Un joueur qui ne répond plus ne bloque pas la fin d'une manche.
 - Le classement final garde les joueurs partis en cours de partie ; « Jeux trouvés » se lit sur les manches jouées par chacun (ex. 2/2 pour un joueur arrivé à la manche 2 d'une partie de 3).
 
+- Sur téléphone, quitter le navigateur puis y revenir ne fait plus perdre la partie : la connexion se rétablit seule au retour, et si le téléphone a rechargé la page, elle rejoint automatiquement la partie en cours avec les réponses déjà données.
 - Anti-triche (site Docker) : les captures et les cartes sont servies sous des codes neutres et les détails des vues sont brouillés ; l'onglet Réseau des outils du navigateur (F12) ne montre plus le nom du jeu ni du lieu.
 
 ## Signalements et administration (site Docker)

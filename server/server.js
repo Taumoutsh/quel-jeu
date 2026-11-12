@@ -160,7 +160,7 @@ const rooms = new Map();
 function snapshot(room) {
   const out = {}, meta = {};
   for (const [peer, p] of room) { out[peer] = p.presence; meta[peer] = { on: p.clients.size ? 1 : 0, t: p.since }; }
-  return JSON.stringify({ peers: out, meta, v: room.v || 0 });
+  return JSON.stringify({ peers: out, meta, v: room.v || 0, rid: room.rid });
 }
 function broadcast(name) {
   const room = rooms.get(name);
@@ -173,7 +173,7 @@ function getPeer(name, peer, create) {
   let room = rooms.get(name);
   if (!room) {
     if (!create || rooms.size >= MAX_ROOMS) return null;
-    room = new Map(); rooms.set(name, room);
+    room = new Map(); room.rid = crypto.randomBytes(4).toString("hex"); rooms.set(name, room);
   }
   let p = room.get(peer);
   if (!p) {
@@ -314,7 +314,7 @@ async function api(req, res, url) {
   // secours si le flux en direct est retenu par un proxy : l'état de la salle à la demande
   if (action === "state" && req.method === "GET") {
     const room = rooms.get(name);
-    if (!room) return json(res, 200, { peers: {}, meta: {}, v: 0 });
+    if (!room) return json(res, 200, { peers: {}, meta: {}, v: 0, rid: "vide" });
     res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store, no-transform" });
     return res.end(snapshot(room));
   }

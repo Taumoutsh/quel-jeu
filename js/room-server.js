@@ -13,7 +13,7 @@
     async join(name) {
       const me = rid();
       const base = "api/rooms/" + encodeURIComponent(name) + "/";
-      let pres = {}, others = new Map(), meta = {}, closed = false, lastV = -1, lastMsg = Date.now();
+      let pres = {}, others = new Map(), meta = {}, closed = false, lastV = -1, lastRid = null, lastMsg = Date.now();
       const hs = [], errs = [];
       // online : connecté au serveur (sinon : coupé, en délai de grâce) ; since : arrivée dans la salle (ms)
       const info = (peer) => ({ online: !meta[peer] || meta[peer].on !== 0, since: meta[peer] ? meta[peer].t : 0 });
@@ -22,11 +22,12 @@
       const fire = () => { const ps = snap(); for (const h of hs) { try { h({ peers: ps, joined: [], left: [], updated: [] }); } catch (e) { console.error(e); } } };
       const post = (what, body) => fetch(base + what + "?peer=" + me, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}), keepalive: what === "leave" });
 
-      const es = new EventSource(base + "events?peer=" + me);
-      let lostT = null;
+      let es = null, lostT = null;
       const apply = (d) => {
         lastMsg = Date.now();
         if (!d || typeof d !== "object") return;
+        // salle recréée (serveur redémarré, salle vidée puis rouverte) : on repart de zéro
+        if (d.rid && d.rid !== lastRid) { lastRid = d.rid; lastV = -1; }
         // déjà reçu, ou plus ancien que ce qu'on a (le flux et la relecture peuvent se croiser)
         if (typeof d.v === "number" && d.v <= lastV) return;
         if (typeof d.v === "number") lastV = d.v;
@@ -34,28 +35,53 @@
         for (const [peer, pr] of Object.entries(d.peers || {})) if (peer !== me) next.set(peer, pr || {});
         others = next; meta = d.meta || {}; fire();
       };
-      es.onmessage = (e) => { let d; try { d = JSON.parse(e.data); } catch (err) { return; } apply(d); };
+      const pollNow = () => fetch(base + "state?peer=" + me, { cache: "no-store" }).then((r) => r.json()).then(apply).catch(() => {});
+      // flux en direct ; recréé quand le navigateur l'a fermé (page mise de côté sur téléphone, réseau coupé…)
+      let firstMsg = null;
+      const connect = () => {
+        if (es) { es.onmessage = es.onopen = es.onerror = null; es.close(); }
+        es = new EventSource(base + "events?peer=" + me);
+        es.onmessage = (e) => { let d; try { d = JSON.parse(e.data); } catch (err) { return; } apply(d); if (firstMsg) { firstMsg(); firstMsg = null; } };
+        es.onopen = () => {
+          clearTimeout(lostT); lostT = null;
+          // après une reconnexion, le serveur a pu oublier notre présence : on la renvoie
+          if (Object.keys(pres).length) post("presence", pres).catch(() => {});
+        };
+        es.onerror = () => {
+          if (closed) return;
+          // fermé pour de bon (le navigateur ne réessaiera pas) : on rouvre nous-mêmes un peu plus tard
+          if (es.readyState === 2) setTimeout(() => { if (!closed && es.readyState === 2) connect(); }, 1500);
+          if (!lostT) lostT = setTimeout(() => { if (es.readyState !== 1) for (const h of errs) h({ code: "connexion" }); }, 10000);
+        };
+      };
+      connect();
+      // retour sur la page (application rouverte, onglet revenu au premier plan, page restaurée, réseau revenu) :
+      // flux rouvert si besoin, présence renvoyée et état de la salle relu tout de suite, sans attendre
+      const wake = () => {
+        if (closed || document.visibilityState === "hidden") return;
+        if (!es || es.readyState === 2 || Date.now() - lastMsg > 20000) connect();
+        if (Object.keys(pres).length) post("presence", pres).catch(() => {});
+        pollNow();
+      };
+      document.addEventListener("visibilitychange", wake);
+      window.addEventListener("pageshow", wake);
+      window.addEventListener("online", wake);
+      window.addEventListener("focus", wake);
       // secours : si un proxy retient le flux en direct, on relit l'état de la salle (au plus toutes les 2,5 s)
       const poll = setInterval(() => {
         if (closed) return clearInterval(poll);
+        if (document.visibilityState === "hidden") return;
+        if (es && es.readyState === 2) connect();
         if (Date.now() - lastMsg < 2500) return;
-        fetch(base + "state?peer=" + me, { cache: "no-store" }).then((r) => r.json()).then(apply).catch(() => {});
+        pollNow();
       }, 2500);
-      es.onopen = () => {
-        clearTimeout(lostT); lostT = null;
-        lastV = -1; // (re)connexion : le serveur a pu redémarrer et repartir de zéro
-        // après une reconnexion, le serveur a pu oublier notre présence : on la renvoie
-        if (Object.keys(pres).length) post("presence", pres).catch(() => {});
-      };
-      es.onerror = () => {
-        if (closed || lostT) return;
-        lostT = setTimeout(() => { for (const h of errs) h({ code: "connexion" }); }, 8000);
-      };
-      const bye = () => { if (!closed) navigator.sendBeacon && navigator.sendBeacon(base + "leave?peer=" + me, new Blob(["{}"], { type: "application/json" })); };
+      // page fermée pour de bon : on prévient le serveur ; page mise de côté (persisted, téléphone qui change
+      // d'application, retour possible) : on ne dit rien, le délai de grâce et le signal de vie s'en chargent
+      const bye = (e) => { if (closed || (e && e.persisted)) return; navigator.sendBeacon && navigator.sendBeacon(base + "leave?peer=" + me, new Blob(["{}"], { type: "application/json" })); };
       window.addEventListener("pagehide", bye);
 
       // attend le premier état de la salle (ou 3 s) pour que peers() soit à jour dès le départ
-      await new Promise((ok) => { const t = setTimeout(ok, 3000); const once = es.onmessage; es.onmessage = (e) => { once(e); es.onmessage = once; clearTimeout(t); ok(); }; });
+      await new Promise((ok) => { const t = setTimeout(ok, 3000); firstMsg = () => { clearTimeout(t); ok(); }; });
 
       return {
         name,
@@ -68,6 +94,8 @@
         },
         async leave() {
           closed = true; es.close(); clearInterval(poll); window.removeEventListener("pagehide", bye);
+          document.removeEventListener("visibilitychange", wake); window.removeEventListener("pageshow", wake);
+          window.removeEventListener("online", wake); window.removeEventListener("focus", wake);
           try { await post("leave"); } catch (e) { /* hors ligne */ }
         },
       };

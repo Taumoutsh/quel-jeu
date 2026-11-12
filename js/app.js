@@ -178,6 +178,22 @@
   }
 
   // ------------------------------------------------------------------ capacités de l'artefact
+  // ---- reprise après rechargement (téléphone qui a déchargé la page en arrière-plan) : la partie en cours
+  // est retenue pour l'onglet, la page s'y reconnecte seule et retrouve ses réponses de la partie
+  const SS = {
+    get() { try { const v = JSON.parse(sessionStorage.getItem("qj.room") || "null"); return v && Date.now() - v.t < 6 * 3600 * 1000 ? v : null; } catch (e) { return null; } },
+    set(v) { try { sessionStorage.setItem("qj.room", JSON.stringify(Object.assign({ t: Date.now() }, v))); } catch (e) { /* indisponible */ } },
+    clear() { try { sessionStorage.removeItem("qj.room"); } catch (e) { /* indisponible */ } },
+  };
+  function saveSession() { if (A.nroom && A.code) SS.set({ code: A.code, gen: A.gen, res: A.res, j: A.j || 0 }); }
+  async function resumeSession() {
+    const s = SS.get();
+    if (!s || !A.caps.room || A.nroom || !/^[A-Z0-9]{5}$/.test(s.code || "")) return;
+    A.resume = s; // réponses à reprendre si la partie est toujours la même (même génération)
+    $("joinCode").value = s.code;
+    toast("Reconnexion à la partie " + s.code + "…");
+    await startJoin();
+  }
   async function initCaps() {
     let tries = 0;
     while (!(window.claude && window.claude.use) && tries < 15) { await new Promise((r) => setTimeout(r, 200)); tries++; }
@@ -190,6 +206,7 @@
     $("bHost").disabled = !A.caps.room; $("bJoin").disabled = !A.caps.room;
     subLib();
     renderLibInfo();
+    resumeSession();
   }
 
   function subLib() {
@@ -239,6 +256,7 @@
   let pubT = null;
   function publish() {
     if (!A.nroom) return;
+    saveSession();
     clearTimeout(pubT);
     pubT = setTimeout(() => {
       const p = { v: 1, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null), hb: A.hb || 0, j: A.j || 0 };
@@ -358,6 +376,9 @@
     if (st.gen !== A.gen) {
       A.gen = st.gen; A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false;
       A.j = st.ph === "lobby" ? 0 : st.ph === "play" ? st.i : st.ph === "rev" ? st.i + 1 : st.seq.length; // arrivé en cours de partie ?
+      // page rechargée en pleine partie : on reprend ses réponses et sa manche d'arrivée
+      if (A.resume && A.resume.gen === st.gen) { A.res = Array.isArray(A.resume.res) ? A.resume.res.slice() : []; A.j = A.resume.j | 0; }
+      A.resume = null;
       publish();
     }
     A.st = st;
@@ -449,7 +470,7 @@
   function genCode() { let s = ""; for (let i = 0; i < 5; i++) s += CODE_ABC[(Math.random() * CODE_ABC.length) | 0]; return s; }
 
   async function startSolo() {
-    ensureName(); await leaveRoom();
+    ensureName(); SS.clear(); A.resume = null; await leaveRoom();
     A.mode = "solo"; A.gen = rid(8); A.res = [];
     A.st = { gen: A.gen, ph: "lobby", cfg: Object.assign({}, A.cfg), seq: [], i: -1, dl: 0 };
     route();
@@ -470,6 +491,7 @@
     await leaveRoom();
     try { await joinRoom(code); } catch (e) { toast("Impossible de rejoindre : " + (e.code || e.message), 5000); return; }
     A.mode = "guest"; A.st = null; A.gen = null; A.res = []; A.sawHost = false; A._stjs = null;
+    try { history.replaceState(null, "", "#partie-" + code.toLowerCase()); } catch (e) { /* ignore */ }
     publish();
     showLobby();
     setTimeout(() => { if (A.mode === "guest" && !A.sawHost && A.code === code) toast("Aucune partie trouvée pour l'instant avec le code " + code + ". Vérifie le code ou attends l'hôte.", 5000); }, 7000);
@@ -481,6 +503,7 @@
     A.peers = []; A.code = null;
   }
   async function goHome() {
+    SS.clear(); A.resume = null;
     await leaveRoom();
     A.mode = null; A.st = null; A.R = null; A._stjs = null;
     try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* ignore */ }
@@ -1103,6 +1126,8 @@
     setInterval(() => { hostCheck(); tickTimer(); }, 250);
     setInterval(() => { if (A.nroom) { A.hb = ((A.hb || 0) + 1) % 1e6; publish(); } }, HB_MS);
     setInterval(() => { if (A.nroom) { checkHost(); if (A.mode === "host") hostRecordGone(); renderPlayers(); } }, 1000);
+    // retour sur la page (téléphone) : signal de vie immédiat pour ne pas passer pour absent
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && A.nroom) { A.hb = ((A.hb || 0) + 1) % 1e6; publish(); } });
 
     const m = /^#partie-([a-z0-9]{5})$/i.exec(location.hash);
     if (m) $("joinCode").value = m[1].toUpperCase();
