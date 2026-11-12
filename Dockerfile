@@ -1,4 +1,4 @@
-# Quel Jeu ? auto-hébergé : site + multijoueur (salles servies par server/server.js, sans dépendance).
+# GameSpotter auto-hébergé : site + multijoueur (salles servies par server/server.js, sans dépendance).
 #   docker compose up -d --build   puis http://localhost:6103
 # La bibliothèque d'images (ajout de vues depuis la page) reste propre aux artefacts Claude.
 

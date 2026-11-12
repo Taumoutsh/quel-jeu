@@ -1,4 +1,4 @@
-/* Quel Jeu ? — logique de l'application : écrans, manches, points, multijoueur, bibliothèque. */
+/* GameSpotter — logique de l'application : écrans, manches, points, multijoueur, bibliothèque. */
 (function () {
   "use strict";
   const $ = (id) => document.getElementById(id);

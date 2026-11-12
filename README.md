@@ -1,4 +1,4 @@
-# Quel Jeu ?
+# GameSpotter
 
 Un jeu de devinettes en français, inspiré de GameGuessr : une **vue** prise dans un jeu vidéo s'affiche (panorama à 360° ou capture d'écran).
 1. Trouve **le nom du jeu**.

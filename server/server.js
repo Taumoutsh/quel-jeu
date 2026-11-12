@@ -1,4 +1,4 @@
-// Serveur de « Quel Jeu ? » pour l'auto-hébergement (Docker) : fichiers statiques + salles multijoueur.
+// Serveur de GameSpotter pour l'auto-hébergement (Docker) : fichiers statiques + salles multijoueur.
 // Aucune dépendance : Node.js seul. Les salles remplacent la capacité « room » des artefacts Claude :
 // chaque joueur publie sa présence (un objet JSON) et reçoit celles des autres en flux SSE.
 //
@@ -191,7 +191,7 @@ function imagesReport() {
   }
 }
 server.listen(PORT, () => {
-  console.log("Quel Jeu ? sur http://localhost:" + PORT + " (dossier " + ROOT + ") · images : " + IMAGES + (JEUX.length ? " · jeux : " + JEUX.join(", ") : ""));
+  console.log("GameSpotter sur http://localhost:" + PORT + " (dossier " + ROOT + ") · images : " + IMAGES + (JEUX.length ? " · jeux : " + JEUX.join(", ") : ""));
   console.log(imagesReport());
 });
 process.on("SIGTERM", () => server.close(() => process.exit(0)));

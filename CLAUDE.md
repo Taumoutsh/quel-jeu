@@ -1,6 +1,6 @@
 # Contexte pour Claude Code
 
-Projet : « Quel Jeu ? », clone en français du concept GameGuessr (devine le jeu à partir d'une vue 360°, puis place l'endroit sur la carte du jeu). Voir README.md pour les règles et la structure.
+Projet : « GameSpotter » (anciennement « Quel Jeu ? » ; ne pas reprendre le nom « GameGuessr », qui appartient à un autre jeu), clone en français du concept GameGuessr (devine le jeu à partir d'une vue 360°, puis place l'endroit sur la carte du jeu). Voir README.md pour les règles et la structure.
 
 ## État actuel
 - Jeu complet en HTML/JS statique, sans build ni dépendance : solo, multijoueur par code (capacité `room` des artefacts Claude), bibliothèque d'images (capacités `db` + `assets`), pack démo procédural (6 jeux fictifs, 48 vues).
