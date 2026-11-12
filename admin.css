@@ -1,5 +1,8 @@
 /* Page d'administration (/admin) : complète style.css */
-/* la page défile normalement (pas d'écran fixe à défilement interne comme dans le jeu) */
+/* la page défile normalement (pas d'écran fixe à défilement interne comme dans le jeu) :
+   on annule le body « overflow: hidden » sur toute la hauteur de style.css */
+html, body { height: auto; min-height: 100%; }
+body { overflow: visible; }
 .screen.adm { position: static; inset: auto; overflow: visible; min-height: 100%; padding: max(16px, env(safe-area-inset-top)) 16px 40px; }
 .adm .wrap.wide { max-width: 1200px; }
 .adm-head { align-items: center; gap: 10px; flex-wrap: wrap; }
