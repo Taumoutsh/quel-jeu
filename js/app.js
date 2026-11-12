@@ -855,7 +855,7 @@
     $("joinCode").addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); });
     $("bLib").onclick = openLibrary;
     $("bAvaRnd").onclick = () => AV && setAvatar(AV.random());
-    $("bAvaEdit").onclick = () => { const h = $("avaOpts").classList.toggle("hidden"); $("bAvaEdit").textContent = h ? "Personnaliser" : "Fermer"; $("bAvaEdit").setAttribute("aria-expanded", h ? "false" : "true"); };
+    $("bAvaEdit").onclick = () => { const h = $("avaOpts").classList.toggle("hidden"); $("bAvaEdit").classList.toggle("on", !h); $("bAvaEdit").setAttribute("aria-expanded", h ? "false" : "true"); };
     $("bLibBack").onclick = () => show(A.mode ? "lobby" : "home");
     $("bLobbyBack").onclick = goHome;
     $("bCopy").onclick = () => { navigator.clipboard.writeText(A.code).then(() => toast("Code copié : " + A.code), () => toast("Code : " + A.code)); };

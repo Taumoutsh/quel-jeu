@@ -27,8 +27,8 @@
         <div class="ava-prev" id="avaPrev"></div>
         <div class="grow">
           <div class="row">
-            <button class="btn sm" id="bAvaRnd" type="button">Au hasard</button>
-            <button class="btn sm ghost" id="bAvaEdit" type="button" aria-expanded="false" aria-controls="avaOpts">Personnaliser</button>
+            <button class="btn icon" id="bAvaRnd" type="button" title="Avatar au hasard" aria-label="Avatar au hasard"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.6" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.6" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.6" fill="currentColor"/></svg></button>
+            <button class="btn icon" id="bAvaEdit" type="button" title="Personnaliser l'avatar" aria-label="Personnaliser l'avatar" aria-expanded="false" aria-controls="avaOpts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20 l1.2-4.6 L15.6 5 a2.1 2.1 0 0 1 3 0 l.4.4 a2.1 2.1 0 0 1 0 3 L8.6 18.8 Z M13.8 6.8 l3.4 3.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg></button>
           </div>
         </div>
       </div>
@@ -42,10 +42,10 @@
 
     <div class="card col">
       <button class="btn pri block" id="bSolo">Jouer seul</button>
-      <button class="btn sea block" id="bHost">Créer une partie à plusieurs</button>
+      <button class="btn sea block" id="bHost">Créer un serveur</button>
       <div class="row">
         <input type="text" class="code grow" id="joinCode" maxlength="5" placeholder="CODE" autocomplete="off">
-        <button class="btn" id="bJoin">Rejoindre</button>
+        <button class="btn caps" id="bJoin">Rejoindre</button>
       </div>
       <div class="notice small hidden" id="noRoom">Le multijoueur n'est pas disponible ici : il faut ouvrir l'artefact sur claude.ai (connecté) ou le site déployé avec Docker.</div>
     </div>

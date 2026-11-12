@@ -21,7 +21,7 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
   for (const pg of [h, g]) pg.on("pageerror", (e) => errs.push(String(e)));
   try {
     await h.goto(URL); await g.goto(URL); await wait(800);
-    check(await h.isEnabled("#bHost"), "bouton « Créer une partie à plusieurs » actif");
+    check(await h.isEnabled("#bHost"), "bouton « Créer un serveur » actif");
     check((await h.inputValue("#pseudo")) !== null, "page chargée");
     await h.fill("#pseudo", "Hôte"); await h.click("#bHost"); await wait(1200);
     const code = (await h.innerText("#codeBox")).trim();

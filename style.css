@@ -72,6 +72,10 @@ input.code { font-family: var(--fd); text-transform: uppercase; letter-spacing: 
 .btn.ghost { background: transparent; }
 .btn.danger { color: var(--bad); }
 .btn.sm { padding: 8px 12px; font-size: 14px; border-radius: 10px; }
+.btn.caps { font-family: var(--fd); text-transform: uppercase; letter-spacing: .5px; }
+.btn.icon { width: 42px; height: 42px; padding: 0; border-radius: 12px; color: var(--txt); }
+.btn.icon svg { width: 22px; height: 22px; display: block; }
+.btn.icon.on { border-color: var(--acc); color: var(--acc); background: var(--acc-soft); }
 .btn.block { width: 100%; }
 
 .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
