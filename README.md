@@ -38,7 +38,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 300 vues de 57 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 471 vues de 95 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
@@ -100,6 +100,44 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Tom Clancy's The Division 2 | Capitole, Federal Triangle, Downtown East, Lincoln Memorial |
     | Euro Truck Simulator 2 | Londres, Paris, Berlin, Prague, Vienne |
     | American Truck Simulator | Los Angeles, Las Vegas, San Francisco, Phoenix, Sacramento |
+    | Final Fantasy XII | Cité impériale d'Archadès, Jahara, terre des Garifs, Mont Bur-Omisace, Plaine d'Ozmone, Bois de Feywood |
+    | Dragon's Dogma | Cathédrale de Gran Soren, Tour de Lune-Bleue, Le Campement, Butte de Hillfigure, Bois de la Sorcière |
+    | Dark Souls II | Majula, Tour de flamme de Heide, Bastille perdue, Donjon de fer, Forêt des géants déchus |
+    | Shadow of the Colossus | Temple de l'Adoration, Clairière ombragée (nord-ouest), Chutes brumeuses, Gorge de l'arche de pierre, Falaise de l'est |
+    | The Legend of Zelda: Echoes of Wisdom | Bourg d'Hyrule, Village Cocorico, Village Goron, Village Gerudo, Lac Hylia |
+    | Fable II | Bowerstone (marché), Bloodstone, Wraithmarsh, Brightwood |
+    | Dragon Age: The Veilguard | Minrathous (Tevinter), Forêt d'Arlathan, Weisshaupt (Anderfels), Côte de Rivain |
+    | Pillars of Eternity | Defiance Bay (Copperlane), Caed Nua, Twin Elms (Hearthsong), Defiance Bay (Heritage Hill) |
+    | Mount & Blade II: Bannerlord | Ville de Vlandie, Ville aserai (sud), Village de Battanie |
+    | ARK: Survival Evolved | Herbivore Island, The Dead Island, Cratère du volcan |
+    | Conan Exiles | Sepermeru, New Asagarth, Black Galleon, Mounds of the Dead, The Summoning Place |
+    | Dishonored 2 | Conservatoire royal (Cyria Gardens), District minier de Batista, Institut Addermire, Quartier d'Aventa, Manoir mécanique |
+    | New World | Windsward, Brightwood (colonie), Mourningdale (colonie), Ebonscale Reach |
+    | Dying Light 2 Stay Human | Old Villedor, Central Loop |
+    | Palworld | Astral Mountains, Feybreak Island, Windswept Hills |
+    | Kingdoms of Amalur: Reckoning | Rathir, Adessa, Mel Senshir, Ysa |
+    | Far Cry 4 | Banapur, Utkarsh, Tirtha, Temple de Jalendu, Forteresse de Varshakot |
+    | Far Cry 5 | Église Lamb of God (Holland Valley), Domaine de Joseph, Centre F.A.N.G. (Whitetail Mountains), Centre de vétérans St. Francis, Prosperity (Henbane River) |
+    | Far Cry Primal | Avant-poste Payska River, Avant-poste Rotten Lake, Avant-poste Kaba Blade, Avant-poste Nasan Horn (nord enneigé), Avant-poste Ring Wall |
+    | Far Cry New Dawn | The FANG Center, Pont ferroviaire de la Henbane, The Bullet Farm, The Flame of Eden, Mine Blacklung |
+    | Just Cause 2 | Gunung Hotel Ski Resort, Kampung Bahari, Kem Jalan Merpati, Port de Pelabuhan Saudagar (Panau City), Temple de Rajang |
+    | Need for Speed Heat | Downtown Palm City, Mendoza Keys, North Rockville (planque de Lucas), Bayview Park, Circuit de Palm City |
+    | Need for Speed Payback | Silver Rock, Airfield 73, Gare de Fortune Valley (désert), Fortune Valley Resort & Casino (Mount Providence), Silver Canyon |
+    | Dying Light | Garnison de Rais, Port des ferries, Sunny Apartments, Parking souterrain, Entrepôt chimique |
+    | Metal Gear Solid V: The Phantom Pain | Forteresse de Spugmay (Afghanistan), Caserne de Wakh Sind (Afghanistan), Da Ghwandai Khar (Afghanistan), Centrale électrique de Serak (Afghanistan), Camp de base central (Afghanistan) |
+    | Escape from Tarkov | Customs : sortie Crossroads, Customs : sortie des dortoirs (V-Ex), Customs : passage vers Factory, Customs : passage vers Reserve, Customs : passage vers Shoreline |
+    | Valorant | Ascent : site A, Ascent : site B, Ascent : Market, Ascent : Mid Bottom, Ascent : spawn des défenseurs |
+    | Counter-Strike 2 | Dust II : site B, Dust II : spawn CT, Dust II : entrée de Long A, Dust II : mid |
+    | Overwatch 2 | King's Row (Londres), Dorado (Mexique), Ilios (Grèce), Busan (Corée du Sud), Paraíso (Rio de Janeiro) |
+    | Arma 3 | Kavala, Aéroport international d'Altis, Sofia, Zaros, Neochori |
+    | Team Fortress 2 | 2Fort : le pont, 2Fort : salle des renseignements RED, 2Fort : remparts RED |
+    | Minecraft Dungeons | Squid Coast, Soggy Swamp, Redstone Mines, Desert Temple, Highblock Halls |
+    | Left 4 Dead 2 | The Parish : débarquement du bateau, The Parish : Bienville Park, The Parish : statue équestre, The Parish : gare routière |
+    | Dishonored | Prison de Coldridge, Place Holger, Île de Kingsparrow, Le pub des Hound Pits, Distillerie de whiskey de Dunwall |
+    | The Last of Us | Boston : le Capitole, Barrage de Tommy (Wyoming), Université du Colorado oriental, Salt Lake City |
+    | Fallout 3 | Tenpenny Tower, Washington Monument, Big Town, Jefferson Memorial, Canterbury Commons |
+    | Horizon Zero Dawn | Meridian, Cœur-de-la-Mère (terres des Nora), Sunfall, Pitchcliff, Maker's End |
+    | Ghost of Tsushima | Sanctuaire du Sommet doré (Izuhara), Sanctuaire de la Roche guérisseuse, Sources chaudes d'Hiyoshi, Domaine du Vent salé, Pont de la rivière Kuta |
 
     Les captures portant le logo ou le nom du jeu ont été écartées. Les positions ont été relevées à la main sur les cartes (noms de lieux quand la carte en a, sinon repères visibles) : elles sont justes à quelques pourcents de la carte.
   - La visionneuse affiche une capture plate en plein écran ; on la déplace en glissant et on zoome comme pour un 360°.
