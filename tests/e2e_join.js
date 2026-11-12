@@ -33,7 +33,12 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
   const t1 = Date.now(); await C.click("#bJoin");
   check((await until(() => C.evaluate("QJ.A.screen === 'lobby'"), 6000)) >= 0, "partie existante rejointe en " + ((Date.now() - t1) / 1000).toFixed(1) + " s");
   check((await until(async () => (await H.innerText("#playersList")).includes("Client"), 4000)) >= 0, "le client apparaît chez l'hôte");
-  await H.click("#bStart"); await wait(2000);
+  await H.click("#bStart");
+  check((await until(() => C.evaluate("!document.getElementById('cd').classList.contains('hidden')"), 2000)) >= 0, "décompte affiché chez l'invité");
+  check(await H.evaluate("!document.getElementById('cd').classList.contains('hidden') && /^[123]$/.test(document.getElementById('cdNum').textContent)"), "décompte affiché chez l'hôte (" + (await H.innerText("#cdNum")) + ")");
+  await wait(400); await C.screenshot({ path: OUT + "/countdown.png" });
+  check((await until(() => C.evaluate("document.getElementById('cd').classList.contains('hidden')"), 4500)) >= 0, "décompte terminé, la manche commence");
+  check((await H.innerText("#hTime")).trim() === "2:00", "chrono plein au début de la manche (" + (await H.innerText("#hTime")).trim() + ")");
   await answer(H); await answer(C);
   await until(() => H.evaluate("QJ.A.screen === 'reveal'"), 6000); await H.click("#bNext");
   check((await until(() => C.evaluate("QJ.A.screen === 'final'"), 6000)) >= 0, "fin de partie chez le client");

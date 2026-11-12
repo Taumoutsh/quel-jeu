@@ -423,8 +423,33 @@
     if (!seq.length) { toast("Aucune vue disponible pour ce choix d'images."); return; }
     cfg.rounds = seq.length;
     A.gen = rid(8); A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false; A.j = 0; A.track = {};
-    A.st = { gen: A.gen, ph: "play", cfg, seq, i: 0, dl: newDeadline(cfg), term: (A.st && A.st.term) || 0, gone: [] };
+    // à plusieurs : décompte 3, 2, 1 chez tout le monde avant la 1re manche (t0 : départ, le chrono attend la fin)
+    const cd = A.mode === "host" ? CD_MS : 0;
+    A.st = { gen: A.gen, ph: "play", cfg, seq, i: 0, dl: newDeadline(cfg) + (cfg.time ? cd : 0), t0: cd ? Date.now() : 0, term: (A.st && A.st.term) || 0, gone: [] };
     publish(); route();
+  }
+  // décompte affiché par chacun dès qu'il reçoit le départ (pas d'horloge commune : les écarts d'heure entre
+  // appareils dépassent souvent l'écart de réception) ; la vue se charge derrière pendant ce temps
+  const CD_MS = 3000;
+  let cdT = null;
+  function countdown() {
+    const el = $("cd"), num = $("cdNum");
+    let n = CD_MS / 1000;
+    const step = () => {
+      if (n === 0) { clearInterval(cdT); el.classList.add("hidden"); return; }
+      num.textContent = n; num.classList.remove("pop"); void num.offsetWidth; num.classList.add("pop"); n--;
+    };
+    clearInterval(cdT);
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    el.classList.remove("hidden"); step(); cdT = setInterval(step, 1000);
+  }
+  function maybeCountdown(i) {
+    const st = A.st;
+    if (i !== 0 || !A.nroom || !st.t0 || A.cdGen === A.gen || A.res[0]) return;
+    A.cdGen = A.gen;
+    // arrivé (ou page rechargée) bien après le départ : pas de décompte
+    if (Math.abs(Date.now() - st.t0) > 2 * CD_MS) return;
+    countdown();
   }
   function hostCheck() {
     if (!isHost() || !A.st || A.st.ph !== "play") return;
@@ -559,7 +584,7 @@
     A.peers = []; A.code = null;
   }
   async function goHome() {
-    SS.clear(); A.resume = null;
+    SS.clear(); A.resume = null; clearInterval(cdT); $("cd").classList.add("hidden");
     await leaveRoom();
     A.mode = null; A.st = null; A.R = null; A._stjs = null;
     try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* ignore */ }
@@ -660,6 +685,7 @@
     const g = A.matcher.byId[info.game] || { id: info.game, t: gameTitle(info.game), n: [], tok: [] };
     A.R = { i, sid, info, game: g, errors: 0, phase: "name", pin: null, namePts: 0 };
     if (!A.res[i] || A.res[i][0] < 2) A.res[i] = null;
+    maybeCountdown(i);
     if (!pano) pano = new Pano($("pano"));
     if (pano.failed) toast("WebGL est désactivé sur cet appareil : la vue 360° ne peut pas s'afficher.", 6000);
     $("panoLoad").classList.remove("hidden");
