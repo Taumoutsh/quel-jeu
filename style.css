@@ -131,10 +131,11 @@ td.who { white-space: nowrap; }
 #pano:active { cursor: grabbing; }
 .hud { position: absolute; left: 0; right: 0; top: 0; padding: max(10px, env(safe-area-inset-top)) 12px 10px; display: flex; gap: 8px; align-items: flex-start; pointer-events: none; background: linear-gradient(rgba(4, 10, 16, .6), rgba(4, 10, 16, 0)); }
 .hud > * { pointer-events: auto; }
-/* barre de temps (en haut, sur toute la largeur) et alerte des 10 dernières secondes */
-.tbar { position: absolute; left: 0; right: 0; top: 0; height: 4px; z-index: 3; background: rgba(255, 255, 255, .08); pointer-events: none; }
-.tbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--acc), var(--acc-hi)); transform-origin: left; transition: transform .25s linear, background-color .3s; }
-.tbar.low i { background: var(--bad); box-shadow: 0 0 12px var(--bad); }
+/* temps restant : fin trait au bas de la pastille « Temps », et alerte des 10 dernières secondes */
+.pill.timer { position: relative; overflow: hidden; }
+.tbar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; pointer-events: none; }
+.tbar i { display: block; height: 100%; background: var(--acc); opacity: .7; transform-origin: left; transition: transform .25s linear; }
+.tbar.low i { background: var(--bad); opacity: .9; }
 .vignette { position: absolute; inset: 0; pointer-events: none; opacity: 0; box-shadow: inset 0 0 90px 24px rgba(255, 70, 70, .6), inset 0 0 0 3px rgba(255, 90, 90, .55); transition: opacity .3s; }
 .vignette.on { opacity: .75; }
 @media (prefers-reduced-motion: no-preference) { .vignette.on { animation: vig 1s ease-in-out infinite; } }
