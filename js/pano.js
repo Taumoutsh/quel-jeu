@@ -81,10 +81,10 @@ void main(){
       this.dirty = true;
     }
     // capture plate : demi-étendue visible (en coordonnées de texture) pour l'écran actuel.
-    // À fov = 1,35 l'image couvre tout l'écran ; plus petit = zoom avant.
+    // À fov = 1,35 l'image tient entière dans l'écran (bandes sombres autour) ; plus petit = zoom avant.
     _flatScale() {
       const sa = this.c.clientWidth / Math.max(1, this.c.clientHeight), z = this.fov / 1.35;
-      const sy = Math.min(0.5, (0.5 * this.iasp) / sa) * z;
+      const sy = Math.max(0.5, (0.5 * this.iasp) / sa) * z;
       return [sy / this.iasp, sy, sa];
     }
     _clampFlat() {
@@ -107,7 +107,7 @@ void main(){
         ptrs.set(e.pointerId, [e.clientX, e.clientY]);
         if (ptrs.size === 2) {
           const [a, b] = [...ptrs.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-          if (pinch0) this.fov = Math.max(this.flat ? 0.3 : 0.45, Math.min(this.flat ? 1.35 : 1.75, fov0 * pinch0 / d));
+          if (pinch0) this.fov = Math.max(this.flat ? 0.2 : 0.45, Math.min(this.flat ? 1.35 : 1.75, fov0 * pinch0 / d));
           this.dirty = true; return;
         }
         const dx = e.clientX - lastX, dy = e.clientY - lastY; lastX = e.clientX; lastY = e.clientY;
@@ -123,7 +123,7 @@ void main(){
       });
       const up = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch0 = 0; if (performance.now() - lastT > 60) this.vy = 0; };
       c.addEventListener("pointerup", up); c.addEventListener("pointercancel", up);
-      c.addEventListener("wheel", (e) => { e.preventDefault(); this.fov = Math.max(this.flat ? 0.3 : 0.45, Math.min(this.flat ? 1.35 : 1.75, this.fov * Math.exp(e.deltaY * 0.001))); this.dirty = true; }, { passive: false });
+      c.addEventListener("wheel", (e) => { e.preventDefault(); this.fov = Math.max(this.flat ? 0.2 : 0.45, Math.min(this.flat ? 1.35 : 1.75, this.fov * Math.exp(e.deltaY * 0.001))); this.dirty = true; }, { passive: false });
       window.addEventListener("resize", () => (this.dirty = true));
       if (root.ResizeObserver) new ResizeObserver(() => (this.dirty = true)).observe(c);
     }

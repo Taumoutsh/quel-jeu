@@ -4,8 +4,8 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const COLORS = ["#f4b740", "#ff7b72", "#4cc9c0", "#9d8cff", "#6fd69b", "#ff9f5a", "#f07ac0", "#e3ecf2"]; // couleurs de joueur, accordées à la palette
-  const AVA_IDS = Object.keys(window.AVATARS || {}); // figurines (js/avatars.js), dans l'ordre des couleurs
-  const avaOK = (id) => typeof id === "string" && AVA_IDS.includes(id);
+  const AV = window.AVATAR; // avatars composés (js/avatars.js) : "tenue.couleur.peau.yeux"
+  const avaOK = (spec) => !!(AV && AV.ok(spec));
   // petite figurine d'un joueur (repli : pastille de couleur si l'avatar est inconnu)
   const ava = (p, size) => avaOK(p.avatar)
     ? "<span class='ava' style='width:" + size + "px;height:" + size + "px'>" + window.avatarSVG(p.avatar) + "</span>"
@@ -43,10 +43,14 @@
   // couleur choisie avec l'ancienne palette : on prend sa remplaçante
   const OLD_COLORS = ["#c6ff3d", "#ff5d8f", "#3de0ff", "#ffc94d", "#b48bff", "#ff8a3d", "#5dffb0", "#f2f2f2"];
   if (!COLORS.includes(A.color)) { const k = OLD_COLORS.indexOf(String(A.color).toLowerCase()); A.color = COLORS[k >= 0 ? k : 0]; LS.set("color", A.color); }
-  // avatar : choisi, sinon celui qui correspond à la couleur déjà choisie ; il fixe la couleur du joueur
+  // avatar : celui enregistré (les anciennes figurines sont converties), sinon un avatar au hasard ;
+  // sa couleur est celle du joueur (repères et traits sur la carte)
   A.avatar = LS.get("avatar", null);
-  if (!avaOK(A.avatar)) A.avatar = AVA_IDS[Math.max(0, COLORS.indexOf(A.color))] || null;
-  if (avaOK(A.avatar)) A.color = window.AVATARS[A.avatar].couleur;
+  if (AV) {
+    A.avatar = avaOK(A.avatar) ? AV.format(AV.parse(A.avatar)) : AV.random();
+    LS.set("avatar", A.avatar);
+    A.color = AV.color(A.avatar); LS.set("color", A.color);
+  }
 
   // réglages enregistrés avant l'arrivée du pack « Vrais jeux » : on bascule une fois sur ce pack
   if (LS.get("cfgV", 0) < 2) { A.cfg.pack = "real"; LS.set("cfg", A.cfg); LS.set("cfgV", 2); }
@@ -304,15 +308,39 @@
   // ------------------------------------------------------------------ accueil
   function renderHome() {
     $("pseudo").value = A.name;
-    const sw = $("swatches"); sw.innerHTML = "";
-    for (const id of AVA_IDS) {
-      const a = window.AVATARS[id];
-      const b = document.createElement("button"); b.className = "ava-pick" + (id === A.avatar ? " on" : ""); b.type = "button";
-      b.title = a.nom; b.setAttribute("aria-label", a.nom); b.setAttribute("aria-pressed", id === A.avatar ? "true" : "false");
-      b.style.setProperty("--c", a.couleur); b.innerHTML = window.avatarSVG(id);
-      b.onclick = () => { A.avatar = id; A.color = a.couleur; LS.set("avatar", id); LS.set("color", a.couleur); renderHome(); publish(); };
-      sw.append(b);
-    }
+    renderAvatar();
+  }
+  // éditeur d'avatar : aperçu, « au hasard », et quatre rangées de choix (tenue, couleur, peau, yeux)
+  function setAvatar(spec) {
+    A.avatar = spec; A.color = AV.color(spec);
+    LS.set("avatar", spec); LS.set("color", A.color);
+    renderAvatar(); publish();
+  }
+  function renderAvatar() {
+    if (!AV || !avaOK(A.avatar)) return;
+    const o = AV.parse(A.avatar), col = AV.COULEURS[o.c];
+    $("avaPrev").innerHTML = AV.svg(A.avatar);
+    $("avaPrev").style.setProperty("--c", col);
+    $("avaName").textContent = AV.TENUES.find((t) => t.id === o.t).nom;
+    const choice = (box, items, isOn, make, label) => {
+      const el = $(box); el.innerHTML = "";
+      items.forEach((it, i) => {
+        const b = document.createElement("button"); b.type = "button";
+        const on = isOn(it, i);
+        b.className = "ava-opt" + (on ? " on" : ""); b.setAttribute("aria-pressed", on ? "true" : "false");
+        b.title = label(it, i); b.setAttribute("aria-label", label(it, i));
+        b.style.setProperty("--c", col);
+        make(b, it, i);
+        b.onclick = () => setAvatar(AV.format(Object.assign({}, o, pickOf(box, it, i))));
+        el.append(b);
+      });
+    };
+    const pickOf = (box, it, i) => box === "avaT" ? { t: it.id } : box === "avaC" ? { c: i } : box === "avaS" ? { s: i } : { e: i };
+    choice("avaT", AV.TENUES, (t) => t.id === o.t, (b, t) => { b.classList.add("fig"); b.innerHTML = AV.svg(AV.format(Object.assign({}, o, { t: t.id }))); }, (t) => t.nom);
+    choice("avaC", AV.COULEURS, (c, i) => i === o.c, (b, c) => { b.classList.add("sw"); b.style.background = c; }, (c, i) => "Couleur " + (i + 1));
+    choice("avaS", AV.PEAUX, (c, i) => i === o.s, (b, c) => { b.classList.add("sw"); b.style.background = c; }, (c, i) => "Peau " + (i + 1));
+    choice("avaE", AV.YEUX, (y, i) => i === o.e, (b, y, i) => { b.classList.add("fig"); b.innerHTML = AV.svg(AV.format(Object.assign({}, o, { e: i }))); }, (y) => y.nom);
+    $("avaS").closest(".ava-row").classList.toggle("hidden", o.t === "robot");
   }
   function ensureName() {
     let n = $("pseudo").value.trim().replace(/\s+/g, " ").slice(0, 16);
@@ -762,6 +790,8 @@
     $("joinCode").addEventListener("keydown", (e) => { if (e.key === "Enter") startJoin(); });
     $("joinCode").addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); });
     $("bLib").onclick = openLibrary;
+    $("bAvaRnd").onclick = () => AV && setAvatar(AV.random());
+    $("bAvaEdit").onclick = () => { const h = $("avaOpts").classList.toggle("hidden"); $("bAvaEdit").textContent = h ? "Personnaliser" : "Fermer"; $("bAvaEdit").setAttribute("aria-expanded", h ? "false" : "true"); };
     $("bLibBack").onclick = () => show(A.mode ? "lobby" : "home");
     $("bLobbyBack").onclick = goHome;
     $("bCopy").onclick = () => { navigator.clipboard.writeText(A.code).then(() => toast("Code copié : " + A.code), () => toast("Code : " + A.code)); };
