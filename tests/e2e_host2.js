@@ -26,7 +26,8 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
     for (let i = 0; i < 3; i++) await H.click("#settings [data-step='-1']"); // 2 manches
     await H.click("#settings .seg[data-k='time'] button[data-v='0']"); // temps illimité : rien ne se débloque seul
     for (const p of [A, B]) { await p.fill("#joinCode", code); await p.click("#bJoin"); await wait(1200); }
-    await H.click("#bStart"); await wait(2500);
+    for (const p of [A, B, H]) { await p.click("#bReady"); await wait(300); } // tout le monde prêt : départ
+    await wait(2500);
 
     // Bruno quitte pendant la manche 1 sans avoir répondu ; Alice répond
     await B.click("#bQuit"); await wait(200); await B.click("#cfYes"); await wait(500);
@@ -55,7 +56,8 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
     const code2 = (await H2.innerText("#codeBox")).trim();
     await H2.click("#settings .seg[data-k='time'] button[data-v='0']");
     for (const p of [C, D]) { await p.fill("#joinCode", code2); await p.click("#bJoin"); await wait(1200); }
-    await H2.click("#bStart"); await wait(2500);
+    for (const p of [C, D, H2]) { await p.click("#bReady"); await wait(300); }
+    await wait(2500);
     check((await D.innerHTML("#hChips")).includes("class=\"hc\""), "couronne de l'hôte dans le classement de la manche");
     await H2.click("#bQuit"); await wait(200); await H2.click("#cfYes");
     const t2 = await until(() => C.evaluate("QJ.A.mode === 'host'"), 15000);

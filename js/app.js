@@ -669,7 +669,7 @@
     if (A.screen === "game") renderChips();
   }
   // ---- salon à plusieurs : chacun clique sur « Je suis prêt » ; la partie démarre (décompte 3, 2, 1) quand
-  // tous les joueurs présents sont prêts. L'hôte peut lancer sans attendre quelqu'un qui traîne.
+  // tous les joueurs présents sont prêts (un joueur absent, connexion coupée, ne bloque pas).
   // Prêt = présence rd égale à la génération du salon : un nouveau salon (Rejouer) remet tout le monde à zéro.
   const readyLobby = () => !!A.nroom && !!A.st && A.st.ph === "lobby" && (A.mode === "host" || A.mode === "guest");
   function readyCount() {
@@ -681,18 +681,16 @@
     const b = $("bReady"), info = $("readyInfo");
     b.classList.toggle("hidden", !on); info.classList.toggle("hidden", !on);
     // invité : bouton Prêt au-dessus des réglages (qu'il ne peut que consulter) ; hôte : en bas, près de « Lancer »
-    const setCard = $("settings").closest(".card"), anchor = A.mode === "guest" ? setCard : $("bStart");
+    const setCard = $("settings").closest(".card"), anchor = A.mode === "guest" ? setCard : $("waitHost");
     if (b.nextElementSibling !== anchor) { anchor.before(info); anchor.before(b); }
-    if (!on) { $("bStart").textContent = "Lancer la partie"; $("bStart").classList.add("pri"); return; }
+    // « Lancer la partie » : en solo seulement ; à plusieurs, on part quand tout le monde est prêt
+    $("bStart").classList.toggle("hidden", on || A.mode === "guest");
+    if (!on) return;
     const { n, all } = readyCount();
     b.textContent = A.ready ? "Prêt ! (annuler)" : "Je suis prêt";
     b.classList.toggle("pri", !A.ready); b.classList.toggle("sea", !!A.ready);
     b.setAttribute("aria-pressed", A.ready ? "true" : "false");
     info.innerHTML = "Prêts : <b>" + n + "/" + all + "</b> · la partie démarre quand tout le monde est prêt.";
-    // hôte : bouton secondaire pour ne pas attendre quelqu'un qui ne répond plus
-    $("bStart").textContent = "Lancer sans attendre";
-    $("bStart").classList.remove("pri");
-    $("bStart").classList.toggle("hidden", A.mode !== "host" || n === all);
     $("waitHost").classList.add("hidden");
   }
   function toggleReady() {

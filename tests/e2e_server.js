@@ -37,7 +37,7 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
     check((await h.innerText("#playersList")).includes("Ami renommé"), "pseudo modifié dans le salon, vu par l'hôte");
     check((await g.evaluate("localStorage.getItem('qj.name')")) === JSON.stringify("Ami renommé"), "nouveau pseudo enregistré");
     await g.screenshot({ path: OUT + "/s1-guest-lobby.png" });
-    await h.click("#bStart"); await wait(2000);
+    await g.click("#bReady"); await wait(300); await h.click("#bReady"); await wait(2000); // tout le monde prêt : départ
     check((await g.evaluate("QJ.A.screen")) === "game", "l'invité est passé en jeu");
     check((await h.evaluate("QJ.A.R.sid")) === (await g.evaluate("QJ.A.R.sid")), "même vue pour les deux : " + (await g.evaluate("QJ.A.R.sid")));
     await h.evaluate("QJ.submitGuess(QJ.A.R.game.t)"); await wait(300);

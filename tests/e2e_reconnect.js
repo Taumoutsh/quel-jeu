@@ -48,7 +48,7 @@ const roomState = async (code) => (await (await fetch(URL + "api/rooms/qj-" + co
     check(Object.keys((await roomState(code)).peers).length === 2, "l'invité est de nouveau dans la salle côté serveur");
 
     // 3. la partie se lance toujours chez l'invité après le retour
-    await H.p.click("#bStart");
+    await G.p.click("#bReady"); await wait(300); await H.p.click("#bReady");
     check((await until(() => G.p.evaluate("QJ.A.screen === 'game'"), 6000)) >= 0, "la partie démarre chez l'invité revenu");
 
     // 3 bis. le téléphone a déchargé la page en arrière-plan : au retour elle se recharge, se reconnecte seule

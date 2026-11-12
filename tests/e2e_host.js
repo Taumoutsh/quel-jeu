@@ -30,14 +30,16 @@ async function until(fn, ms, step) { const t0 = Date.now(); while (Date.now() - 
     const code = (await H.p.innerText("#codeBox")).trim();
     for (let i = 0; i < 2; i++) await H.p.click("#settings [data-step='-1']"); // 3 manches
     await join(G1, code); await join(G2, code);
-    await H.p.click("#bStart"); await wait(2500);
+    for (const x of [G1, G2, H]) { await x.p.click("#bReady"); await wait(300); } // tout le monde prêt : départ
+    await wait(2500);
     check((await G2.p.evaluate("QJ.A.screen")) === "game", "partie lancée chez les invités");
 
     // manche 1 : tout le monde répond, l'hôte passe à la suivante
     for (const [x, d] of [[H, 0], [G1, 0.02], [G2, 0.04]]) await answer(x.p, d);
     check((await until(() => G1.p.evaluate("QJ.A.screen === 'reveal'"), 6000)) >= 0, "manche 1 terminée chez tous");
+    await until(() => H.p.evaluate("QJ.A.screen === 'reveal'"), 6000);
     await H.p.click("#bNext");
-    check((await until(() => G1.p.evaluate("QJ.A.screen === 'game' && QJ.A.R.i === 1"), 6000)) >= 0, "manche 2 reçue");
+    check((await until(() => G1.p.evaluate("QJ.A.screen === 'game' && QJ.A.R.i === 1"), 10000)) >= 0, "manche 2 reçue");
 
     // un invité part, un joueur arrive en cours de partie
     await G2.p.click("#bQuit").catch(() => {}); await wait(300);

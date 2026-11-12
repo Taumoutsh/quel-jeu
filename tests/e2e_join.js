@@ -36,11 +36,11 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
   // salon : chacun clique sur « Je suis prêt » ; la partie démarre quand tout le monde est prêt
   const info = (p) => p.innerText("#readyInfo");
   check(/0\/2/.test(await info(H)) && /0\/2/.test(await info(C)), "salon : Prêts 0/2 chez les deux");
-  check(await H.isVisible("#bStart") && /sans attendre/i.test(await H.innerText("#bStart")), "l'hôte peut lancer sans attendre");
+  check(!(await H.isVisible("#bStart")) && (await H.isVisible("#bReady")), "hôte : bouton Prêt, pas de « Lancer » à plusieurs");
   check(!(await C.isVisible("#bStart")) && (await C.isVisible("#bReady")), "l'invité a le bouton Prêt, pas Lancer");
   const above = (p) => p.evaluate("!!(document.getElementById('bReady').compareDocumentPosition(document.getElementById('settings')) & Node.DOCUMENT_POSITION_FOLLOWING)");
   check(await above(C), "invité : bouton Prêt au-dessus des réglages");
-  check(!(await above(H)), "hôte : bouton Prêt en bas, près de « Lancer »");
+  check(!(await above(H)), "hôte : bouton Prêt en bas, sous les réglages");
   await C.screenshot({ path: OUT + "/ready-guest.png" });
   await C.click("#bReady");
   check((await until(async () => /1\/2/.test(await info(H)) && /PRÊT/i.test(await H.innerText("#playersList")), 3000)) >= 0, "l'hôte voit l'invité prêt (1/2) en moins de 3 s");
@@ -70,7 +70,7 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
   await H.click("#bAgain"); await wait(300);
   check((await until(() => C.evaluate("QJ.A.st.ph === 'lobby' && QJ.A.screen === 'lobby'"), 4000)) >= 0, "l'hôte relance : l'invité est dans le nouveau salon");
   check(/0\/2/.test(await info(C)) && /je suis prêt/i.test(await C.innerText("#bReady")), "nouveau salon : tout le monde redevient « pas prêt »");
-  await H.click("#bStart");
+  await C.click("#bReady"); await wait(300); await H.click("#bReady");
   check((await until(() => C.evaluate("QJ.A.screen === 'game'"), 5000)) >= 0, "nouvelle partie lancée chez l'invité");
   // 2e fin : l'invité attend dans le salon, l'hôte part au lieu de relancer → l'invité prépare la suite
   await answer(H); await answer(C);
