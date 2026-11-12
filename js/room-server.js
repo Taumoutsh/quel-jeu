@@ -20,7 +20,8 @@
       const snap = () => [Object.assign({ peer: me, sameTab: true, isMe: true, presence: pres }, info(me)),
         ...[...others].map(([peer, pr]) => Object.assign({ peer, sameTab: false, isMe: false, presence: pr }, info(peer)))];
       const fire = () => { const ps = snap(); for (const h of hs) { try { h({ peers: ps, joined: [], left: [], updated: [] }); } catch (e) { console.error(e); } } };
-      const post = (what, body) => fetch(base + what + "?peer=" + me, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}), keepalive: what === "leave" });
+      let seq = 0; // numéro d'ordre des présences envoyées (le serveur ignore une présence plus ancienne)
+      const post = (what, body) => fetch(base + what + "?peer=" + me + (what === "presence" ? "&s=" + (++seq) : ""), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}), keepalive: what === "leave" });
 
       let es = null, lostT = null, firstMsg = null;
       // lagging : la relecture a apporté du neuf que le flux n'avait pas livré (flux retenu par un antivirus,

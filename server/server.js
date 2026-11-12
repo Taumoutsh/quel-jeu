@@ -307,6 +307,12 @@ async function api(req, res, url) {
     if (!body || typeof body !== "object" || Array.isArray(body)) return json(res, 400, { error: "objet attendu" });
     const p = getPeer(name, peer, true);
     if (!p) return json(res, 503, { error: "salle pleine" });
+    // numéro d'ordre : deux envois rapprochés peuvent arriver dans le désordre ; le plus ancien est ignoré
+    const seq = Number(url.searchParams.get("s"));
+    if (Number.isFinite(seq) && seq > 0) {
+      if (seq <= (p.seq || 0)) return json(res, 200, { ok: true, stale: true });
+      p.seq = seq;
+    }
     p.presence = Object.assign({}, p.presence, body);
     broadcast(name);
     return json(res, 200, { ok: true });

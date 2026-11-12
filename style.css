@@ -126,6 +126,9 @@ td.who { white-space: nowrap; }
 .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
 .tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 99px; background: var(--panel3); color: var(--mut); text-transform: uppercase; letter-spacing: .5px; }
 .tag.acc { background: var(--acc-soft); color: var(--acc); }
+.tag.good { background: var(--good-soft); color: var(--good); }
+.ready-info { text-align: center; margin: 0; font-size: 14px; color: var(--mut); }
+.ready-info b { color: var(--txt); }
 .notice { border-left: 3px solid var(--acc); background: var(--acc-soft); padding: 10px 12px; border-radius: 8px; font-size: 14px; }
 .notice.bad { border-left-color: var(--bad); background: var(--bad-soft); }
 .btn[aria-busy="true"]:disabled { opacity: .9; }

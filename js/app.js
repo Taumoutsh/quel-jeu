@@ -240,7 +240,7 @@
 
   // ------------------------------------------------------------------ multijoueur (présence dans un salon nommé)
   function players(forScore) {
-    const me = { me: true, name: A.name, color: A.color, avatar: A.avatar, r: A.res, host: A.mode === "host" || A.mode === "solo", peer: "me", j: A.j || 0, alive: true };
+    const me = { me: true, name: A.name, color: A.color, avatar: A.avatar, r: A.res, host: A.mode === "host" || A.mode === "solo", peer: "me", j: A.j || 0, alive: true, ready: !!A.ready };
     if (!A.nroom) return [me];
     const out = []; let sawMe = false;
     for (const p of A.peers) {
@@ -248,7 +248,7 @@
       if (!pr.n) continue;
       if (p.sameTab) { sawMe = true; out.push(me); continue; }
       if (forScore && pr.g !== A.gen) continue;
-      out.push({ me: false, name: String(pr.n).slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(pr.c) ? pr.c : "#ffffff", avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], host: pr.h === 1, peer: p.peer, j: pr.j | 0, alive: alive(p), active: active(p) });
+      out.push({ me: false, name: String(pr.n).slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(pr.c) ? pr.c : "#ffffff", avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], host: pr.h === 1, peer: p.peer, j: pr.j | 0, alive: alive(p), active: active(p), ready: !!pr.rd && pr.rd === A.gen });
     }
     if (!sawMe) out.unshift(me);
     return out;
@@ -259,9 +259,9 @@
     saveSession();
     clearTimeout(pubT);
     pubT = setTimeout(() => {
-      const p = { v: 1, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null), hb: A.hb || 0, j: A.j || 0, vh: document.visibilityState === "hidden" ? 1 : 0 };
+      const p = { v: 1, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null), hb: A.hb || 0, j: A.j || 0, vh: document.visibilityState === "hidden" ? 1 : 0, rd: A.ready && A.gen ? A.gen : 0 };
       p.st = A.mode === "host" ? A.st : null;
-      A.nroom.presence(p).catch((e) => console.warn("presence", e));
+      if (A.nroom) A.nroom.presence(p).catch((e) => console.warn("presence", e)); // salle quittée entre-temps : rien
     }, 40);
   }
   async function joinRoom(code) {
@@ -384,7 +384,7 @@
   function onPeers() {
     refreshSeen(); trackPlayers();
     checkHost();
-    if (A.mode === "host") { hostRecordGone(); hostCheck(); }
+    if (A.mode === "host") { hostRecordGone(); hostCheck(); hostReadyCheck(); }
     renderPlayers();
     if (A.screen === "reveal") renderRevealTable();
     if (A.screen === "final") renderFinal();
@@ -395,7 +395,7 @@
     if (A._stjs === js) return;
     A._stjs = js;
     if (st.gen !== A.gen) {
-      A.gen = st.gen; A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false;
+      A.gen = st.gen; A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false; A.ready = false;
       A.j = st.ph === "lobby" ? 0 : st.ph === "play" ? st.i : st.ph === "rev" ? st.i + 1 : st.seq.length; // arrivé en cours de partie ?
       // page rechargée en pleine partie : on reprend ses réponses et sa manche d'arrivée
       if (A.resume && A.resume.gen === st.gen) { A.res = Array.isArray(A.resume.res) ? A.resume.res.slice() : []; A.j = A.resume.j | 0; }
@@ -422,6 +422,7 @@
     const seq = buildSeq(cfg);
     if (!seq.length) { toast("Aucune vue disponible pour ce choix d'images."); return; }
     cfg.rounds = seq.length;
+    A.ready = false;
     A.gen = rid(8); A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false; A.j = 0; A.track = {};
     // à plusieurs : décompte 3, 2, 1 chez tout le monde avant la 1re manche (t0 : départ, le chrono attend la fin)
     const cd = A.mode === "host" ? CD_MS : 0;
@@ -467,7 +468,7 @@
     publish(); route();
   }
   function hostReplay() {
-    A.gen = rid(8); A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false; A.j = 0; A.track = {};
+    A.gen = rid(8); A.res = []; A.R = null; A.shownReveal = -1; A.shownFinal = false; A.j = 0; A.track = {}; A.ready = false;
     A.st = { gen: A.gen, ph: "lobby", cfg: Object.assign({}, A.cfg), seq: [], i: -1, dl: 0, term: (A.st && A.st.term) || 0 };
     publish(); route();
   }
@@ -525,7 +526,7 @@
     ensureName(); await leaveRoom();
     const code = genCode();
     try { await joinRoom(code); } catch (e) { toast("Impossible de créer la partie : " + (e.code || e.message), 5000); return; }
-    A.mode = "host"; A.gen = rid(8); A.res = [];
+    A.mode = "host"; A.gen = rid(8); A.res = []; A.ready = false;
     A.st = { gen: A.gen, ph: "lobby", cfg: Object.assign({}, A.cfg), seq: [], i: -1, dl: 0 };
     try { history.replaceState(null, "", "#partie-" + code.toLowerCase()); } catch (e) { /* ignore */ }
     publish(); route();
@@ -572,7 +573,7 @@
         : resume === true ? "La partie " + code + " n'existe plus." : "Aucune partie en cours avec le code " + code + ". Vérifie le code auprès de l'hôte.");
       return;
     }
-    A.mode = "guest"; A.st = null; A.gen = null; A.res = []; A.sawHost = false; A._stjs = null;
+    A.mode = "guest"; A.st = null; A.gen = null; A.res = []; A.sawHost = false; A._stjs = null; A.ready = false;
     try { history.replaceState(null, "", "#partie-" + code.toLowerCase()); } catch (e) { /* ignore */ }
     publish();
     showLobby();
@@ -617,6 +618,7 @@
     $("codeBox").textContent = A.code || "-----";
     $("bStart").classList.toggle("hidden", A.mode === "guest");
     $("waitHost").classList.toggle("hidden", A.mode !== "guest");
+    renderReady();
     $("waitHostTxt").textContent = A.st && A.st.ph === "end" ? "Partie terminée : en attente que l'hôte relance une partie…" : "En attente du lancement par l'hôte…";
     $("settings").classList.toggle("locked", A.mode === "guest");
     renderSettings(); renderPlayers();
@@ -651,7 +653,7 @@
     if (A.screen === "lobby" && !(A.editName && $("plName"))) {
       $("nPlayers").textContent = "(" + ps.length + ")";
       $("playersList").innerHTML = ps.map((p) => {
-        const tags = (p.alive === false ? '<span class="tag bad">Absent</span>' : "") + (p.host && A.nroom ? '<span class="tag acc">Hôte</span>' : "") + (p.me ? '<span class="tag">Toi</span>' : "");
+        const tags = (p.alive === false ? '<span class="tag bad">Absent</span>' : "") + (p.ready && readyLobby() ? '<span class="tag good">Prêt</span>' : "") + (p.host && A.nroom ? '<span class="tag acc">Hôte</span>' : "") + (p.me ? '<span class="tag">Toi</span>' : "");
         if (p.me && A.editName) return '<form class="pl me" id="plNameForm">' + ava(p, 30) + '<input type="text" id="plName" class="grow" maxlength="16" value="' + esc(p.name) + '" autocomplete="off" enterkeyhint="done" aria-label="Ton pseudo">'
           + '<button class="btn icon sm on" type="submit" title="Valider" aria-label="Valider le pseudo">' + ICON_OK + "</button></form>";
         return '<div class="pl' + (p.me ? " me" : "") + '">' + ava(p, 30) + '<b class="grow">' + esc(p.name) + "</b>"
@@ -663,7 +665,43 @@
         $("plName").onkeydown = (e) => { if (e.key === "Escape") editName(false); };
       }
     }
+    if (A.screen === "lobby") renderReady();
     if (A.screen === "game") renderChips();
+  }
+  // ---- salon à plusieurs : chacun clique sur « Je suis prêt » ; la partie démarre (décompte 3, 2, 1) quand
+  // tous les joueurs présents sont prêts. L'hôte peut lancer sans attendre quelqu'un qui traîne.
+  // Prêt = présence rd égale à la génération du salon : un nouveau salon (Rejouer) remet tout le monde à zéro.
+  const readyLobby = () => !!A.nroom && !!A.st && A.st.ph === "lobby" && (A.mode === "host" || A.mode === "guest");
+  function readyCount() {
+    const ps = players(false).filter((p) => p.alive !== false);
+    return { n: ps.filter((p) => p.ready).length, all: ps.length };
+  }
+  function renderReady() {
+    const on = readyLobby();
+    const b = $("bReady"), info = $("readyInfo");
+    b.classList.toggle("hidden", !on); info.classList.toggle("hidden", !on);
+    if (!on) { $("bStart").textContent = "Lancer la partie"; $("bStart").classList.add("pri"); return; }
+    const { n, all } = readyCount();
+    b.textContent = A.ready ? "Prêt ! (annuler)" : "Je suis prêt";
+    b.classList.toggle("pri", !A.ready); b.classList.toggle("sea", !!A.ready);
+    b.setAttribute("aria-pressed", A.ready ? "true" : "false");
+    info.innerHTML = "Prêts : <b>" + n + "/" + all + "</b> · la partie démarre quand tout le monde est prêt.";
+    // hôte : bouton secondaire pour ne pas attendre quelqu'un qui ne répond plus
+    $("bStart").textContent = "Lancer sans attendre";
+    $("bStart").classList.remove("pri");
+    $("bStart").classList.toggle("hidden", A.mode !== "host" || n === all);
+    $("waitHost").classList.add("hidden");
+  }
+  function toggleReady() {
+    if (!readyLobby()) return;
+    A.ready = !A.ready;
+    publish(); renderPlayers();
+    hostReadyCheck();
+  }
+  function hostReadyCheck() {
+    if (A.mode !== "host" || !readyLobby()) return;
+    const { n, all } = readyCount();
+    if (all > 0 && n === all) hostStart();
   }
 
   // ------------------------------------------------------------------ manche
@@ -1173,6 +1211,7 @@
     $("bLobbyBack").onclick = goHome;
     $("bCopy").onclick = () => { navigator.clipboard.writeText(A.code).then(() => toast("Code copié : " + A.code), () => toast("Code : " + A.code)); };
     $("bStart").onclick = () => { if (isHost()) hostStart(); };
+    $("bReady").onclick = toggleReady;
     for (const b of document.querySelectorAll("#settings [data-step]")) b.onclick = () => { const c = curCfg(); const max = Math.max(1, Math.min(15, pool(c.pack).length)); setCfg("rounds", Math.max(1, Math.min(max, c.rounds + +b.dataset.step))); };
     for (const seg of document.querySelectorAll("#settings .seg")) seg.addEventListener("click", (e) => {
       const b = e.target.closest("button"); if (!b || b.disabled) return;

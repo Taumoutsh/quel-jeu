@@ -33,9 +33,24 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
   const t1 = Date.now(); await C.click("#bJoin");
   check((await until(() => C.evaluate("QJ.A.screen === 'lobby'"), 6000)) >= 0, "partie existante rejointe en " + ((Date.now() - t1) / 1000).toFixed(1) + " s");
   check((await until(async () => (await H.innerText("#playersList")).includes("Client"), 4000)) >= 0, "le client apparaît chez l'hôte");
-  await H.click("#bStart");
-  check((await until(() => C.evaluate("!document.getElementById('cd').classList.contains('hidden')"), 2000)) >= 0, "décompte affiché chez l'invité");
-  check(await H.evaluate("!document.getElementById('cd').classList.contains('hidden') && /^[123]$/.test(document.getElementById('cdNum').textContent)"), "décompte affiché chez l'hôte (" + (await H.innerText("#cdNum")) + ")");
+  // salon : chacun clique sur « Je suis prêt » ; la partie démarre quand tout le monde est prêt
+  const info = (p) => p.innerText("#readyInfo");
+  check(/0\/2/.test(await info(H)) && /0\/2/.test(await info(C)), "salon : Prêts 0/2 chez les deux");
+  check(await H.isVisible("#bStart") && /sans attendre/i.test(await H.innerText("#bStart")), "l'hôte peut lancer sans attendre");
+  check(!(await C.isVisible("#bStart")) && (await C.isVisible("#bReady")), "l'invité a le bouton Prêt, pas Lancer");
+  await C.click("#bReady");
+  check((await until(async () => /1\/2/.test(await info(H)) && /PRÊT/i.test(await H.innerText("#playersList")), 3000)) >= 0, "l'hôte voit l'invité prêt (1/2) en moins de 3 s");
+  check(/annuler/i.test(await C.innerText("#bReady")), "bouton de l'invité : Prêt ! (annuler)");
+  await C.click("#bReady");
+  check((await until(async () => /0\/2/.test(await info(H)), 3000)) >= 0, "l'invité annule : 0/2 chez l'hôte");
+  // clics rapides : l'état final doit être « prêt » partout (présences dans l'ordre)
+  for (let k = 0; k < 5; k++) { await C.click("#bReady"); await wait(30); }
+  check((await until(async () => /1\/2/.test(await info(H)), 3000)) >= 0, "5 clics rapides : l'hôte voit bien l'état final (prêt)");
+  await H.screenshot({ path: OUT + "/ready-host.png" });
+  check((await H.evaluate("QJ.A.st.ph")) === "lobby", "pas de départ tant que l'hôte n'est pas prêt");
+  await H.click("#bReady");
+  check((await until(() => C.evaluate("!document.getElementById('cd').classList.contains('hidden')"), 2000)) >= 0, "tout le monde prêt : départ automatique, décompte affiché chez l'invité");
+  check(await H.evaluate("QJ.A.cdGen === QJ.A.gen && QJ.A.st.t0 > 0"), "décompte lancé chez l'hôte aussi");
   await wait(400); await C.screenshot({ path: OUT + "/countdown.png" });
   check((await until(() => C.evaluate("document.getElementById('cd').classList.contains('hidden')"), 4500)) >= 0, "décompte terminé, la manche commence");
   check((await H.innerText("#hTime")).trim() === "2:00", "chrono plein au début de la manche (" + (await H.innerText("#hTime")).trim() + ")");
@@ -50,7 +65,7 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
   await C.screenshot({ path: OUT + "/guest-again.png" });
   await H.click("#bAgain"); await wait(300);
   check((await until(() => C.evaluate("QJ.A.st.ph === 'lobby' && QJ.A.screen === 'lobby'"), 4000)) >= 0, "l'hôte relance : l'invité est dans le nouveau salon");
-  check(/lancement/.test(await C.innerText("#waitHost")), "message : « " + (await C.innerText("#waitHost")).trim() + " »");
+  check(/0\/2/.test(await info(C)) && /je suis prêt/i.test(await C.innerText("#bReady")), "nouveau salon : tout le monde redevient « pas prêt »");
   await H.click("#bStart");
   check((await until(() => C.evaluate("QJ.A.screen === 'game'"), 5000)) >= 0, "nouvelle partie lancée chez l'invité");
   // 2e fin : l'invité attend dans le salon, l'hôte part au lieu de relancer → l'invité prépare la suite
@@ -61,6 +76,11 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
   await H.click("#bHome");
   check((await until(() => C.evaluate("QJ.A.mode === 'host' && QJ.A.screen === 'lobby' && QJ.A.st.ph === 'lobby'"), 8000)) >= 0, "hôte parti : l'invité qui attendait devient hôte d'un nouveau salon, même code");
   check((await C.innerText("#codeBox")).trim() === code, "code inchangé");
+  // serveur : une présence plus ancienne (numéro d'ordre inférieur) arrivée en retard est ignorée
+  const post = (s, body) => fetch(URL + "api/rooms/qj-ordre/presence?peer=testordre01&s=" + s, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  await post(2, { n: "Ordre", rd: "neuf" }); await post(1, { n: "Ordre", rd: "" });
+  const stt = await (await fetch(URL + "api/rooms/qj-ordre/state?peer=testordre02")).json();
+  check(stt.peers.testordre01 && stt.peers.testordre01.rd === "neuf", "serveur : présence périmée ignorée (ordre des envois respecté)");
   check(errs.length === 0, "erreurs JS : " + (errs.join(" | ") || "aucune"));
   srv.kill(); await b.close(); process.exit();
 })();
