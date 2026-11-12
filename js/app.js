@@ -877,7 +877,7 @@
 
     $("fGuess").addEventListener("submit", (e) => { e.preventDefault(); submitGuess($("gInput").value); });
     attachSuggest($("gInput"), $("sugg"), (t) => { $("gInput").value = t; submitGuess(t); }, () => (A.st && A.st.cfg.hints ? (t) => true : null));
-    $("bSkip").onclick = async () => { if (await confirmBox("Passer cette manche ?<br><span class='mut small'>Tu marques 0 point.</span>", "Passer")) failName("Manche passée"); };
+    $("bSkip").onclick = async () => { if (await confirmBox("Passer cette manche ?", "Passer")) failName("Manche passée"); };
     $("bPin").onclick = validatePin;
     $("bBig").onclick = () => { const big = $("pMap").classList.toggle("big"); $("bBig").textContent = big ? "Réduire" : "Agrandir"; setTimeout(() => pick && pick.fit(), 280); };
     $("bForce").onclick = hostForceEnd;
