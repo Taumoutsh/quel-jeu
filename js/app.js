@@ -248,7 +248,7 @@
       if (!pr.n) continue;
       if (p.sameTab) { sawMe = true; out.push(me); continue; }
       if (forScore && pr.g !== A.gen) continue;
-      out.push({ me: false, name: String(pr.n).slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(pr.c) ? pr.c : "#ffffff", avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], host: pr.h === 1, peer: p.peer, j: pr.j | 0, alive: alive(p) });
+      out.push({ me: false, name: String(pr.n).slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(pr.c) ? pr.c : "#ffffff", avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], host: pr.h === 1, peer: p.peer, j: pr.j | 0, alive: alive(p), active: active(p) });
     }
     if (!sawMe) out.unshift(me);
     return out;
@@ -259,7 +259,7 @@
     saveSession();
     clearTimeout(pubT);
     pubT = setTimeout(() => {
-      const p = { v: 1, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null), hb: A.hb || 0, j: A.j || 0 };
+      const p = { v: 1, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null), hb: A.hb || 0, j: A.j || 0, vh: document.visibilityState === "hidden" ? 1 : 0 };
       p.st = A.mode === "host" ? A.st : null;
       A.nroom.presence(p).catch((e) => console.warn("presence", e));
     }, 40);
@@ -281,13 +281,23 @@
     for (const p of A.peers) {
       if (p.sameTab) { A.myPeer = p.peer; A.mySince = p.since || 0; continue; }
       const pr = p.presence || {}, s = A.seen[p.peer];
-      if (!s || s.hb !== pr.hb) A.seen[p.peer] = { hb: pr.hb, at: now };
+      if (!s || s.hb !== pr.hb) A.seen[p.peer] = Object.assign({ hid: 0 }, s, { hb: pr.hb, at: now });
+      const t = A.seen[p.peer];
+      t.hid = pr.vh ? t.hid || now : 0; // page cachée depuis (téléphone passé sur une autre application)
     }
   }
   function alive(p) {
     if (!p || p.sameTab) return true;
     const s = A.seen[p.peer];
     return p.online !== false && !!s && Date.now() - s.at < DEAD_MS;
+  }
+  // présent ET disponible : page visible (ou cachée depuis moins de 4 s). Un téléphone peut garder la page
+  // en marche un moment après être passé sur une autre application : l'hôte paraît vivant mais ne joue plus.
+  const AWAY_MS = 4000;
+  function active(p) {
+    if (!p || p.sameTab) return true;
+    const s = A.seen[p.peer];
+    return alive(p) && !(s && s.hid && Date.now() - s.hid > AWAY_MS);
   }
   // joueurs de la partie en cours (même génération), gardés même après leur départ pour le classement final
   function trackPlayers() {
@@ -311,7 +321,6 @@
     let changed = false;
     for (const t of Object.values(A.track)) {
       if (livePeers.has(t.peer) || gone.some((g) => g.peer === t.peer)) continue;
-      if (!t.r.some((x) => x)) continue; // parti sans avoir joué une manche
       gone.push({ peer: t.peer, name: t.name, color: t.color, avatar: t.avatar, r: t.r, j: t.j, left: A.st.i });
       changed = true;
     }
@@ -324,7 +333,7 @@
   function checkHost() {
     if (!A.nroom || (A.mode !== "host" && A.mode !== "guest")) return;
     const now = Date.now();
-    const hosts = A.peers.filter((p) => !p.sameTab && p.presence && p.presence.h === 1 && p.presence.st && alive(p));
+    const hosts = A.peers.filter((p) => !p.sameTab && p.presence && p.presence.h === 1 && p.presence.st && active(p));
     const rank = (p) => [-((p.presence.st && p.presence.st.term) || 0), p.peer];
     hosts.sort((a, b) => { const x = rank(a), y = rank(b); return x[0] - y[0] || (x[1] < y[1] ? -1 : 1); });
     const best = hosts[0];
@@ -346,7 +355,8 @@
     if (!A.sawHost || !A.st) return;
     if (!A.hostLostAt) A.hostLostAt = now;
     if (now - A.hostLostAt < HOST_WAIT_MS) return;
-    const cands = A.peers.filter((p) => (p.sameTab || (alive(p) && p.presence && p.presence.n && p.presence.g === A.gen)))
+    if (document.visibilityState === "hidden") return; // pas de relève prise par une page cachée
+    const cands = A.peers.filter((p) => (p.sameTab || (active(p) && p.presence && p.presence.n && p.presence.g === A.gen)))
       .map((p) => ({ peer: p.peer, me: !!p.sameTab, since: p.since || 0 }))
       .sort((a, b) => (a.since - b.since) || (a.peer < b.peer ? -1 : 1));
     if (cands.length && cands[0].me) becomeHost();
@@ -409,7 +419,7 @@
   function hostCheck() {
     if (!isHost() || !A.st || A.st.ph !== "play") return;
     const i = A.st.i, ps = players(true);
-    const live = ps.filter((p) => p.alive !== false);
+    const live = ps.filter((p) => p.active !== false);
     const allDone = live.length > 0 && live.every((p) => p.r[i] && p.r[i][0] >= 2);
     const timeUp = A.st.dl && Date.now() > A.st.dl + 1200;
     if (allDone || timeUp) { A.st = Object.assign({}, A.st, { ph: "rev" }); publish(); route(); }
@@ -925,7 +935,7 @@
     const here = players(true).filter((p) => !gonePeers.has(p.peer)), names = new Set(here.map((p) => p.name));
     const gone = goneList.filter((g) => !names.has(g.name)).map((g) => ({ me: false, name: g.name, color: g.color || "#8b9fb1", avatar: avaOK(g.avatar) ? g.avatar : null, r: g.r || [], j: g.j | 0, gone: true, left: g.left, peer: "g-" + g.peer }));
     const ps = here.concat(gone).map((p) => ({ p, tot: totalOf(p.r), found: (p.r || []).filter((x) => x && x[0] >= 1 && x[0] <= 2).length, played: (p.r || []).filter((x) => x).length })).sort((a, b) => b.tot - a.tot);
-    const multi = ps.length > 1;
+    const multi = ps.length > 1 || A.mode === "host" || A.mode === "guest";
     const mine = ps.find((x) => x.p.me) || ps[0];
     // récapitulatif du joueur : sur les manches qu'il a jouées (arrivé en cours de partie : pas sur toute la partie)
     const cnt = multi ? Math.max(mine.played, 1) : n, maxMine = cnt * (NAME_MAX + LOC_MAX);
@@ -1130,7 +1140,7 @@
     setInterval(() => { if (A.nroom) { A.hb = ((A.hb || 0) + 1) % 1e6; publish(); } }, HB_MS);
     setInterval(() => { if (A.nroom) { checkHost(); if (A.mode === "host") hostRecordGone(); renderPlayers(); } }, 1000);
     // retour sur la page (téléphone) : signal de vie immédiat pour ne pas passer pour absent
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && A.nroom) { A.hb = ((A.hb || 0) + 1) % 1e6; publish(); } });
+    document.addEventListener("visibilitychange", () => { if (A.nroom) { A.hb = ((A.hb || 0) + 1) % 1e6; publish(); } });
 
     const m = /^#partie-([a-z0-9]{5})$/i.exec(location.hash);
     if (m) $("joinCode").value = m[1].toUpperCase();
