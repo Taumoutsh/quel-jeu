@@ -392,22 +392,27 @@
 
   // ------------------------------------------------------------------ salon / réglages
   function curCfg() { return A.mode === "guest" ? (A.st && A.st.cfg) || A.cfg : A.cfg; }
-  // pseudo modifiable depuis le salon : enregistré et transmis aux autres joueurs pendant la saisie
-  let nameT = null;
-  function setName(raw, final) {
-    let n = String(raw).trim().replace(/\s+/g, " ").slice(0, 16);
-    if (!n) { if (!final) return; n = A.name || "Joueur " + (10 + ((Math.random() * 89) | 0)); }
-    if (final) $("lobbyName").value = n;
-    if (n === A.name) return;
-    A.name = n; LS.set("name", n); $("pseudo").value = n;
-    publish(); renderPlayers();
+  // pseudo modifiable depuis le salon : crayon à côté de son nom → zone de texte et bouton Valider
+  const ICON_PEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20 l1.2-4.6 L15.6 5 a2.1 2.1 0 0 1 3 0 l.4.4 a2.1 2.1 0 0 1 0 3 L8.6 18.8 Z M13.8 6.8 l3.4 3.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+  const ICON_OK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 l4.5 4.5 L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+  function editName(on) {
+    A.editName = on;
+    renderPlayers();
+    if (on) { const i = $("plName"); i.focus(); i.select(); }
+  }
+  function saveName() {
+    const n = $("plName").value.trim().replace(/\s+/g, " ").slice(0, 16);
+    if (n && n !== A.name) { A.name = n; LS.set("name", n); $("pseudo").value = n; publish(); }
+    editName(false);
   }
   function showLobby() {
     show("lobby");
-    $("lobbyName").value = A.name;
+    A.editName = false;
     const multi = A.mode === "host" || A.mode === "guest";
     $("codeCard").classList.toggle("hidden", !multi);
-    $("playersCard").classList.toggle("hidden", !multi);
+    $("playersCard").querySelector("h2").firstChild.textContent = multi ? "Joueurs " : "Joueur ";
+    $("nPlayers").classList.toggle("hidden", !multi);
+    $("playersCard").classList.remove("hidden");
     $("codeBox").textContent = A.code || "-----";
     $("bStart").classList.toggle("hidden", A.mode === "guest");
     $("waitHost").classList.toggle("hidden", A.mode !== "guest");
@@ -441,9 +446,20 @@
   }
   function renderPlayers() {
     const ps = players(false);
-    if (A.screen === "lobby") {
+    if (A.screen === "lobby" && !(A.editName && $("plName"))) {
       $("nPlayers").textContent = "(" + ps.length + ")";
-      $("playersList").innerHTML = ps.map((p) => '<div class="pl">' + ava(p, 30) + '<b class="grow">' + esc(p.name) + "</b>" + (p.host ? '<span class="tag acc">Hôte</span>' : "") + (p.me ? '<span class="tag">Toi</span>' : "") + "</div>").join("");
+      $("playersList").innerHTML = ps.map((p) => {
+        const tags = (p.host && A.nroom ? '<span class="tag acc">Hôte</span>' : "") + (p.me ? '<span class="tag">Toi</span>' : "");
+        if (p.me && A.editName) return '<form class="pl me" id="plNameForm">' + ava(p, 30) + '<input type="text" id="plName" class="grow" maxlength="16" value="' + esc(p.name) + '" autocomplete="off" enterkeyhint="done" aria-label="Ton pseudo">'
+          + '<button class="btn icon sm on" type="submit" title="Valider" aria-label="Valider le pseudo">' + ICON_OK + "</button></form>";
+        return '<div class="pl' + (p.me ? " me" : "") + '">' + ava(p, 30) + '<b class="grow">' + esc(p.name) + "</b>"
+          + (p.me ? '<button class="btn icon sm" type="button" id="bNameEdit" title="Modifier mon pseudo" aria-label="Modifier mon pseudo">' + ICON_PEN + "</button>" : "") + tags + "</div>";
+      }).join("");
+      if ($("bNameEdit")) $("bNameEdit").onclick = () => editName(true);
+      if ($("plNameForm")) {
+        $("plNameForm").onsubmit = (e) => { e.preventDefault(); saveName(); };
+        $("plName").onkeydown = (e) => { if (e.key === "Escape") editName(false); };
+      }
     }
     if (A.screen === "game") renderChips();
   }
@@ -936,9 +952,6 @@
     $("bAvaEdit").onclick = () => { const h = $("avaOpts").classList.toggle("hidden"); $("bAvaEdit").classList.toggle("on", !h); $("bAvaEdit").setAttribute("aria-expanded", h ? "false" : "true"); };
     $("bLibBack").onclick = () => show(A.mode ? "lobby" : "home");
     $("bLobbyBack").onclick = goHome;
-    $("lobbyName").oninput = () => { clearTimeout(nameT); nameT = setTimeout(() => setName($("lobbyName").value, false), 350); };
-    $("lobbyName").onchange = () => { clearTimeout(nameT); setName($("lobbyName").value, true); };
-    $("lobbyName").onkeydown = (e) => { if (e.key === "Enter") $("lobbyName").blur(); };
     $("bCopy").onclick = () => { navigator.clipboard.writeText(A.code).then(() => toast("Code copié : " + A.code), () => toast("Code : " + A.code)); };
     $("bStart").onclick = () => { if (isHost()) hostStart(); };
     for (const b of document.querySelectorAll("#settings [data-step]")) b.onclick = () => { const c = curCfg(); const max = Math.max(1, Math.min(15, pool(c.pack).length)); setCfg("rounds", Math.max(1, Math.min(max, c.rounds + +b.dataset.step))); };
