@@ -96,6 +96,7 @@
       ["The Witcher 3: Wild Hunt", "witcher 3", "wild hunt"],
     ]},
     { s: null, g: [["Cyberpunk 2077", "cyberpunk"]] },
+    { s: null, g: [["RuneScape", "runescape 3", "rs3"], ["Old School RuneScape", "osrs", "old school runescape"]] },
     { s: "Mass Effect", a: [], g: [
       ["Mass Effect", "mass effect 1"], ["Mass Effect 2"], ["Mass Effect 3"], ["Mass Effect: Andromeda", "andromeda"],
     ]},
@@ -181,7 +182,7 @@
     { s: "Persona", a: [], g: [["Persona 5", "p5", "persona 5 royal"], ["Persona 3 Reload", "persona 3", "p3r"]] },
     { s: "Monster Hunter", a: ["mh"], g: [["Monster Hunter: World", "mhw", "mh world"], ["Monster Hunter Rise", "mhr"], ["Monster Hunter Wilds", "mh wilds"]] },
     { s: "NieR", a: ["nier"], g: [["NieR:Automata", "nier automata", "automata"]] },
-    { s: "Yakuza", a: ["like a dragon"], g: [["Yakuza 0"], ["Yakuza: Like a Dragon", "like a dragon 7", "yakuza 7"], ["Like a Dragon: Infinite Wealth", "infinite wealth"]] },
+    { s: "Yakuza", a: ["like a dragon"], g: [["Yakuza 0"], ["Yakuza Kiwami 2", "kiwami 2", "ryu ga gotoku kiwami 2"], ["Yakuza: Like a Dragon", "like a dragon 7", "yakuza 7"], ["Like a Dragon: Infinite Wealth", "infinite wealth"]] },
     { s: "Tomb Raider", a: ["lara croft"], g: [
       ["Tomb Raider (2013)", "tomb raider 2013"], ["Rise of the Tomb Raider"], ["Shadow of the Tomb Raider"],
     ]},
@@ -208,7 +209,7 @@
     { s: "Ori", a: [], g: [["Ori and the Blind Forest", "ori 1"], ["Ori and the Will of the Wisps", "ori 2"]] },
     { s: "Dying Light", a: [], g: [["Dying Light", "dying light 1"], ["Dying Light 2 Stay Human", "dying light 2"]] },
     { s: "Dead Space", a: [], g: [["Dead Space"]] },
-    { s: "Mafia", a: [], g: [["Mafia: Definitive Edition", "mafia 1"], ["Mafia II", "mafia 2"], ["Mafia: The Old Country", "mafia old country"]] },
+    { s: "Mafia", a: [], g: [["Mafia: Definitive Edition", "mafia 1"], ["Mafia II", "mafia 2"], ["Mafia III", "mafia 3"], ["Mafia: The Old Country", "mafia old country"]] },
     { s: "Hogwarts Legacy", a: ["hogwarts", "harry potter"], g: [["Hogwarts Legacy", "l heritage de poudlard"]] },
     { s: "Ratchet & Clank", a: ["ratchet"], g: [["Ratchet & Clank: Rift Apart", "rift apart"]] },
     { s: "Prince of Persia", a: [], g: [["Prince of Persia: Les Sables du Temps", "sands of time"], ["Prince of Persia: The Lost Crown", "the lost crown"]] },

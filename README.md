@@ -38,7 +38,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 133 vues de 18 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 201 vues de 34 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
@@ -61,6 +61,22 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Grand Theft Auto: Vice City | Vice Point, Little Havana, Starfish Island, aéroport Escobar, Prawn Island |
     | Assassin's Creed Unity | La Bastille, Hôtel de Ville, Palais-Royal, Panthéon, palais du Luxembourg (plan de Paris de 1789) |
     | Assassin's Creed Syndicate | Palais de Westminster, Buckingham Palace, cathédrale Saint-Paul, Tour de Londres |
+    | Zelda: Tears of the Kingdom | Hyrule central, village Rito, Lurelin, hautes terres d'Akkala, ville Goron |
+    | Pokémon Écarlate et Violet | Levincia, Porto Marinada, Montenevera |
+    | Final Fantasy XV | Lestallum, Cap Caem, Galdin Quay, pont vers Insomnia, disque de Cauthess |
+    | Hollow Knight | Dirtmouth, routes oubliées, Vertchemin, Cité des Larmes, pic de cristal |
+    | Yakuza Kiwami 2 | Theater Square, Millennium Tower, Pink Street, Tenkaichi Street, Nakamichi Street (Kamurocho) |
+    | The Elder Scrolls Online | Daggerfall, Wayrest, Elden Root, Mournhold, Vivec |
+    | World of Warcraft | Hurlevent, Forgefer, Baie-du-Butin, ruines de Lordaeron |
+    | Mafia: Definitive Edition | Little Italy, Chinatown, Works Quarter, hôtel de ville |
+    | Mafia III | Opéra, hôtel de ville, églises de Frisco Fields et de Pointe Verdun, fresque de Delray Hollow |
+    | Sleeping Dogs | Business District, North Point, Kennedy Town, Aberdeen |
+    | Assassin's Creed Brotherhood | Colisée, arc de Constantin, Panthéon (Rome) |
+    | Assassin's Creed Revelations | Sainte-Sophie, palais de Topkapı, port de Galata |
+    | Assassin's Creed Mirage | Ville ronde, Harbiyah, Karkh, Abbasiyah (Bagdad) |
+    | Final Fantasy XIV | Limsa Lominsa, Gridania, Ul'dah, Mor Dhona |
+    | Sea of Thieves | Plunder, Sanctuary, Ancient Spire, Golden Sands |
+    | RuneScape | Lumbridge, Varrock, Falador, Al Kharid, East Ardougne |
 
     Les captures portant le logo ou le nom du jeu ont été écartées. Les positions ont été relevées à la main sur les cartes (noms de lieux quand la carte en a, sinon repères visibles) : elles sont justes à quelques pourcents de la carte.
   - La visionneuse affiche une capture plate en plein écran ; on la déplace en glissant et on zoome comme pour un 360°.
