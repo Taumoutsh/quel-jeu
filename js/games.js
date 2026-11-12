@@ -101,7 +101,8 @@
     { s: null, g: [["RuneScape", "runescape 3", "rs3"], ["Old School RuneScape", "osrs", "old school runescape"]] },
     { s: "Dead Island", a: [], g: [["Dead Island"], ["Dead Island 2", "di2"]] },
     { s: "Life is Strange", a: [], g: [["Life is Strange", "lis"], ["Life is Strange 2", "lis2"], ["Life is Strange: True Colors", "true colors"]] },
-    { s: null, g: [["Kenshi"], ["Wuthering Waves", "wuwa"], ["Infinity Nikki"]] },
+    { s: null, g: [["Kenshi"], ["Wuthering Waves", "wuwa"], ["Infinity Nikki"], ["The Long Dark", "long dark"], ["Avowed"]] },
+    { s: "Metro", a: [], g: [["Metro 2033"], ["Metro: Last Light", "last light"], ["Metro Exodus", "exodus"]] },
     { s: "Just Cause", a: [], g: [["Just Cause 2", "jc2"], ["Just Cause 3", "jc3"]] },
     { s: "Dragon's Dogma", a: [], g: [["Dragon's Dogma", "dragons dogma dark arisen", "ddda"], ["Dragon's Dogma 2", "dd2"]] },
     { s: "Fable", a: [], g: [["Fable", "fable the lost chapters"], ["Fable II", "fable 2"], ["Fable III", "fable 3"]] },
@@ -183,7 +184,7 @@
       ["Resident Evil 2", "re2"], ["Resident Evil 4", "re4"], ["Resident Evil 7: Biohazard", "re7"],
       ["Resident Evil Village", "re8", "resident evil 8"],
     ]},
-    { s: "Silent Hill", a: [], g: [["Silent Hill 2"], ["Silent Hill f"]] },
+    { s: "Silent Hill", a: [], g: [["Silent Hill", "silent hill 1", "sh1"], ["Silent Hill 2"], ["Silent Hill: Homecoming", "homecoming", "silent hill 5"], ["Silent Hill f"]] },
     { s: "Final Fantasy", a: ["ff"], g: [
       ["Final Fantasy VII", "ff7", "ffvii"], ["Final Fantasy VII Remake", "ff7 remake", "ff7r"],
       ["Final Fantasy VII Rebirth", "ff7 rebirth"], ["Final Fantasy X", "ffx", "ff10"], ["Final Fantasy XII", "ffxii", "ff12", "final fantasy 12", "zodiac age"],

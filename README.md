@@ -38,7 +38,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 564 vues de 115 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 615 vues de 127 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
@@ -158,6 +158,18 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Need for Speed Unbound | City Pier, Planque de Rüdiger, Garage Rydell's Rydes, Storm Drain, Dômes de la carrière |
     | Need for Speed: Underground 2 | Aéroport international de Bayview, Beacon Hill East, City Center, Fort Union, Jackson Heights |
     | Need for Speed: Hot Pursuit | Big Timber Forest, Barrage de Carson Ridge, Grand Ocean Coast, East Gorge Canyon, Boulder Desert |
+    | Baldur's Gate 3 | Blighted Village, Camp gobelin, Repos de Waukeen, Overgrown Ruins, Épave du nautiloïde |
+    | Avowed | Lighthouse, Claviger's Landing, Watermill, Magran's Assay, Godless Ruins |
+    | The Legend of Zelda: Link's Awakening | Village des Mouettes, Plage de Toronbo, Marais Goponga, Œuf du Poisson-Rêve, Maison de la baie |
+    | The Legend of Zelda: Skyward Sword | Terre scellée, Grand Arbre (forêt de Firone), Cascade de Floria, Volcan d'Ordinn |
+    | Xenoblade Chronicles | Syrath Lighthouse (mer d'Eryth), Central Seal Island (mer d'Eryth), High Entia Tomb (mer d'Eryth), Sleeping Dragon Isle (mer d'Eryth), Centre Gate (mer d'Eryth) |
+    | Death Stranding 2: On the Beach | Villa Libre, Abri de Sam, Ciudad Nudo del Norte, C1 South Distribution Center, Former Geophysics Research Lab |
+    | The Long Dark | Camp Office, Carter Hydro Dam, Forestry Lookout, Logging Camp, Derailment |
+    | Silent Hill 2 | Société historique de Silent Hill, Pete's Bowl-O-Rama, Heaven's Night, Neely's Bar |
+    | Dead Island | Bunker 03, Bunker 04, Bunker 01, Bunker 06 |
+    | Metro Exodus | Église du Tsar des Eaux, Le pont (Volga) |
+    | Silent Hill: Homecoming | Cimetière de Rose Heights, Hôtel de ville de Shepherd's Glen, Casse de Curtis, Maison des Shepherd |
+    | Silent Hill | Église Balkan, Queen Burger, Maison Gordon |
 
     Les captures portant le logo ou le nom du jeu ont été écartées. Les positions ont été relevées à la main sur les cartes (noms de lieux quand la carte en a, sinon repères visibles) : elles sont justes à quelques pourcents de la carte.
   - La visionneuse affiche une capture plate en plein écran ; on la déplace en glissant et on zoome comme pour un 360°.
