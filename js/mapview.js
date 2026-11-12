@@ -124,7 +124,7 @@
         if (ptrs.size === 1) { const p = [...ptrs.values()][0]; last = { x: p.x, y: p.y }; }
       };
       el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
-      el.addEventListener("wheel", (e) => { e.preventDefault(); const r = el.getBoundingClientRect(); this.zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+      el.addEventListener("wheel", (e) => { if (this.opts.pageWheel && !e.ctrlKey) return; e.preventDefault(); const r = el.getBoundingClientRect(); this.zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
     }
   }
   root.MapView = MapView;

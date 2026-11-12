@@ -93,7 +93,7 @@
       const c = current(sc);
       return !q || (sid + " " + title(c.game) + " " + c.place).toLowerCase().includes(q);
     });
-    $("items").innerHTML = rows.length ? rows.slice(0, 400).map(({ sid, rs }) => {
+    $("items").innerHTML = rows.length ? rows.map(({ sid, rs }) => {
       const sc = scene(sid), c = sc && current(sc);
       const kinds = [...new Set(rs.map((r) => r.kind))].map((k) => "<span class='tag'>" + esc(KIND[k] || k) + "</span>").join(" ");
       return "<button type='button' class='adm-item" + (S.sel === sid ? " on" : "") + "' data-sid='" + esc(sid) + "'>"
@@ -101,7 +101,17 @@
         + "<span class='adm-tags'>" + (rs.length ? "<span class='tag acc'>" + rs.length + "</span> " : "") + kinds
         + (c && c.deleted ? " <span class='tag bad'>supprimée</span>" : c && c.changed ? " <span class='tag good'>corrigée</span>" : "") + "</span></button>";
     }).join("") : "<p class='mut small'>" + (S.tab === "reports" ? "Aucun signalement." : "Aucune vue.") + "</p>";
-    for (const b of $("items").querySelectorAll(".adm-item")) b.onclick = () => { S.sel = b.dataset.sid; S.draft = null; renderList(); renderEdit(); };
+    for (const b of $("items").querySelectorAll(".adm-item")) b.onclick = () => select(S.sel === b.dataset.sid ? null : b.dataset.sid);
+  }
+  // sélection d'une vue (null = aucune) ; sur téléphone la fiche remplace la liste
+  function select(sid) {
+    const y = window.scrollY;
+    S.sel = sid; S.draft = null;
+    $("main").classList.toggle("has-sel", !!sid);
+    renderList(); renderEdit();
+    if (sid && matchMedia("(max-width: 860px)").matches) window.scrollTo(0, 0);
+    else if (!sid) window.scrollTo(0, S.listY || 0);
+    if (sid) S.listY = y;
   }
   for (const b of $("tabs").children) b.onclick = () => { S.tab = b.dataset.t; for (const x of $("tabs").children) x.classList.toggle("on", x === b); renderList(); };
   $("search").oninput = renderList;
@@ -116,7 +126,9 @@
     if (!S.draft) S.draft = { game: c.game, place: c.place, x: c.x, y: c.y };
     const d = S.draft, rs = S.reports.filter((r) => r.sid === sc.id).sort((a, b) => (b.at > a.at ? 1 : -1));
     const opts = Object.values(S.games).sort((a, b) => a.t.localeCompare(b.t)).map((g) => "<option value='" + esc(g.key) + "'" + (g.key === d.game ? " selected" : "") + ">" + esc(g.t) + "</option>").join("");
-    box.innerHTML = "<div class='row'><h2 class='grow' style='margin:0'>" + esc(title(c.game)) + "</h2><span class='mut small'>" + esc(sc.id) + "</span></div>"
+    box.innerHTML = "<div class='row adm-edit-head'><button class='btn sm ghost adm-back' id='eBack' type='button'>← Liste</button><h2 class='grow' style='margin:0'>" + esc(title(c.game)) + "</h2>"
+      + "<button class='btn icon adm-close' id='eClose' type='button' title='Fermer' aria-label='Fermer la vue'><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M6 6 L18 18 M18 6 L6 18' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'/></svg></button></div>"
+      + "<div class='mut small'>" + esc(sc.id) + "</div>"
       + (c.deleted ? "<div class='notice small'>Cette vue est supprimée : les joueurs ne la voient plus.</div>" : c.changed ? "<div class='notice small'>Vue corrigée (original : " + esc(title(sc.game)) + " · " + esc(sc.place) + ").</div>" : "")
       + "<div class='adm-shot'><img src='packs/img/" + esc(sc.id) + ".jpg' alt='Capture'></div>"
       + "<div class='adm-fields'><label class='f'>Jeu<select id='eGameSel'>" + opts + "</select></label>"
@@ -134,7 +146,8 @@
         + (r.status !== "ignored" ? "<button class='btn sm ghost' data-st='ignored' data-id='" + r.id + "' type='button'>Ignorer</button>" : "")
         + (r.status !== "open" ? "<button class='btn sm ghost' data-st='open' data-id='" + r.id + "' type='button'>Rouvrir</button>" : "")
         + "<button class='btn sm ghost danger' data-rm='" + r.id + "' type='button'>Effacer</button></div></div>").join("") : "<p class='mut small'>Aucun.</p>");
-    S.map = new MapView($("eMap"), { onTap: (x, y) => { d.x = x; d.y = y; drawPins(); } });
+    $("eBack").onclick = $("eClose").onclick = () => select(null);
+    S.map = new MapView($("eMap"), { pageWheel: true, onTap: (x, y) => { d.x = x; d.y = y; drawPins(); } });
     const m = mapOf(d.game);
     if (m) requestAnimationFrame(() => { S.map.setImage(m.url, m.w, m.h); drawPins(true); });
     $("eGameSel").onchange = () => {
