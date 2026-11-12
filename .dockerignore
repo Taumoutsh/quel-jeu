@@ -3,3 +3,4 @@ tests
 *.md
 .env
 packs/img/.git
+data/

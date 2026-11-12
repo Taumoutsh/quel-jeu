@@ -1,0 +1,30 @@
+/* Page d'administration (/admin) : complète style.css */
+.adm { padding: 18px 16px 40px; }
+.adm .wrap.wide { max-width: 1200px; }
+.adm-head { align-items: center; gap: 10px; flex-wrap: wrap; }
+.adm-title { font-family: var(--fd); font-size: 26px; margin: 0; text-transform: uppercase; }
+.adm-title span { color: var(--acc); }
+.adm-title small { font-family: var(--fb); font-size: 13px; color: var(--mut); text-transform: none; margin-left: 6px; }
+.adm-main { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 860px) { .adm-main { grid-template-columns: 1fr; } }
+.adm-list { position: sticky; top: 12px; }
+.adm-check { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.adm-items { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; max-height: 70vh; overflow-y: auto; }
+.adm-item { text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line); background: var(--well); color: var(--txt); cursor: pointer; font: inherit; font-size: 14px; }
+.adm-item:hover { border-color: var(--dim); }
+.adm-item.on { border-color: var(--acc); background: var(--acc-soft); }
+.adm-item .mut { font-size: 13px; }
+.adm-tags { margin-top: 3px; }
+.tag.bad { background: rgba(255, 123, 114, .15); color: var(--bad); }
+.tag.good { background: rgba(111, 214, 155, .15); color: var(--good); }
+.adm-edit { display: flex; flex-direction: column; gap: 10px; }
+.adm-shot { background: var(--well); border-radius: 12px; overflow: hidden; display: flex; justify-content: center; }
+.adm-shot img { max-width: 100%; max-height: 340px; display: block; }
+.adm-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 560px) { .adm-fields { grid-template-columns: 1fr; } }
+.adm-fields select { background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; width: 100%; color: var(--txt); font: inherit; font-size: 15px; }
+.adm-map { height: 420px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); }
+.adm-rep { border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px; }
+.adm-rep.st-resolved, .adm-rep.st-ignored { opacity: .6; }
+.adm-com { background: var(--well); border-radius: 8px; padding: 7px 9px; font-size: 14px; white-space: pre-wrap; }
+input[type=password] { background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; width: 100%; outline: none; font-size: 16px; color: var(--txt); }

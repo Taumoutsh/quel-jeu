@@ -23,12 +23,14 @@ RUN --mount=type=cache,id=quel-jeu-images,target=/cache \
 # 2. Serveur Node (fichiers statiques + salles multijoueur)
 FROM node:22-alpine
 WORKDIR /app
-COPY index.html style.css ./
+COPY index.html admin.html style.css admin.css ./
 COPY js js
 COPY server server
 COPY packs/vrais-jeux.js packs/
 COPY --from=images /src/packs/img packs/img
-ENV PORT=8080
+# signalements des joueurs et corrections de l'administrateur (volume Docker, voir docker-compose.yml)
+RUN mkdir -p /app/data && chown node:node /app/data
+ENV PORT=8080 QJ_DATA=/app/data
 EXPOSE 8080
 USER node
 CMD ["node", "server/server.js"]

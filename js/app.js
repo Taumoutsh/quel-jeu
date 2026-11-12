@@ -40,7 +40,7 @@
     lib: { scenes: {}, maps: {}, games: {} }, libReady: false,
     matcher: null,
     mode: null, nroom: null, code: null, st: null, gen: null, res: [], peers: [],
-    R: null, shownReveal: -1, shownFinal: false, sawHost: false,
+    R: null, shownReveal: -1, shownFinal: false, sawHost: false, reported: {},
   };
 
   // couleur choisie avec l'ancienne palette : on prend sa remplaçante
@@ -620,6 +620,11 @@
     $("bNext").textContent = last ? "Voir le classement" : "Manche suivante";
     $("bNext").classList.toggle("hidden", !isHost());
     $("rvWait").classList.toggle("hidden", isHost());
+    // signaler une erreur : seulement pour les vrais jeux, sur le site auto-hébergé (le serveur garde les signalements)
+    const rid = A.st.seq[i];
+    $("bReport").classList.toggle("hidden", !(SERVER && rid && rid.startsWith("r-")));
+    $("bReport").disabled = !!A.reported[rid];
+    $("bReport").textContent = A.reported[rid] ? "Erreur signalée" : "Signaler une erreur";
     if (!rvMap) rvMap = new MapView($("rvMap"));
     const m = info && mapInfo(info.game);
     if (m) requestAnimationFrame(() => { rvMap.setImage(m.url, m.w, m.h); renderRevealPins(); });
@@ -650,6 +655,56 @@
     }).join("");
     $("rvTable").innerHTML = "<tr><th>Joueur</th><th>Nom</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows;
     if (A.screen === "reveal") renderRevealPins();
+  }
+
+  // ------------------------------------------------------------------ signalement d'une erreur
+  let rpMap = null, rpPin = null, rpKind = null, rpSid = null;
+  function openReport() {
+    const sid = A.st && A.st.seq[A.shownReveal];
+    const info = sceneInfo(sid);
+    if (!info || !sid.startsWith("r-")) return;
+    rpSid = sid; rpPin = null; rpKind = null;
+    $("rpWhat").textContent = gameTitle(info.game) + (info.place ? " · " + info.place : "");
+    for (const b of $("rpKind").children) b.classList.remove("on");
+    $("rpText").value = ""; $("rpYes").disabled = true; $("rpMapBox").classList.add("hidden");
+    $("report").classList.remove("hidden");
+  }
+  function setReportKind(k) {
+    rpKind = k;
+    for (const b of $("rpKind").children) b.classList.toggle("on", b.dataset.v === k);
+    $("rpYes").disabled = false;
+    const showMap = k === "position";
+    $("rpMapBox").classList.toggle("hidden", !showMap);
+    if (showMap) {
+      const info = sceneInfo(rpSid), m = info && mapInfo(info.game);
+      if (!rpMap) rpMap = new MapView($("rpMap"), { onTap: (x, y) => { rpPin = { x, y }; drawReportPins(); } });
+      if (m) requestAnimationFrame(() => { rpMap.setImage(m.url, m.w, m.h); drawReportPins(); });
+    }
+  }
+  function drawReportPins() {
+    const info = sceneInfo(rpSid);
+    if (!rpMap || !info) return;
+    const pins = [{ x: info.x, y: info.y, goal: true, label: "Actuel" }];
+    if (rpPin) pins.push({ x: rpPin.x, y: rpPin.y, color: A.color, label: "Ici" });
+    rpMap.setPins(pins, rpPin ? [{ a: rpPin, b: { x: info.x, y: info.y }, color: A.color }] : []);
+  }
+  async function sendReport() {
+    if (!rpKind || !rpSid) return;
+    $("rpYes").disabled = true;
+    const body = { sid: rpSid.slice(2), kind: rpKind, comment: $("rpText").value, name: A.name };
+    if (rpKind === "position" && rpPin) body.pin = rpPin;
+    try {
+      const r = await fetch("api/reports", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "erreur " + r.status);
+      A.reported[rpSid] = true;
+      $("report").classList.add("hidden");
+      $("bReport").disabled = true; $("bReport").textContent = "Erreur signalée";
+      toast("Merci, c'est signalé !");
+    } catch (e) {
+      $("rpYes").disabled = false;
+      toast("Envoi impossible : " + e.message, 4000);
+    }
   }
 
   // ------------------------------------------------------------------ fin de partie
@@ -862,6 +917,10 @@
     $("joinCode").addEventListener("keydown", (e) => { if (e.key === "Enter") startJoin(); });
     $("joinCode").addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); });
     $("bLib").onclick = openLibrary;
+    $("bReport").onclick = openReport;
+    for (const b of $("rpKind").children) b.onclick = () => setReportKind(b.dataset.v);
+    $("rpNo").onclick = () => $("report").classList.add("hidden");
+    $("rpYes").onclick = sendReport;
     $("bAvaRnd").onclick = () => AV && setAvatar(AV.random());
     $("bAvaEdit").onclick = () => { const h = $("avaOpts").classList.toggle("hidden"); $("bAvaEdit").classList.toggle("on", !h); $("bAvaEdit").setAttribute("aria-expanded", h ? "false" : "true"); };
     $("bLibBack").onclick = () => show(A.mode ? "lobby" : "home");

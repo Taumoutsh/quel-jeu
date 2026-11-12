@@ -284,3 +284,14 @@ table.det .ko { color: var(--bad); }
   table.det th, table.det td { padding: 5px 6px; }
   table.det .pl { display: none; }
 }
+
+/* signalement d'une erreur (écran de révélation) */
+.rv-meta { align-items: center; gap: 10px; }
+.rv-meta .credit { margin: 0; }
+.report-card { max-width: 460px !important; }
+.report-card h3 { margin: 0; }
+.report-card .seg button { font-size: 13px; }
+.rp-map { height: 240px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); }
+textarea { background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; color: var(--txt); font: inherit; font-size: 16px; resize: vertical; outline: none; }
+textarea:focus { border-color: var(--acc); }
+

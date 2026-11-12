@@ -27,7 +27,79 @@ if (process.env.QJ_IMAGES && process.env.QJ_IMAGES !== IMAGES) console.warn("QJ_
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
   ".json": "application/json", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp",
   ".svg": "image/svg+xml", ".ico": "image/x-icon", ".md": "text/plain; charset=utf-8" };
-const PRIVATE = /^\/(server|tools|tests|\.git)(\/|$)|^\/(Dockerfile|docker-compose\.yml|\.dockerignore|\.gitignore)$/;
+const PRIVATE = /^\/(server|tools|tests|data|\.git)(\/|$)|^\/(Dockerfile|docker-compose\.yml|\.dockerignore|\.gitignore|\.env.*)$/;
+
+// ------------------------------------------------------------------ signalements et corrections
+// Les joueurs signalent une vue (position fausse, mauvais jeu…) ; l'administrateur (page /admin,
+// mot de passe QJ_ADMIN_PASSWORD du .env) corrige la vue ou la supprime. Tout est gardé dans DATA :
+//   reports.json   : [{ id, at, sid, kind, comment, pin, status }]
+//   overrides.json : { scenes: { idVue: { x, y, game, place } | { deleted: true } } }
+// Les corrections sont appliquées à packs/vrais-jeux.js au moment de le servir ; le dépôt n'est pas modifié.
+const DATA = path.resolve(process.env.QJ_DATA || path.join(ROOT, "data"));
+const ADMIN_PASSWORD = process.env.QJ_ADMIN_PASSWORD || "";
+const KINDS = ["position", "jeu", "image", "autre"];
+function loadJSON(name, fallback) {
+  try { return JSON.parse(fs.readFileSync(path.join(DATA, name), "utf8")); } catch (e) { return fallback; }
+}
+function saveJSON(name, obj) {
+  fs.mkdirSync(DATA, { recursive: true });
+  const file = path.join(DATA, name), tmp = file + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(obj, null, 1)); fs.renameSync(tmp, file);
+}
+let reports = loadJSON("reports.json", []);
+let overrides = loadJSON("overrides.json", { scenes: {} });
+if (!overrides || typeof overrides.scenes !== "object") overrides = { scenes: {} };
+let overridesVersion = crypto.createHash("sha1").update(JSON.stringify(overrides)).digest("hex").slice(0, 8);
+function setOverrides(o) { overrides = o; saveJSON("overrides.json", o); overridesVersion = crypto.createHash("sha1").update(JSON.stringify(o)).digest("hex").slice(0, 8); packCache = null; }
+
+// pack d'origine (lu dans le fichier) et pack corrigé (servi aux joueurs)
+let packCache = null;
+function readPack() {
+  const txt = fs.readFileSync(path.join(ROOT, "packs", "vrais-jeux.js"), "utf8");
+  const a = txt.indexOf("/*JSON*/"), b = txt.indexOf("/*FIN*/");
+  return { txt, head: txt.slice(0, a + 8), tail: txt.slice(b), pack: JSON.parse(txt.slice(a + 8, b)) };
+}
+function applyOverrides(pack) {
+  const keys = new Set(pack.games.map((g) => g.key)), o = overrides.scenes || {};
+  pack.scenes = pack.scenes.filter((sc) => !(o[sc.id] && o[sc.id].deleted)).map((sc) => {
+    const c = o[sc.id];
+    if (!c) return sc;
+    const out = Object.assign({}, sc);
+    if (typeof c.x === "number" && typeof c.y === "number") { out.x = c.x; out.y = c.y; }
+    if (c.game && keys.has(c.game)) out.game = c.game;
+    if (typeof c.place === "string" && c.place) out.place = c.place;
+    return out;
+  });
+  return pack;
+}
+function servedPack() {
+  if (packCache) return packCache;
+  const p = readPack();
+  if (!Object.keys(overrides.scenes || {}).length) return (packCache = p.txt);
+  return (packCache = p.head + JSON.stringify(applyOverrides(p.pack)) + p.tail);
+}
+
+// connexion administrateur : jetons en mémoire (12 h), essais ratés limités
+const tokens = new Map(), fails = new Map();
+const TOKEN_MS = 12 * 3600 * 1000;
+function sameSecret(a, b) {
+  const ha = crypto.createHash("sha256").update(String(a)).digest(), hb = crypto.createHash("sha256").update(String(b)).digest();
+  return crypto.timingSafeEqual(ha, hb);
+}
+function clientIP(req) { return String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim(); }
+function isAdmin(req) {
+  const t = String(req.headers.authorization || "").replace(/^Bearer /, "");
+  const exp = tokens.get(t);
+  if (!exp || exp < Date.now()) { tokens.delete(t); return false; }
+  return true;
+}
+// limite simple par adresse : n actions par fenêtre
+function limited(map, key, n, ms) {
+  const now = Date.now(), list = (map.get(key) || []).filter((t) => now - t < ms);
+  map.set(key, list);
+  return list.length >= n;
+}
+const reportsByIP = new Map();
 
 // ------------------------------------------------------------------ salles
 // rooms : nom → Map(peer → { presence, clients:Set(res), timer })
@@ -77,9 +149,79 @@ function readBody(req) {
 }
 function json(res, code, obj) { res.writeHead(code, { "Content-Type": "application/json", "Cache-Control": "no-store" }); res.end(JSON.stringify(obj)); }
 
+async function readJSON(req, max) {
+  const txt = await readBody(req);
+  if (txt.length > max) throw new Error("trop gros");
+  return JSON.parse(txt);
+}
+const num01 = (v) => typeof v === "number" && isFinite(v) && v >= 0 && v <= 1;
+
+async function adminApi(req, res, url) {
+  const route = url.pathname.slice("/api/admin/".length);
+  if (!ADMIN_PASSWORD) return json(res, 503, { error: "administration désactivée : définir QJ_ADMIN_PASSWORD dans le .env" });
+  if (route === "login" && req.method === "POST") {
+    const ip = clientIP(req);
+    if (limited(fails, ip, 8, 15 * 60 * 1000)) return json(res, 429, { error: "trop d'essais, réessaie dans 15 minutes" });
+    let body; try { body = await readJSON(req, 2000); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
+    if (!body || !sameSecret(body.password || "", ADMIN_PASSWORD)) { fails.get(ip).push(Date.now()); return json(res, 401, { error: "mot de passe incorrect" }); }
+    const t = crypto.randomBytes(24).toString("hex");
+    tokens.set(t, Date.now() + TOKEN_MS);
+    return json(res, 200, { token: t });
+  }
+  if (!isAdmin(req)) return json(res, 401, { error: "connexion requise" });
+  if (route === "data" && req.method === "GET") return json(res, 200, { reports, overrides });
+  if (route === "pack" && req.method === "GET") return json(res, 200, readPack().pack);
+  if (route === "scene" && req.method === "POST") {
+    let b; try { b = await readJSON(req, 4000); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
+    const pack = readPack().pack;
+    if (!b || !pack.scenes.some((sc) => sc.id === b.id)) return json(res, 404, { error: "vue inconnue" });
+    const o = JSON.parse(JSON.stringify(overrides));
+    if (b.reset) delete o.scenes[b.id];
+    else if (b.deleted) o.scenes[b.id] = { deleted: true };
+    else {
+      const c = {};
+      if (num01(b.x) && num01(b.y)) { c.x = Math.round(b.x * 1e4) / 1e4; c.y = Math.round(b.y * 1e4) / 1e4; }
+      if (typeof b.game === "string" && pack.games.some((g) => g.key === b.game)) c.game = b.game;
+      if (typeof b.place === "string" && b.place.trim()) c.place = b.place.trim().slice(0, 80);
+      o.scenes[b.id] = c;
+    }
+    setOverrides(o);
+    return json(res, 200, { ok: true, overrides });
+  }
+  if (route === "report" && req.method === "POST") {
+    let b; try { b = await readJSON(req, 2000); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
+    const r = b && reports.find((x) => x.id === b.id);
+    if (!r) return json(res, 404, { error: "signalement inconnu" });
+    if (b.remove) reports = reports.filter((x) => x !== r);
+    else if (["open", "resolved", "ignored"].includes(b.status)) r.status = b.status;
+    saveJSON("reports.json", reports);
+    return json(res, 200, { ok: true });
+  }
+  return json(res, 404, { error: "introuvable" });
+}
+
+async function reportApi(req, res) {
+  if (req.method !== "POST") return json(res, 405, { error: "méthode non permise" });
+  const ip = clientIP(req);
+  if (limited(reportsByIP, ip, 30, 3600 * 1000)) return json(res, 429, { error: "trop de signalements, réessaie plus tard" });
+  let b; try { b = await readJSON(req, 3000); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
+  if (!b || typeof b.sid !== "string" || !KINDS.includes(b.kind)) return json(res, 400, { error: "signalement invalide" });
+  if (!readPack().pack.scenes.some((sc) => sc.id === b.sid)) return json(res, 404, { error: "vue inconnue" });
+  if (reports.length >= 5000) return json(res, 507, { error: "trop de signalements en attente" });
+  const r = { id: crypto.randomBytes(6).toString("hex"), at: new Date().toISOString(), sid: b.sid, kind: b.kind,
+    comment: typeof b.comment === "string" ? b.comment.trim().slice(0, 400) : "", status: "open" };
+  if (b.pin && num01(b.pin.x) && num01(b.pin.y)) r.pin = { x: Math.round(b.pin.x * 1e4) / 1e4, y: Math.round(b.pin.y * 1e4) / 1e4 };
+  if (typeof b.name === "string") r.name = b.name.trim().slice(0, 16);
+  reports.push(r); saveJSON("reports.json", reports);
+  reportsByIP.get(ip).push(Date.now());
+  return json(res, 200, { ok: true });
+}
+
 async function api(req, res, url) {
   const m = url.pathname.match(/^\/api\/rooms\/([^/]+)\/(events|presence|leave)$/);
   if (url.pathname === "/api/ping") return json(res, 200, { ok: true });
+  if (url.pathname === "/api/reports") return reportApi(req, res);
+  if (url.pathname.startsWith("/api/admin/")) return adminApi(req, res, url);
   if (!m) return json(res, 404, { error: "introuvable" });
   const name = m[1], action = m[2], peer = url.searchParams.get("peer") || "";
   if (!ROOM_RE.test(name) || !PEER_RE.test(peer)) return json(res, 400, { error: "salle ou joueur invalide" });
@@ -138,11 +280,12 @@ function version(rel) {
 function versionAssets(html) {
   return html.replace(/(src|href)="((?:js|packs)\/[^"?#]+\.js|[^"?#/:]+\.css)"/g, (m, attr, rel) => {
     const v = version(rel);
-    return v ? attr + '="' + rel + "?v=" + v + '"' : m;
+    return v ? attr + '="' + rel + "?v=" + v + (rel === "packs/vrais-jeux.js" ? overridesVersion : "") + '"' : m;
   });
 }
 function serveFile(req, res, url) {
   let rel = decodeURIComponent(url.pathname);
+  if (rel === "/admin" || rel === "/admin/") rel = "/admin.html";
   if (rel.endsWith("/")) rel += "index.html";
   if (PRIVATE.test(rel)) { res.writeHead(404); return res.end("Introuvable"); }
   const file = path.join(ROOT, rel);
@@ -157,7 +300,13 @@ function serveFile(req, res, url) {
     const IMG = /^\.(jpe?g|png|webp|svg|ico)$/.test(ext);
     const headers = { "Content-Type": TYPES[ext] || "application/octet-stream", "Content-Length": st.size,
       "Cache-Control": !IMG ? "no-store" : url.searchParams.has("v") ? "public, max-age=31536000, immutable" : "public, max-age=86400" };
-    if (rel === "/index.html") {
+    if (rel === "/packs/vrais-jeux.js") {
+      // pack « Vrais jeux » avec les corrections de l'administrateur
+      let body; try { body = servedPack(); } catch (e) { body = fs.readFileSync(file, "utf8"); }
+      headers["Content-Length"] = Buffer.byteLength(body);
+      res.writeHead(200, headers); return res.end(req.method === "HEAD" ? undefined : body);
+    }
+    if (rel === "/index.html" || rel === "/admin.html") {
       // signale à la page qu'elle est servie par ce serveur : le multijoueur passe alors par /api/rooms
       const meta = '<meta name="qj-server" content="1" data-images="' + IMAGES + '" data-jeux="' + JEUX.join(",") + '">';
       const html = versionAssets(fs.readFileSync(file, "utf8").replace("</head>", meta + "\n</head>"));
@@ -193,5 +342,6 @@ function imagesReport() {
 server.listen(PORT, () => {
   console.log("GameSpotter sur http://localhost:" + PORT + " (dossier " + ROOT + ") · images : " + IMAGES + (JEUX.length ? " · jeux : " + JEUX.join(", ") : ""));
   console.log(imagesReport());
+  console.log("Signalements : " + reports.filter((r) => r.status === "open").length + " en attente · corrections : " + Object.keys(overrides.scenes || {}).length + " vue(s) · administration " + (ADMIN_PASSWORD ? "active (/admin)" : "désactivée (QJ_ADMIN_PASSWORD vide)") + " · données dans " + DATA);
 });
 process.on("SIGTERM", () => server.close(() => process.exit(0)));

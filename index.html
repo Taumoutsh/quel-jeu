@@ -166,7 +166,7 @@
 <section id="reveal" class="screen hidden">
   <div class="wrap wide">
     <div class="row"><div class="answer grow" id="rvAnswer"></div><div class="pill" id="rvRound"></div></div>
-    <p class="mut small credit" id="rvCredit"></p>
+    <div class="row rv-meta"><p class="mut small credit grow" id="rvCredit"></p><button class="btn sm ghost hidden" id="bReport" type="button">Signaler une erreur</button></div>
     <div class="reveal-map"><div id="rvMap" class="mapview"></div></div>
     <div class="card"><table class="sc" id="rvTable"></table></div>
     <button class="btn pri block" id="bNext">Manche suivante</button>
@@ -241,6 +241,14 @@
 </section>
 
 <div class="toast hidden" id="toast"></div>
+<div class="overlay hidden" id="report"><div class="card col report-card">
+  <h3>Signaler une erreur</h3>
+  <div class="mut small" id="rpWhat"></div>
+  <div class="seg" id="rpKind"><button type="button" data-v="position">Position fausse</button><button type="button" data-v="jeu">Mauvais jeu</button><button type="button" data-v="image">Image inadaptée</button><button type="button" data-v="autre">Autre</button></div>
+  <div class="col hidden" id="rpMapBox"><div class="mut small">Touche la carte au bon endroit (facultatif).</div><div class="rp-map"><div id="rpMap" class="mapview"></div></div></div>
+  <textarea id="rpText" maxlength="400" rows="3" placeholder="Précise si tu veux : le bon jeu, le bon endroit, le problème de l'image…"></textarea>
+  <div class="row"><button class="btn grow caps" id="rpNo" type="button">Annuler</button><button class="btn sea grow" id="rpYes" type="button" disabled>Envoyer</button></div>
+</div></div>
 <div class="overlay hidden" id="confirm"><div class="card col"><div id="cfTxt"></div><div class="row"><button class="btn grow caps" id="cfNo">Annuler</button><button class="btn sea grow" id="cfYes">Confirmer</button></div></div></div>
 
 <script src="js/games.js"></script>

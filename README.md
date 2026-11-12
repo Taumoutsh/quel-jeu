@@ -35,6 +35,11 @@ Avec les suggestions activées, une liste de choix s'affiche quand il faut préc
 Le multijoueur utilise la capacité « room » des artefacts Claude, ou les salles du serveur Docker (`server/server.js`) quand le site est auto-hébergé : chaque joueur publie son état (sa présence) dans une salle nommée `qj-<code>`. L'hôte publie l'état de la partie, les autres le suivent. Rien n'est stocké durablement côté serveur.
 Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact (partagé depuis claude.ai) ou ton site Docker.
 
+## Signalements et administration (site Docker)
+- Sur l'écran de résultat d'une manche, **« Signaler une erreur »** : position fausse (on peut toucher la carte au bon endroit), mauvais jeu, image inadaptée ou autre, avec un commentaire facultatif. Le bouton n'apparaît que sur le site auto-hébergé (le serveur garde les signalements), pour les vues du pack « Vrais jeux ».
+- **Page `/admin`**, protégée par le mot de passe `QJ_ADMIN_PASSWORD` du `.env` (vide = désactivée ; 8 essais ratés par quart d'heure et par adresse) : liste des signalements par vue, capture, carte avec la position actuelle, l'originale et celles proposées par les joueurs. On peut changer le jeu, le nom du lieu et la position (toucher la carte, ou « Utiliser sa position »), rétablir l'original, supprimer la vue, et marquer chaque signalement résolu ou ignoré. L'onglet « Toutes les vues » permet de corriger n'importe quelle vue.
+- Les corrections sont gardées par le serveur (volume Docker `gamespotter-data`, fichiers `reports.json` et `overrides.json`) et appliquées au pack servi aux joueurs, sans toucher au dépôt. « Exporter les corrections » les télécharge en JSON pour les reporter dans `packs/vrais-jeux.js`.
+
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
@@ -198,6 +203,8 @@ js/pano.js        visionneuse 360° en WebGL pur (sans bibliothèque)
 js/mapview.js     carte zoomable avec repères
 js/app.js         déroulement, points, multijoueur, éditeur
 js/avatars.js     avatars des joueurs à composer (tenue, couleur, peau, yeux ; SVG originaux), tirés au hasard la première fois
+js/admin.js       page d'administration (/admin) : signalements, correction ou suppression des vues
+admin.html, admin.css
 packs/            pack « Vrais jeux » : données (versionnées) et images (packs/img/, téléchargées)
 tools/            fetch_packs.py : téléchargement des images du pack
 server/           server.js : site + salles multijoueur pour l'auto-hébergement (Docker)

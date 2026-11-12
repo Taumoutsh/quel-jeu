@@ -10,9 +10,17 @@ services:
       # réglés dans le fichier .env (voir .env.example)
       QJ_IMAGES: ${QJ_IMAGES:-real}
       QJ_JEUX: ${QJ_JEUX:-}
+      # mot de passe de la page /admin (signalements, corrections des vues) ; vide = administration désactivée
+      QJ_ADMIN_PASSWORD: ${QJ_ADMIN_PASSWORD:-}
+    # signalements et corrections, gardés d'une reconstruction à l'autre
+    volumes:
+      - gamespotter-data:/app/data
     networks:
       - proxy
     restart: unless-stopped
+
+volumes:
+  gamespotter-data:
 
 networks:
   # réseau Docker du reverse proxy (Nginx Proxy Manager…), créé par lui : le proxy joint le site
