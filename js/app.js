@@ -552,10 +552,17 @@
   function renderChips() {
     const multi = !!A.nroom;
     $("hChips").innerHTML = "";
+    $("hChips").classList.toggle("hidden", !(multi && A.st));
     const ps = players(true);
     if (multi && A.st) {
       const i = A.st.i;
-      $("hChips").innerHTML = ps.map((p) => { const x = p.r[i]; const s = !x ? "…" : x[0] === 1 ? "🗺" : x[0] === 2 ? "<span class='ok'>✓</span>" : "<span class='ko'>✗</span>"; return "<span class='chip'>" + ava(p, 20) + esc(p.name) + " " + s + "</span>"; }).join("");
+      // classement par score total ; état de la manche : … nom à trouver, 🗺 position à placer, ✓ fini, ✗ manche ratée
+      const rows = ps.map((p) => ({ p, tot: totalOf(p.r) })).sort((a, b) => b.tot - a.tot);
+      $("hChips").innerHTML = rows.map(({ p, tot }, k) => {
+        const x = p.r[i];
+        const s = !x ? "…" : x[0] === 1 ? "🗺" : x[0] === 2 ? "<span class='ok'>✓</span>" : "<span class='ko'>✗</span>";
+        return "<div class='bl" + (p.me ? " me" : "") + "' title='" + esc(p.name) + "'><span class='rk'>" + (k + 1) + "</span>" + ava(p, 20) + "<span class='nm'>" + esc(p.name) + "</span><span class='pt'>" + fmt(tot) + "</span><span class='st'>" + s + "</span></div>";
+      }).join("");
       if (A.R && A.R.phase === "done") {
         const waiting = ps.filter((p) => !(p.r[i] && p.r[i][0] >= 2)).map((p) => p.name);
         const extra = waiting.length ? "En attente de : " + waiting.join(", ") + "." : "Tout le monde a fini !";
