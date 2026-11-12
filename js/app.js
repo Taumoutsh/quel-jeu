@@ -569,11 +569,16 @@
   function tickTimer() {
     if (!A.st || A.st.ph !== "play" || A.screen !== "game") return;
     const dl = A.st.dl;
-    if (!dl) { $("hTime").textContent = "∞"; $("hTimer").classList.remove("low"); return; }
+    if (!dl) { $("hTime").textContent = "∞"; $("hTimer").classList.remove("low"); $("hBar").classList.add("hidden"); $("hVig").classList.remove("on"); return; }
     const left = Math.max(0, Math.ceil((dl - Date.now()) / 1000));
     const shown = Math.min(left, A.st.cfg.time);
     $("hTime").textContent = Math.floor(shown / 60) + ":" + String(shown % 60).padStart(2, "0");
     $("hTimer").classList.toggle("low", shown <= 10);
+    // barre de temps restant, et bords rouges qui pulsent dans les 10 dernières secondes (si la manche est en cours pour moi)
+    const frac = Math.max(0, Math.min(1, (dl - Date.now()) / (A.st.cfg.time * 1000)));
+    const bar = $("hBar"); bar.classList.remove("hidden"); bar.classList.toggle("low", shown <= 10);
+    bar.firstElementChild.style.transform = "scaleX(" + frac.toFixed(4) + ")";
+    $("hVig").classList.toggle("on", shown <= 10 && left > 0 && !!A.R && A.R.phase !== "done");
     if (left <= 0) timeOut();
   }
   function renderChips() {
