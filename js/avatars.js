@@ -19,6 +19,8 @@
     { id: "pirate", nom: "Pirate" },
     { id: "robot", nom: "Robot" },
     { id: "astronaute", nom: "Astronaute" },
+    { id: "chevaliere", nom: "Chevalière" },
+    { id: "gameuse", nom: "Gameuse" },
   ];
   const COULEURS = ["#f4b740", "#ff7b72", "#4cc9c0", "#9d8cff", "#6fd69b", "#ff9f5a", "#f07ac0", "#e3ecf2", "#5aa9ff", "#c9e265"];
   const PEAUX = ["#f6d7bd", "#f0c9a4", "#e2b08a", "#c98d66", "#a8714e", "#7a4e33"];
@@ -43,6 +45,8 @@
   }
   const body = (fill, extra) => `<path d="M19 64 V54 q0-7 7-7 h12 q7 0 7 7 V64 Z" fill="${fill}"/>${extra || ""}`;
   const head = (skin) => `<rect x="11" y="10" width="42" height="38" rx="13" fill="${skin}"/>`;
+  // cils, au coin extérieur des yeux (pas sur les lunettes)
+  const lashes = (y, dx, e) => e === 3 ? "" : `<path d="M${32 - (dx || 8) - 3} ${y - 1} l-2.6 -0.7 M${32 - (dx || 8) - 2.4} ${y - 2.6} l-2 -1.4 M${32 + (dx || 8) + 3} ${y - 1} l2.6 -0.7 M${32 + (dx || 8) + 2.4} ${y - 2.6} l2 -1.4" stroke="${INK}" stroke-width="1.3" stroke-linecap="round"/>`;
   const blush = `<ellipse cx="20" cy="37" rx="3" ry="1.6" fill="#ff8f8f" opacity=".35"/><ellipse cx="44" cy="37" rx="3" ry="1.6" fill="#ff8f8f" opacity=".35"/>`;
 
   // DRAW[tenue](couleur, peau, yeux)
@@ -88,6 +92,27 @@
     astronaute: (c, s, e) => body("#eef2f6", `<rect x="27" y="51" width="10" height="7" rx="2" fill="${c}" opacity=".9"/>`) + head(s)
       + `<path d="M13 22 q19 -12 38 0 v-4 q-19 -10 -38 0 Z" fill="#2b1d16"/>` + eyes(31, 8, e) + blush
       + `<circle cx="32" cy="29" r="27" fill="${c}" opacity=".16" stroke="#eef2f6" stroke-width="3"/><path d="M14 18 q6 -9 16 -11" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".8"/>`,
+    // chevalière : casque ouvert à plumet, nasal, longue tresse dans le dos
+    chevaliere: (c, s, e) => {
+      const hair = "#8a4b2a", steel = "#c9d2dc";
+      return `<path d="M47 30 q11 9 7 27 q-1 5 -5 3 q2 -13 -6 -23 Z" fill="${hair}"/><circle cx="51.5" cy="57.5" r="2.2" fill="${c}"/>`
+        + body("#b9c3cf", `<path d="M26 47 h12 v17 h-12 Z" fill="${c}"/><path d="M32 49 l3 3.5 l-3 3.5 l-3 -3.5 Z" fill="#eef1f5"/>`)
+        + head(s) + `<path d="M13 27 q6 -6 12 -2 q7 -5 14 0 q6 -4 12 2 v-4 H13 Z" fill="${hair}"/>`
+        + `<path d="M9 29 q0 -24 23 -24 q23 0 23 24 h-5 q-2 -13 -18 -13 q-16 0 -18 13 Z" fill="${steel}"/><path d="M9 29 h5 M50 29 h5" stroke="#9aa7b6" stroke-width="2"/>`
+        + `<rect x="30.6" y="14" width="2.8" height="13" rx="1.2" fill="${steel}"/><path d="M33 6 q3 -7 13 -6 q-7 2 -9 9 Z" fill="${c}"/>`
+        + eyes(31, 8, e) + lashes(31, 8, e) + blush;
+    },
+    // gameuse : couettes, casque audio avec micro, sweat à capuche
+    gameuse: (c, s, e) => {
+      const hair = "#5b3a8c", gear = "#1f2a36";
+      return `<circle cx="8" cy="42" r="6.5" fill="${hair}"/><circle cx="56" cy="42" r="6.5" fill="${hair}"/><circle cx="11" cy="37" r="2.2" fill="${c}"/><circle cx="53" cy="37" r="2.2" fill="${c}"/>`
+        + body(c, `<path d="M29 48 v8 M35 48 v8" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M24 47 q8 6 16 0" stroke="rgba(0,0,0,.25)" stroke-width="2" fill="none"/>`)
+        + head(s) + `<path d="M11 27 q0 -19 21 -19 q21 0 21 19 q-6 -7 -12 -5 q-4 -6 -9 -1 q-5 -5 -9 1 q-6 -2 -12 5 Z" fill="${hair}"/>`
+        + `<path d="M9 30 q0 -27 23 -27 q23 0 23 27" stroke="${gear}" stroke-width="3.5" fill="none"/>`
+        + `<rect x="4.5" y="25" width="8.5" height="14" rx="4" fill="${gear}"/><rect x="51" y="25" width="8.5" height="14" rx="4" fill="${gear}"/><circle cx="8.7" cy="32" r="2" fill="${c}"/><circle cx="55.3" cy="32" r="2" fill="${c}"/>`
+        + `<path d="M10 38 q2 8 11 7" stroke="${gear}" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="21.5" cy="45" r="2.2" fill="${gear}"/>`
+        + eyes(31, 8, e) + lashes(31, 8, e) + blush;
+    },
   };
 
   const TIDX = {};
