@@ -15,14 +15,14 @@
       const z = document.createElement("div"); z.className = "mv-zoom";
       z.innerHTML = '<button type="button" data-z="1.5">+</button><button type="button" data-z="0.667">−</button><button type="button" data-z="0">⤢</button>';
       z.addEventListener("pointerdown", (e) => e.stopPropagation());
-      z.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; const f = +b.dataset.z; f ? this.zoomAt(f, el.clientWidth / 2, el.clientHeight / 2) : this.fit(); });
+      z.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; const f = +b.dataset.z; f ? this.zoomAt(f, el.clientWidth / 2, el.clientHeight / 2) : this.fit(); this.touched = true; });
       el.append(z);
       this.w = 1; this.h = 1; this.s = 1; this.tx = 0; this.ty = 0; this.pins = [];
       this._bind();
       if (root.ResizeObserver) { let lw = 0, lh = 0; new ResizeObserver(() => { const cw = el.clientWidth, ch = el.clientHeight; if (cw && ch && (cw !== lw || ch !== lh)) { const first = !lw; lw = cw; lh = ch; first || this.autoFit ? this.fit() : this._clamp(); } }).observe(el); }
     }
     setImage(src, w, h) {
-      this.w = w; this.h = h; this.autoFit = true;
+      this.w = w; this.h = h; this.autoFit = true; this.touched = false; // touched : vue réglée par la personne
       this.inner.style.width = w + "px"; this.inner.style.height = h + "px";
       this.svg.setAttribute("viewBox", "0 0 " + w + " " + h);
       this.img.src = src;
@@ -105,11 +105,11 @@
         if (ptrs.size === 2 && pinch) {
           const [a, b] = [...ptrs.values()];
           const d = Math.hypot(a.x - b.x, a.y - b.y);
-          this.zoomAt((pinch.s * d / pinch.d) / this.s, (a.x + b.x) / 2 - rect.left, (a.y + b.y) / 2 - rect.top);
+          this.zoomAt((pinch.s * d / pinch.d) / this.s, (a.x + b.x) / 2 - rect.left, (a.y + b.y) / 2 - rect.top); this.touched = true;
           return;
         }
         if (Math.hypot(e.clientX - sx, e.clientY - sy) > 7) moved = true;
-        if (moved && last) { this.tx += e.clientX - last.x; this.ty += e.clientY - last.y; this.autoFit = false; this._clamp(); }
+        if (moved && last) { this.tx += e.clientX - last.x; this.ty += e.clientY - last.y; this.autoFit = false; this.touched = true; this._clamp(); }
         last = { x: e.clientX, y: e.clientY };
       });
       const up = (e) => {
@@ -124,7 +124,7 @@
         if (ptrs.size === 1) { const p = [...ptrs.values()][0]; last = { x: p.x, y: p.y }; }
       };
       el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
-      el.addEventListener("wheel", (e) => { if (this.opts.pageWheel && !e.ctrlKey) return; e.preventDefault(); const r = el.getBoundingClientRect(); this.zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+      el.addEventListener("wheel", (e) => { if (this.opts.pageWheel && !e.ctrlKey) return; e.preventDefault(); const r = el.getBoundingClientRect(); this.zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); this.touched = true; }, { passive: false });
     }
   }
   root.MapView = MapView;

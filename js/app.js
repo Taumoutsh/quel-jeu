@@ -931,7 +931,7 @@
     $("bReport").textContent = A.reported[rid] ? "Erreur signalée" : "Signaler une erreur";
     if (!rvMap) rvMap = new MapView($("rvMap"));
     const m = info && mapInfo(info.game);
-    if (m) requestAnimationFrame(() => { rvMap.setImage(m.url, m.w, m.h); renderRevealPins(); });
+    if (m) requestAnimationFrame(() => { rvMap.setImage(m.url, m.w, m.h); rvMap.pinKey = null; renderRevealPins(); });
     renderRevealTable();
   }
   function renderRevealPins() {
@@ -945,7 +945,11 @@
     }
     pins.push({ x: goal.x, y: goal.y, goal: true, label: "Ici !" });
     rvMap.setPins(pins, lines);
-    rvMap.focus(pins);
+    // recadrage sur les repères seulement quand il en arrive un nouveau, et jamais une fois la carte zoomée ou
+    // déplacée par la personne (les mises à jour des joueurs, toutes les 1 à 2 s, annulaient son zoom)
+    const key = pins.map((p) => p.x.toFixed(4) + "," + p.y.toFixed(4)).join("|");
+    if (!rvMap.touched && key !== rvMap.pinKey) rvMap.focus(pins);
+    rvMap.pinKey = key;
   }
   function renderRevealTable() {
     if (!A.st) return;
