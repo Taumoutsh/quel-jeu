@@ -43,15 +43,19 @@
       </div>
     </div>
 
-    <div class="card col">
-      <button class="btn pri block" id="bSolo">Jouer seul</button>
-      <button class="btn sea block" id="bHost">Créer un serveur</button>
-      <div class="row">
-        <input type="text" class="code grow" id="joinCode" maxlength="5" placeholder="CODE" autocomplete="off">
-        <button class="btn caps" id="bJoin">Rejoindre</button>
+    <!-- jouer : entre amis d'abord (créer, ou rejoindre avec un code), seul ensuite -->
+    <div class="card col play">
+      <h2>Jouer entre amis</h2>
+      <button class="btn pri block" id="bHost">Créer une partie</button>
+      <div class="sep"><span>ou rejoindre avec un code</span></div>
+      <div class="join">
+        <input type="text" class="code" id="joinCode" maxlength="5" placeholder="CODE" autocomplete="off" aria-label="Code de la partie">
+        <button class="btn sea fill" id="bJoin">Rejoindre</button>
       </div>
       <div class="notice small bad hidden" id="joinErr" role="alert"></div>
       <div class="notice small hidden" id="noRoom">Le multijoueur n'est pas disponible ici : il faut ouvrir l'artefact sur claude.ai (connecté) ou le site déployé avec Docker.</div>
+      <div class="sep"><span>ou</span></div>
+      <button class="btn out block" id="bSolo">Jouer seul</button>
     </div>
 
     <div class="card howto">

@@ -16,7 +16,7 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
   const C = await open("Client", 400);
   await C.fill("#joinCode", "ZZZZZ"); const t0 = Date.now(); await C.click("#bJoin");
   await wait(300);
-  check(await C.evaluate("document.getElementById('bJoin').disabled && /connexion/i.test(document.getElementById('bJoin').innerText)"), "chargement affiché pendant la vérification");
+  check(await C.evaluate("document.getElementById('bJoin').disabled && !!document.querySelector('#bJoin .spin') && /connexion/i.test(document.getElementById('bJoin').textContent)"), "chargement affiché pendant la vérification");
   await C.screenshot({ path: OUT + "/join-loading.png" });
   const t = await until(() => C.evaluate("!document.getElementById('joinErr').classList.contains('hidden')"), 8000);
   check(t >= 0, "code inexistant refusé en " + ((Date.now() - t0) / 1000).toFixed(1) + " s : « " + (await C.innerText("#joinErr")) + " »");

@@ -216,6 +216,9 @@
     }
     $("noRoom").classList.toggle("hidden", !!A.caps.room);
     $("bHost").disabled = !A.caps.room; $("bJoin").disabled = !A.caps.room;
+    // sans multijoueur (artefact sans capacités) : « Jouer seul » devient le bouton principal
+    $("bSolo").classList.toggle("pri", !A.caps.room); $("bSolo").classList.toggle("out", !!A.caps.room);
+    $("bHost").classList.toggle("pri", !!A.caps.room); $("bHost").classList.toggle("out", !A.caps.room);
     subLib();
     renderLibInfo();
     resumeSession();
@@ -560,7 +563,10 @@
   function joinError(msg) { $("joinErr").textContent = msg || ""; $("joinErr").classList.toggle("hidden", !msg); }
   function joinBusy(on) {
     $("bJoin").disabled = $("joinCode").disabled = $("bHost").disabled = on;
-    $("bJoin").innerHTML = on ? '<span class="spin"></span>Connexion…' : "Rejoindre";
+    // roue seule, à largeur constante (le champ du code ne bouge pas) ; « Connexion… » pour les lecteurs d'écran
+    const bj = $("bJoin");
+    bj.style.minWidth = on ? bj.offsetWidth + "px" : "";
+    bj.innerHTML = on ? '<span class="spin"></span><span class="sr">Connexion…</span>' : "Rejoindre";
     $("bJoin").setAttribute("aria-busy", on ? "true" : "false");
   }
   const hostIn = (peers) => peers.some((p) => !p.sameTab && p.presence && p.presence.h === 1 && p.presence.st);
