@@ -27,7 +27,7 @@ Avec les suggestions activées, une liste de choix s'affiche quand il faut préc
 
 ## Multijoueur
 
-- L'hôte clique sur « Créer une partie » et obtient un code à 5 caractères.
+- L'hôte clique sur « En groupe » (créer une partie) et obtient un code à 5 caractères.
 - Les amis ouvrent la même page, tapent le code et « Rejoindre ».
 - L'hôte règle la partie et la lance. Tout le monde joue la même vue en même temps. La manche se termine quand tout le monde a fini ou quand le temps est écoulé. L'hôte peut aussi la terminer à la main.
 - Si l'hôte part, un autre joueur peut reprendre le rôle.
