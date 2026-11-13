@@ -49,7 +49,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 642 vues de 133 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 704 vues de 141 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
@@ -67,36 +67,36 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Assassin's Creed Origins | Memphis, Gizeh, Siwa, Cyrène, Fayoum |
     | Assassin's Creed IV: Black Flag | La Havane, Kingston, Nassau, Great Inagua |
     | Fallout: New Vegas | Le Strip, Goodsprings, barrage Hoover, Primm |
-    | Cyberpunk 2077 | Marché de Kabuki, Wellsprings, Grand Imperial Mall (position au quartier près) |
+    | Cyberpunk 2077 | Marché de Kabuki, Wellsprings, Grand Imperial Mall (position au quartier près), Arasaka Waterfront (Watson), Corpo Plaza (City Center) |
     | Grand Theft Auto IV | Middle Park, Star Junction, Statue of Happiness, Broker Bridge, Hove Beach |
     | Grand Theft Auto: Vice City | Vice Point, Little Havana, Starfish Island, aéroport Escobar, Prawn Island |
     | Assassin's Creed Unity | La Bastille, Hôtel de Ville, Palais-Royal, Panthéon, palais du Luxembourg (plan de Paris de 1789) |
     | Assassin's Creed Syndicate | Palais de Westminster, Buckingham Palace, cathédrale Saint-Paul, Tour de Londres |
     | Zelda: Tears of the Kingdom | Hyrule central, village Rito, Lurelin, hautes terres d'Akkala, ville Goron |
-    | Pokémon Écarlate et Violet | Levincia, Porto Marinada, Montenevera |
+    | Pokémon Écarlate et Violet | Levincia, Porto Marinada, Montenevera, Cascarrafa, Artazon |
     | Final Fantasy XV | Lestallum, Cap Caem, Galdin Quay, pont vers Insomnia, disque de Cauthess |
     | Hollow Knight | Dirtmouth, routes oubliées, Vertchemin, Cité des Larmes, pic de cristal |
     | Yakuza Kiwami 2 | Theater Square, Millennium Tower, Pink Street, Tenkaichi Street, Nakamichi Street (Kamurocho) |
     | The Elder Scrolls Online | Daggerfall, Wayrest, Elden Root, Mournhold, Vivec |
-    | World of Warcraft | Hurlevent, Forgefer, Baie-du-Butin, ruines de Lordaeron |
+    | World of Warcraft | Hurlevent, Forgefer, Baie-du-Butin, ruines de Lordaeron, Lune-d'Argent (Quel'Thalas) |
     | Mafia: Definitive Edition | Bar de Salieri, aéroport, Works Quarter, hôtel de ville |
     | Mafia III | Opéra, hôtel de ville, églises de Frisco Fields et de Pointe Verdun, fresque de Delray Hollow |
     | Sleeping Dogs | Business District, North Point, Kennedy Town, Aberdeen |
-    | Assassin's Creed Brotherhood | Colisée, arc de Constantin, Panthéon (Rome) |
+    | Assassin's Creed Brotherhood | Colisée, arc de Constantin, Panthéon (Rome), Château Saint-Ange |
     | Assassin's Creed Revelations | Sainte-Sophie, palais de Topkapı, port de Galata |
     | Assassin's Creed Mirage | Ville ronde, Harbiyah, Karkh, Abbasiyah (Bagdad) |
     | Final Fantasy XIV | Limsa Lominsa, Gridania, Ul'dah, Mor Dhona |
     | Sea of Thieves | Plunder, Sanctuary, Ancient Spire, Golden Sands |
     | RuneScape | Lumbridge, Varrock, Falador, Al Kharid, East Ardougne |
-    | Pokémon Épée et Bouclier | Circhester, Motostoke |
+    | Pokémon Épée et Bouclier | Circhester, Motostoke, Wedgehurst (gare), Postwick (maison du joueur), Mine de Galar (entrée) |
     | Kingdom Come: Deliverance | Rattay, Sasau, Skalitz, Talmberg |
     | Dark Souls | Sanctuaire de Lige-Feu, Bourg des Morts-Vivants, Forteresse de Sen, Jardin de Noiracine |
     | Guild Wars 2 | Divinity's Reach, Lion's Arch, Rata Sum, Hoelbrak, Citadelle noire |
     | Fallout 76 | Charleston, Flatwoods, Morgantown, Watoga, Whitespring |
     | Bloodborne | Yharnam central, quartier de la cathédrale, Vieux Yharnam, Hemwick, château de Cainhurst |
     | L.A. Noire | Grauman's Chinese Theatre, décor d'Intolérance, Hall of Records, MacArthur Park, Angels Flight |
-    | Batman: Arkham City | Palais de justice, Park Row |
-    | Just Cause 3 | Mines de Cava Montana, province de Prospere, monastère |
+    | Batman: Arkham City | Palais de justice, Park Row, Institut d'histoire naturelle Cyrus Pinkney, Aciérie Sionis |
+    | Just Cause 3 | Mines de Cava Montana, province de Prospere, monastère, Citate di Ravello, Alte Potentia |
     | Grand Theft Auto III | Red Light District, Callahan Bridge, Belleville Park, Torrington, Cochrane Dam |
     | Grand Theft Auto: Liberty City Stories | Fort Staunton, Saint Mark's, Chinatown, Wichita Gardens, Bedford Point |
     | Grand Theft Auto: Vice City Stories | Little Havana, Ocean Beach, Starfish Island, aéroport, Vice Point |
@@ -119,12 +119,12 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Fable II | Bowerstone (marché), Bloodstone, Wraithmarsh, Brightwood |
     | Dragon Age: The Veilguard | Minrathous (Tevinter), Forêt d'Arlathan, Weisshaupt (Anderfels), Côte de Rivain |
     | Pillars of Eternity | Defiance Bay (Copperlane), Caed Nua, Twin Elms (Hearthsong), Defiance Bay (Heritage Hill) |
-    | Mount & Blade II: Bannerlord | Ville de Vlandie, Ville aserai (sud), Village de Battanie |
+    | Mount & Blade II: Bannerlord | Ville de Vlandie, Ville aserai (sud), Village de Battanie, Seonon, Sargot |
     | ARK: Survival Evolved | Herbivore Island, The Dead Island, Cratère du volcan |
     | Conan Exiles | Sepermeru, New Asagarth, Black Galleon, Mounds of the Dead, The Summoning Place |
     | Dishonored 2 | Conservatoire royal (Cyria Gardens), District minier de Batista, Institut Addermire, Quartier d'Aventa, Manoir mécanique |
     | New World | Windsward, Brightwood (colonie), Mourningdale (colonie), Ebonscale Reach |
-    | Dying Light 2 Stay Human | Old Villedor, Central Loop |
+    | Dying Light 2 Stay Human | Old Villedor, Central Loop, Tour VNC, L'Observatoire |
     | Palworld | Astral Mountains, Feybreak Island, Windswept Hills |
     | Kingdoms of Amalur: Reckoning | Rathir, Adessa, Mel Senshir, Ysa |
     | Far Cry 4 | Banapur, Utkarsh, Tirtha, Temple de Jalendu, Forteresse de Varshakot |
@@ -141,7 +141,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Counter-Strike 2 | Dust II : site B, Dust II : spawn CT, Dust II : entrée de Long A, Dust II : mid |
     | Overwatch 2 | King's Row (Londres), Dorado (Mexique), Ilios (Grèce), Busan (Corée du Sud), Paraíso (Rio de Janeiro) |
     | Arma 3 | Kavala, Aéroport international d'Altis, Sofia, Zaros, Neochori |
-    | Team Fortress 2 | 2Fort : le pont, 2Fort : salle des renseignements RED, 2Fort : remparts RED |
+    | Team Fortress 2 | 2Fort : le pont, 2Fort : salle des renseignements RED, 2Fort : remparts RED, 2Fort : cour RED, 2Fort : entrée de la spirale RED |
     | Minecraft Dungeons | Squid Coast, Soggy Swamp, Redstone Mines, Desert Temple, Highblock Halls |
     | Left 4 Dead 2 | The Parish : débarquement du bateau, The Parish : Bienville Park, The Parish : statue équestre, The Parish : gare routière |
     | Dishonored | Prison de Coldridge, Place Holger, Île de Kingsparrow, Le pub des Hound Pits, Distillerie de whiskey de Dunwall |
@@ -163,7 +163,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Wuthering Waves | Avinoleum : tour de l'Ascension, Avinoleum : ruines de la salle d'escrime, Avinoleum : tour de l'Unité, Avinoleum : tour du Salut, Avinoleum : jardin de Zargon |
     | Final Fantasy VII Rebirth | Kalm, Junon, Région de Nibelheim, Gongaga |
     | Black Myth: Wukong | Montagne du Vent Noir : à l'orée de la forêt, Montagne du Vent Noir : temple de Guanyin, Montagne du Vent Noir : sentier du Serpent, Montagne du Vent Noir : devant la caverne, Montagne du Vent Noir : pic Bodhi |
-    | Infinity Nikki | Florawish : guilde des stylistes, Florawish : puits de la Fortune, Colline des Reliques |
+    | Infinity Nikki | Florawish : guilde des stylistes, Florawish : puits de la Fortune, Colline des Reliques, Résidence du maire (Florawish), Cabane du chasseur d'insectes |
     | Firewatch | Hawk's Rest, Lac Jonesy, Thunder Canyon, Téléphérique de Thorofare, Beartooth Point |
     | Life is Strange | Le phare, La casse (American Rust), Two Whales Diner, Blackwell Academy |
     | Need for Speed Unbound | City Pier, Planque de Rüdiger, Garage Rydell's Rydes, Storm Drain, Dômes de la carrière |
@@ -183,10 +183,18 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Silent Hill | Église Balkan, Queen Burger, Maison Gordon |
     | Deus Ex: Mankind Divided | Station Palisade, Station Pilgrim, Station Monument, Station Čapek, Quartier rouge |
     | Saints Row 2 | Aéroport Wardill, Cecil Park, Mission Beach, Brighton, Misty Lane |
-    | Gotham Knights | Le Beffroi (Belfry), Iceberg Lounge |
+    | Gotham Knights | Le Beffroi (Belfry), Iceberg Lounge, Asile d'Arkham |
     | Once Human | Overlook Town, Greywater Camp, Deadsville, Silo Psi, Épreuve de l'Ancien |
     | Satisfactory | Côte des Flèches, Cratère bleu, Jungle rouge, Forêt des Titans, Plages de l'Ouest |
     | Stray | Usine Neco, Place du marché, Prison, Toits, Cité morte |
+    | Tom Clancy's Ghost Recon Breakpoint | Smuggler Coves, Mount Hodgson, Liberty, New Stirling, Egg Island |
+    | Sekiro: Shadows Die Twice | Château d'Ashina, Domaine Hirata, Palais de la Source, Vallée engloutie, Faubourgs d'Ashina |
+    | Dragon Age: Inquisition | Skyhold, Val Royeaux, Forteresse d'Adamant, Redoute de Therinfal, Côte des Tempêtes |
+    | Old School RuneScape | Château de Lumbridge, Parc de Falador, Al Kharid, Draynor Village, Edgeville |
+    | 7 Days to Die | Haven Hotel, Navezgane Athletics Complex, Installation Blue Ridge, Jack's Lumber Mill, Correa Rockworx |
+    | Hunt: Showdown | Pitching Crematorium, Stillwater Bend, Lockbay Docks, Darrow Livestock, Cyprus Huts |
+    | Clair Obscur: Expedition 33 | Village gestral, Le Carrousel, Casino volant, Colisée de Sirène, Île des Visages |
+    | Test Drive Unlimited 2 | Zenith loft, Salines mansion, Seaside apartment, Portinatx residence, Fujinoki residence |
 
     Les captures portant le logo ou le nom du jeu ont été écartées. Les positions ont été relevées à la main sur les cartes (noms de lieux quand la carte en a, sinon repères visibles) : elles sont justes à quelques pourcents de la carte.
   - La visionneuse affiche une capture plate en plein écran ; on la déplace en glissant et on zoome comme pour un 360°.

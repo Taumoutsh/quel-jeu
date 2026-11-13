@@ -98,7 +98,7 @@
       ["The Witcher 3: Wild Hunt", "witcher 3", "wild hunt"],
     ]},
     { s: null, g: [["Cyberpunk 2077", "cyberpunk"]] },
-    { s: null, g: [["RuneScape", "runescape 3", "rs3"], ["Old School RuneScape", "osrs", "old school runescape"]] },
+    { s: "RuneScape", a: ["runescape"], g: [["RuneScape", "runescape 3", "rs3"], ["Old School RuneScape", "osrs", "old school runescape"]] },
     { s: "Dead Island", a: [], g: [["Dead Island"], ["Dead Island 2", "di2"]] },
     { s: "Life is Strange", a: [], g: [["Life is Strange", "lis"], ["Life is Strange 2", "lis2"], ["Life is Strange: True Colors", "true colors"]] },
     { s: "Deus Ex", a: [], g: [["Deus Ex"], ["Deus Ex: Human Revolution", "human revolution", "dxhr"], ["Deus Ex: Mankind Divided", "mankind divided", "dxmd"]] },
@@ -219,7 +219,9 @@
     { s: "Forza Horizon", a: ["forza"], g: [["Forza Horizon 4", "fh4"], ["Forza Horizon 5", "fh5"]] },
     { s: "Gran Turismo", a: ["gt"], g: [["Gran Turismo 7", "gt7"]] },
     { s: "Need for Speed", a: ["nfs"], g: [["Need for Speed: Most Wanted", "nfs most wanted", "most wanted"], ["Need for Speed Heat", "nfs heat"], ["Need for Speed Payback", "nfs payback"],
-      ["Need for Speed Unbound", "nfs unbound", "unbound"], ["Need for Speed: Underground 2", "nfs underground 2", "nfsu2", "underground 2"], ["Need for Speed: Hot Pursuit", "nfs hot pursuit", "hot pursuit", "hot pursuit 2010"]] },
+      ["Need for Speed Unbound", "nfs unbound", "unbound"], ["Need for Speed: Underground 2", "nfs underground 2", "nfsu2", "underground 2"], ["Need for Speed: Hot Pursuit", "nfs hot pursuit", "hot pursuit", "hot pursuit 2010"],
+      ["Need for Speed (2015)", "nfs 2015", "need for speed 2015", "nfs 15"]] },
+    { s: "Test Drive Unlimited", a: ["tdu", "test drive"], g: [["Test Drive Unlimited 2", "tdu2", "tdu 2", "test drive unlimited 2"]] },
     { s: "The Sims", a: ["sims", "les sims"], g: [["Les Sims 4", "the sims 4", "sims 4"]] },
     { s: "Kingdom Come: Deliverance", a: ["kingdom come", "kcd"], g: [["Kingdom Come: Deliverance", "kcd1"], ["Kingdom Come: Deliverance II", "kcd2"]] },
     { s: "Hollow Knight", a: [], g: [["Hollow Knight"], ["Hollow Knight: Silksong", "silksong"]] },
@@ -256,7 +258,7 @@
       ["Path of Exile 2", "poe2"], ["Helldivers 2"], ["Lethal Company"], ["Phasmophobia"], ["Rust"],
       ["DayZ"], ["Escape from Tarkov", "tarkov"], ["Satisfactory"], ["Factorio"], ["Microsoft Flight Simulator", "flight simulator", "msfs"],
       ["Euro Truck Simulator 2", "ets2"], ["American Truck Simulator", "ats", "american truck sim"], ["Spore"], ["Grounded"], ["The Forest"], ["Sons of the Forest"],
-      ["Death's Door"], ["Ico"], ["Jak and Daxter"], ["Spyro Reignited Trilogy", "spyro"],
+      ["Death's Door"], ["Ico"], ["7 Days to Die", "7dtd", "7 days"], ["Hunt: Showdown", "hunt", "hunt showdown"], ["Jak and Daxter"], ["Spyro Reignited Trilogy", "spyro"],
     ]},
   ];
 
