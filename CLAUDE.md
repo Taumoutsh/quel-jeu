@@ -26,7 +26,7 @@ Projet : « GameSpotter » (anciennement « Quel Jeu ? » ; ne pas reprendre le 
 - « Terminer la manche maintenant » (`#bForce`, `hostForceEnd`) : seulement en temps illimité (`canForceEnd`, demande du propriétaire) ; avec un chrono, la manche finit quand tout le monde a répondu ou à la fin du temps.
 - Chrono : barre de temps restant en haut de l'écran, sous l'encoche (`#hBar`, visible toute la manche) et bords rouges qui pulsent (`#hVig`) dans les 10 dernières secondes, tant que la manche du joueur est en cours (`tickTimer`).
 - Carte des résultats : recadrée sur les repères seulement quand un nouveau repère arrive, et plus du tout une fois zoomée ou déplacée par la personne (`MapView.touched`, remis à zéro par `setImage` ; clé des repères `pinKey`) : les mises à jour des joueurs annulaient le zoom. Test : `node tests/e2e_revealmap.js`.
-- Captures plates : affichées entières par défaut (bandes sombres autour), zoom à la molette ou au pincement puis déplacement.
+- Captures plates : affichées entières par défaut (bandes sombres autour), zoom à la molette ou au pincement puis déplacement ; fin d'un pincement : le doigt restant reprend depuis sa propre position, sans élan (`pano.js`, `up`), sinon l'image sautait sur le côté. Test : `node tests/e2e_pinch.js`.
 - Pack par défaut : « Vrais jeux » (réglage enregistré basculé une fois via `cfgV`).
 - Site auto-hébergé : le choix des images se fait dans `.env` (`QJ_IMAGES` = real|demo|mix, `QJ_JEUX` = filtre de clés), transmis par server.js dans la balise meta ; le bloc « Images » (#packSetting) est alors masqué et `setCfg('pack')` ignoré. Sur claude.ai et en local sans server.js, le choix reste dans la page.
 

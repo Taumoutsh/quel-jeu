@@ -1306,6 +1306,6 @@
   }
 
   // accès pour les tests automatisés
-  window.QJ = { A, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t) => submitGuess(t), startSolo, hostStart, validatePin };
+  window.QJ = { A, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t) => submitGuess(t), startSolo, hostStart, validatePin, get pano() { return pano; } };
   wire();
 })();

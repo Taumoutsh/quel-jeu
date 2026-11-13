@@ -121,7 +121,14 @@ void main(){
         }
         this.dirty = true;
       });
-      const up = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch0 = 0; if (performance.now() - lastT > 60) this.vy = 0; };
+      const up = (e) => {
+        const wasPinch = ptrs.size >= 2;
+        ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch0 = 0;
+        // fin d'un pincement : le doigt restant reprend le glissement depuis SA position (sinon saut de l'image
+        // vers le côté au premier mouvement), sans élan
+        if (wasPinch && ptrs.size === 1) { [lastX, lastY] = [...ptrs.values()][0]; lastT = performance.now(); this.vy = 0; }
+        if (wasPinch || performance.now() - lastT > 60) this.vy = 0;
+      };
       c.addEventListener("pointerup", up); c.addEventListener("pointercancel", up);
       c.addEventListener("wheel", (e) => { e.preventDefault(); this.fov = Math.max(this.flat ? 0.2 : 0.45, Math.min(this.flat ? 1.35 : 1.75, this.fov * Math.exp(e.deltaY * 0.001))); this.dirty = true; }, { passive: false });
       window.addEventListener("resize", () => (this.dirty = true));
