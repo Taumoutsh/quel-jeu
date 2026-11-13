@@ -58,11 +58,11 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
     for (const p of [C, D]) { await p.fill("#joinCode", code2); await p.click("#bJoin"); await wait(1200); }
     for (const p of [C, D, H2]) { await p.click("#bReady"); await wait(300); }
     await wait(2500);
-    check((await D.innerHTML("#hChips")).includes("class=\"hc\""), "couronne de l'hôte dans le classement de la manche");
+    check((await D.innerHTML("#hChips")).includes("class=\"htag\""), "« H » de l'hôte dans le classement de la manche");
     await H2.click("#bQuit"); await wait(200); await H2.click("#cfYes");
     const t2 = await until(() => C.evaluate("QJ.A.mode === 'host'"), 15000);
     check(t2 >= 0 && t2 < 5000, "hôte parti par le bouton de fermeture : relève en pleine manche (" + (t2 / 1000).toFixed(1) + " s)");
-    check((await until(async () => /Chloé est maintenant l'hôte/.test(await D.innerText("#toast")) && (await D.innerHTML("#hChips")).includes("hc"), 4000)) >= 0, "David est prévenu tout de suite (message et couronne de Chloé)");
+    check((await until(async () => /Chloé est maintenant l'hôte/.test(await D.innerText("#toast")) && (await D.$$eval("#hChips .bl", (bs) => bs.some((b) => b.innerText.includes("Chloé") && !!b.querySelector(".htag")))), 4000)) >= 0, "David est prévenu tout de suite (message, et « H » à côté du score de Chloé)");
     check((await C.evaluate("QJ.A.screen")) === "game" && (await C.evaluate("QJ.A.R.i")) === 0, "toujours en manche 1");
     await answer(C); await answer(D);
     check((await until(() => D.evaluate("QJ.A.screen === 'reveal'"), 6000)) >= 0, "manche terminée par le nouvel hôte");

@@ -898,11 +898,12 @@
       const i = A.st.i;
       // classement par score total ; état de la manche : … nom à trouver, 🗺 position à placer, ✓ fini, ✗ manche ratée
       const rows = ps.map((p) => ({ p, tot: totalOf(p.r) })).sort((a, b) => b.tot - a.tot);
-      const hc = "<svg class='hc' viewBox='0 0 32 20' aria-label='Hôte'><title>Hôte</title><path d='M2 18 L4 5 L11 11 L16 2 L21 11 L28 5 L30 18 Z' fill='var(--acc)'/></svg>";
+      // l'hôte : un « H » à côté de son score (une couronne se confondait avec le meneur de la partie)
+      const hc = "<span class='htag' title='Hôte' aria-label='Hôte'>H</span>";
       $("hChips").innerHTML = rows.map(({ p, tot }, k) => {
         const x = p.r[i];
         const s = !x ? "…" : x[0] === 1 ? "🗺" : x[0] === 2 ? "<span class='ok'>✓</span>" : "<span class='ko'>✗</span>";
-        return "<div class='bl" + (p.me ? " me" : "") + "' title='" + esc(p.name) + "'><span class='rk'>" + (k + 1) + "</span>" + ava(p, 20) + "<span class='nm'>" + (p.host && p.active !== false ? hc : "") + esc(p.name) + "</span><span class='pt'>" + fmt(tot) + "</span><span class='st'>" + s + "</span></div>";
+        return "<div class='bl" + (p.me ? " me" : "") + "' title='" + esc(p.name) + "'><span class='rk'>" + (k + 1) + "</span>" + ava(p, 20) + "<span class='nm'>" + esc(p.name) + "</span><span class='pt'>" + (p.host && p.active !== false ? hc : "") + fmt(tot) + "</span><span class='st'>" + s + "</span></div>";
       }).join("");
       if (A.R && A.R.phase === "done") {
         const waiting = ps.filter((p) => !(p.r[i] && p.r[i][0] >= 2)).map((p) => p.name);

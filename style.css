@@ -173,7 +173,7 @@ td.who { white-space: nowrap; }
 .board { position: absolute; right: 12px; top: max(10px, env(safe-area-inset-top)); z-index: 1; width: 260px; max-width: calc(100vw - 24px); max-height: calc(100% - 300px); overflow-y: auto; background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--glass-line); border-radius: 14px; padding: 4px; }
 .board .bl { display: grid; grid-template-columns: 14px 22px minmax(0, 1fr) auto 18px; align-items: center; gap: 7px; padding: 4px 6px; border-radius: 10px; font-size: 13px; font-weight: 600; }
 .board .bl.me { background: var(--acc-soft); }
-.board .bl .hc { width: 13px; height: 9px; margin-right: 4px; vertical-align: 1px; } /* couronne de l'hôte */
+.board .bl .htag { display: inline-grid; place-items: center; width: 15px; height: 15px; margin-right: 5px; border-radius: 4px; background: var(--sea-soft); color: var(--sea); border: 1px solid var(--sea-ring); font-family: var(--fd); font-size: 10px; font-weight: 700; line-height: 1; vertical-align: 1px; } /* hôte : « H » à côté du score */
 .board .rk { color: var(--mut); font-family: var(--fd); font-size: 12px; text-align: right; }
 .board .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .board .pt { font-family: var(--fd); font-variant-numeric: tabular-nums; }
