@@ -40,6 +40,8 @@ const crypto = require("crypto");
     check(await p.isVisible("#bReport"), "bouton « Signaler une erreur » visible");
     await p.click("#bReport"); await wait(200);
     await p.click("#rpKind [data-v='position']"); await wait(600);
+    // carte de signalement chargée et cadrée avant de poser le repère (sous charge, elle peut tarder)
+    for (let k = 0; k < 40 && !(await p.evaluate("(() => { const i = document.querySelector('#rpMap img'); return !!i && i.complete && i.naturalWidth > 0 && !!document.querySelector('#rpMap .mv-inner').style.transform; })()")); k++) await wait(250);
     const box = await p.$("#rpMap").then((e) => e.boundingBox());
     await p.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.4); await wait(200);
     await p.fill("#rpText", "Le lieu est plus à l'ouest.");
