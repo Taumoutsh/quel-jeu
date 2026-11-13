@@ -357,6 +357,8 @@ function versionAssets(html) {
 function serveFile(req, res, url) {
   let rel = decodeURIComponent(url.pathname);
   if (rel === "/admin" || rel === "/admin/") rel = "/admin.html";
+  // lien d'une partie : /K6P7V → la page du jeu (le code est lu dans l'adresse) ; /packs, /tools… restent des dossiers
+  else if (/^\/[A-Za-z0-9]{5}$/.test(rel) && !fs.existsSync(path.join(ROOT, rel))) rel = "/index.html";
   const coded = /^\/packs\/img\/x\/([0-9a-f]{12})\.jpg$/.exec(rel);
   if (coded) { const id = idOfCode(coded[1]); if (!id) { res.writeHead(404); return res.end("Introuvable"); } rel = "/packs/img/" + id + ".jpg"; }
   if (rel.endsWith("/")) rel += "index.html";

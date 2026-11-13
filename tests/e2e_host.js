@@ -38,7 +38,10 @@ async function until(fn, ms, step) { const t0 = Date.now(); while (Date.now() - 
     for (const [x, d] of [[H, 0], [G1, 0.02], [G2, 0.04]]) await answer(x.p, d);
     check((await until(() => G1.p.evaluate("QJ.A.screen === 'reveal'"), 6000)) >= 0, "manche 1 terminée chez tous");
     await until(() => H.p.evaluate("QJ.A.screen === 'reveal'"), 6000);
-    await H.p.click("#bNext");
+    // l'hôte du moment (sous forte charge, une page privée de processeur plus de 6 s peut être relevée)
+    const curHost = (await H.p.evaluate("QJ.A.mode")) === "host" ? H : G1;
+    if (curHost !== H) console.log("     (relève sous charge : Alice est hôte)");
+    await curHost.p.click("#bNext");
     check((await until(() => G1.p.evaluate("QJ.A.screen === 'game' && QJ.A.R.i === 1"), 10000)) >= 0, "manche 2 reçue");
 
     // un invité part, un joueur arrive en cours de partie

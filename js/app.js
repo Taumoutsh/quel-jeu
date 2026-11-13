@@ -67,7 +67,7 @@
 
   // ------------------------------------------------------------------ utilitaires d'interface
   const SCREENS = ["home", "lobby", "game", "reveal", "final", "library"];
-  function show(id) { for (const s of SCREENS) $(s).classList.toggle("hidden", s !== id); A.screen = id; }
+  function show(id) { for (const s of SCREENS) $(s).classList.toggle("hidden", s !== id); A.screen = id; if (id !== "game" && cdT) stopCountdown(); }
   let toastT = null;
   function toast(msg, ms) { const t = $("toast"); t.textContent = msg; t.classList.remove("hidden"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add("hidden"), ms || 2600); }
   function confirmBox(html, yes) {
@@ -89,6 +89,18 @@
     const jeux = (m.dataset.jeux || "").split(",").filter(Boolean);
     return { images, jeux };
   })();
+  // lien de la partie dans la barre d'adresse : gamespotter…/K6P7V sur le site (server.js sert la page pour
+  // ce chemin), #K6P7V ailleurs (artefact claude.ai, simple serveur de fichiers : le chemin ne peut pas changer)
+  const HOME_PATH = SERVER ? "/" : location.pathname;
+  function setLink(code) {
+    const url = !code ? HOME_PATH + location.search : SERVER ? "/" + code + location.search : HOME_PATH + location.search + "#" + code;
+    try { history.replaceState(null, "", url); } catch (e) { /* ignore */ }
+  }
+  function codeFromLink() {
+    // /K6P7V (site), #K6P7V, et les anciens liens #partie-k6p7v
+    const m = (SERVER && /^\/([a-z0-9]{5})$/i.exec(location.pathname)) || /^#(?:partie-)?([a-z0-9]{5})$/i.exec(location.hash);
+    return m ? m[1].toUpperCase() : "";
+  }
   // inverse du brouillage du serveur (server.js, scramble) : base64 → octets XOR le code → JSON
   function unscramble(code, z) {
     try {
@@ -330,9 +342,17 @@
   }
   // un seul hôte : le plus récent mandat (term) l'emporte ; s'il n'y a plus d'hôte vivant, le joueur arrivé le plus tôt
   // parmi ceux qui restent le devient, sans rien demander
+  // page arrêtée un moment (téléphone figé, onglet suspendu) : ce qu'on sait des autres date d'avant l'arrêt ;
+  // on leur laisse un nouveau délai au lieu de les croire tous partis (et de prendre la place de l'hôte)
+  function freshenSeen(now) {
+    for (const s of Object.values(A.seen)) { s.at = now; if (s.hid) s.hid = now; }
+    A.hostLostAt = 0;
+  }
   function checkHost() {
     if (!A.nroom || (A.mode !== "host" && A.mode !== "guest")) return;
     const now = Date.now();
+    if (A.lastCheck && now - A.lastCheck > 2500) freshenSeen(now);
+    A.lastCheck = now;
     // pendant une manche ou ses résultats, un hôte passé sur une autre application bloque la partie : il est
     // remplacé ; dans le salon (partage du code par message…) ou au classement final, seul son départ compte
     const busy = !!A.st && (A.st.ph === "play" || A.st.ph === "rev");
@@ -433,17 +453,21 @@
   // appareils dépassent souvent l'écart de réception) ; la vue se charge derrière pendant ce temps
   const CD_MS = 3000;
   let cdT = null;
+  // calé sur l'heure réelle (pas sur le nombre de tours de minuterie, ralentie quand l'appareil est chargé ou la
+  // page en arrière-plan) : il disparaît au bout de 3 s quoi qu'il arrive, et dès qu'on quitte l'écran de jeu
   function countdown() {
-    const el = $("cd"), num = $("cdNum");
-    let n = CD_MS / 1000;
+    const el = $("cd"), num = $("cdNum"), t0 = Date.now();
+    let shown = 0;
     const step = () => {
-      if (n === 0) { clearInterval(cdT); el.classList.add("hidden"); return; }
-      num.textContent = n; num.classList.remove("pop"); void num.offsetWidth; num.classList.add("pop"); n--;
+      const n = Math.ceil((CD_MS - (Date.now() - t0)) / 1000);
+      if (n <= 0 || A.screen !== "game") { stopCountdown(); return; }
+      if (n !== shown) { shown = n; num.textContent = n; num.classList.remove("pop"); void num.offsetWidth; num.classList.add("pop"); }
     };
     clearInterval(cdT);
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    el.classList.remove("hidden"); step(); cdT = setInterval(step, 1000);
+    el.classList.remove("hidden"); step(); cdT = setInterval(step, 100);
   }
+  function stopCountdown() { clearInterval(cdT); cdT = null; $("cd").classList.add("hidden"); }
   function maybeCountdown(i) {
     const st = A.st;
     if (i !== 0 || !A.nroom || !st.t0 || A.cdGen === A.gen || A.res[0]) return;
@@ -528,7 +552,7 @@
     try { await joinRoom(code); } catch (e) { toast("Impossible de créer la partie : " + (e.code || e.message), 5000); return; }
     A.mode = "host"; A.gen = rid(8); A.res = []; A.ready = false;
     A.st = { gen: A.gen, ph: "lobby", cfg: Object.assign({}, A.cfg), seq: [], i: -1, dl: 0 };
-    try { history.replaceState(null, "", "#partie-" + code.toLowerCase()); } catch (e) { /* ignore */ }
+    setLink(code);
     publish(); route();
   }
   // rejoindre : on se connecte à la salle sans s'y montrer, on vérifie qu'un hôte y tient une partie, et
@@ -574,7 +598,7 @@
       return;
     }
     A.mode = "guest"; A.st = null; A.gen = null; A.res = []; A.sawHost = false; A._stjs = null; A.ready = false;
-    try { history.replaceState(null, "", "#partie-" + code.toLowerCase()); } catch (e) { /* ignore */ }
+    setLink(code);
     publish();
     showLobby();
     onPeers();
@@ -585,10 +609,10 @@
     A.peers = []; A.code = null;
   }
   async function goHome() {
-    SS.clear(); A.resume = null; clearInterval(cdT); $("cd").classList.add("hidden");
+    SS.clear(); A.resume = null; stopCountdown();
     await leaveRoom();
     A.mode = null; A.st = null; A.R = null; A._stjs = null;
-    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* ignore */ }
+    setLink(null);
     renderHome(); show("home");
   }
 
@@ -667,6 +691,8 @@
     }
     if (A.screen === "lobby") renderReady();
     if (A.screen === "game") renderChips();
+    // rôle changé pendant les résultats (relève) : « Manche suivante » chez le nouvel hôte seulement
+    if (A.screen === "reveal") { $("bNext").classList.toggle("hidden", !isHost()); $("rvWait").classList.toggle("hidden", isHost()); }
   }
   // ---- salon à plusieurs : chacun clique sur « Je suis prêt » ; la partie démarre (décompte 3, 2, 1) quand
   // tous les joueurs présents sont prêts (un joueur absent, connexion coupée, ne bloque pas).
@@ -1260,8 +1286,8 @@
     // retour sur la page (téléphone) : signal de vie immédiat pour ne pas passer pour absent
     document.addEventListener("visibilitychange", () => { if (A.nroom) { A.hb = ((A.hb || 0) + 1) % 1e6; publish(); } });
 
-    const m = /^#partie-([a-z0-9]{5})$/i.exec(location.hash);
-    if (m) $("joinCode").value = m[1].toUpperCase();
+    const linked = codeFromLink();
+    if (linked) $("joinCode").value = linked;
     show("home");
     initCaps();
   }
