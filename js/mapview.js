@@ -96,7 +96,7 @@
       el.addEventListener("pointerdown", (e) => {
         el.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (ptrs.size === 1) { sx = e.clientX; sy = e.clientY; moved = false; last = { x: e.clientX, y: e.clientY }; }
-        if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: this.s }; moved = true; }
+        if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: this.s, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; moved = true; }
       });
       el.addEventListener("pointermove", (e) => {
         if (!ptrs.has(e.pointerId)) return;
@@ -105,7 +105,10 @@
         if (ptrs.size === 2 && pinch) {
           const [a, b] = [...ptrs.values()];
           const d = Math.hypot(a.x - b.x, a.y - b.y);
-          this.zoomAt((pinch.s * d / pinch.d) / this.s, (a.x + b.x) / 2 - rect.left, (a.y + b.y) / 2 - rect.top); this.touched = true;
+          // deux doigts : déplacement du point entre les doigts = glisser la carte, puis zoom autour de ce point
+          const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+          this.tx += mx - pinch.mx; this.ty += my - pinch.my; pinch.mx = mx; pinch.my = my;
+          this.zoomAt((pinch.s * d / pinch.d) / this.s, mx - rect.left, my - rect.top); this.touched = true; this.autoFit = false;
           return;
         }
         if (Math.hypot(e.clientX - sx, e.clientY - sy) > 7) moved = true;

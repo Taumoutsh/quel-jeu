@@ -95,20 +95,37 @@ void main(){
     }
     _bind() {
       const c = this.c, ptrs = new Map();
-      let lastX = 0, lastY = 0, pinch0 = 0, fov0 = 0, lastT = 0;
+      let lastX = 0, lastY = 0, lastT = 0, pinch = null; // pinch : écart et milieu des deux doigts au dernier mouvement
       const k = () => this.fov / c.clientHeight;
+      const two = () => { const [a, b] = [...ptrs.values()]; return { d: Math.hypot(a[0] - b[0], a[1] - b[1]), m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] }; };
       c.addEventListener("pointerdown", (e) => {
         c.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]);
         lastX = e.clientX; lastY = e.clientY; this.vy = 0; lastT = performance.now();
-        if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); fov0 = this.fov; }
+        if (ptrs.size === 2) pinch = two();
       });
       c.addEventListener("pointermove", (e) => {
         if (!ptrs.has(e.pointerId)) return;
         ptrs.set(e.pointerId, [e.clientX, e.clientY]);
         if (ptrs.size === 2) {
-          const [a, b] = [...ptrs.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-          if (pinch0) this.fov = Math.max(this.flat ? 0.2 : 0.45, Math.min(this.flat ? 1.35 : 1.75, fov0 * pinch0 / d));
-          this.dirty = true; return;
+          // deux doigts : zoom autour du point entre les doigts, et déplacement de ce point = glisser l'image
+          const n = two();
+          if (pinch && n.d > 0) {
+            const lim = (f) => Math.max(this.flat ? 0.2 : 0.45, Math.min(this.flat ? 1.35 : 1.75, f));
+            if (this.flat) {
+              const r = c.getBoundingClientRect(), W = c.clientWidth, H = Math.max(1, c.clientHeight);
+              const uv = (m) => [(2 * (m[0] - r.left) - W) / H, (2 * (m[1] - r.top) - H) / H];
+              const [u0, v0] = uv(pinch.m), [s0x, s0y] = this._flatScale();
+              const tx = this.cx + u0 * s0x, ty = this.cy + v0 * s0y; // point de l'image sous les doigts
+              this.fov = lim(this.fov * pinch.d / n.d);
+              const [u1, v1] = uv(n.m), [s1x, s1y] = this._flatScale();
+              this.cx = tx - u1 * s1x; this.cy = ty - v1 * s1y; this._clampFlat();
+            } else {
+              this.yaw += (n.m[0] - pinch.m[0]) * k();
+              this.pitch = Math.max(-1.45, Math.min(1.45, this.pitch + (n.m[1] - pinch.m[1]) * k()));
+              this.fov = lim(this.fov * pinch.d / n.d);
+            }
+          }
+          pinch = n; this.vy = 0; this.dirty = true; return;
         }
         const dx = e.clientX - lastX, dy = e.clientY - lastY; lastX = e.clientX; lastY = e.clientY;
         const now = performance.now(), dt = Math.max(1, now - lastT); lastT = now;
@@ -123,7 +140,7 @@ void main(){
       });
       const up = (e) => {
         const wasPinch = ptrs.size >= 2;
-        ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch0 = 0;
+        ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null;
         // fin d'un pincement : le doigt restant reprend le glissement depuis SA position (sinon saut de l'image
         // vers le côté au premier mouvement), sans élan
         if (wasPinch && ptrs.size === 1) { [lastX, lastY] = [...ptrs.values()][0]; lastT = performance.now(); this.vy = 0; }
