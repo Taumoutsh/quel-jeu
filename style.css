@@ -84,11 +84,11 @@ input.code { font-family: var(--fd); text-transform: uppercase; letter-spacing: 
 /* accueil : mêmes hauteur, police et coins pour tous les boutons de jeu ; le code et « Rejoindre » alignés */
 .play h2 { margin-bottom: 2px; }
 /* deux tuiles carrées côte à côte : « Seul » et « En groupe », avec des bonshommes */
-.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.tile { aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel3); color: var(--txt); cursor: pointer; transition: transform .08s, border-color .15s, background-color .15s, box-shadow .15s; }
-.tile b { font-family: var(--fd); text-transform: uppercase; letter-spacing: .5px; font-size: 19px; }
-.tile small { font-size: 12.5px; color: var(--mut); }
-.tile-fig { width: 58%; max-width: 120px; height: auto; margin-bottom: 4px; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 132px)); justify-content: center; gap: 14px; }
+.tile { aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel3); color: var(--txt); cursor: pointer; transition: transform .08s, border-color .15s, background-color .15s, box-shadow .15s; }
+.tile b { font-family: var(--fd); text-transform: uppercase; letter-spacing: .5px; font-size: 15px; }
+.tile small { font-size: 11px; color: var(--mut); white-space: nowrap; }
+.tile-fig { width: 46px; height: 46px; margin-bottom: 2px; }
 .tile.solo .f1 { fill: var(--sea); }
 .tile.group { background: linear-gradient(180deg, var(--acc-hi), var(--acc)); color: var(--acc-ink); border-color: transparent; box-shadow: 0 1px 0 rgba(255, 255, 255, .35) inset, 0 10px 26px rgba(244, 183, 64, .2); }
 .tile.group small { color: rgba(36, 23, 3, .72); }
@@ -99,7 +99,6 @@ input.code { font-family: var(--fd); text-transform: uppercase; letter-spacing: 
 .tile:active:not(:disabled) { transform: translateY(1px) scale(.99); }
 .tile:disabled { opacity: .45; cursor: not-allowed; }
 .tile:focus-visible { outline: 3px solid var(--acc-ring); outline-offset: 2px; }
-@media (min-width: 600px) { .tile { aspect-ratio: auto; height: 220px; } .tile-fig { width: auto; height: 96px; } } /* grand écran : tuiles moins hautes */
 .play .btn.block, .play .join > * { height: 52px; padding-top: 0; padding-bottom: 0; font-size: 16px; }
 .play .join { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
 .play .join input.code { font-size: 20px; letter-spacing: 6px; padding: 0 12px; }
