@@ -17,11 +17,12 @@ async def main():
         await h.fill("#pseudo", "Hôte"); await h.click("#bHost"); await h.wait_for_timeout(400)
         code = await h.inner_text("#codeBox"); print("code :", code)
         await h.click("#settings [data-step='-1']"); await h.click("#settings [data-step='-1']"); await h.click("#settings [data-step='-1']")  # 2 manches
+        await h.click("#settings .seg[data-k='time'] button[data-v='0']")  # temps illimité : l'hôte peut terminer la manche
         await g.fill("#pseudo", "Ami"); await g.fill("#joinCode", code); await g.click("#bJoin"); await g.wait_for_timeout(800)
         print("joueurs (invité) :", await g.inner_text("#playersList"))
         print("manches vues par l'invité :", await g.inner_text("#sRounds"))
         await g.screenshot(path=f"{OUT}/m1-guest-lobby.png")
-        await h.click("#bStart"); await h.wait_for_timeout(1500)
+        await g.click("#bReady"); await g.wait_for_timeout(300); await h.click("#bReady"); await h.wait_for_timeout(3800)  # tout le monde prêt, décompte
         print("invité sur :", await g.evaluate("QJ.A.screen"), "| même vue :", await h.evaluate("QJ.A.R.sid") == await g.evaluate("QJ.A.R.sid"))
         # l'hôte trouve, l'invité se trompe puis passe
         await h.evaluate("QJ.submitGuess(QJ.A.R.game.t)"); await h.wait_for_timeout(300)

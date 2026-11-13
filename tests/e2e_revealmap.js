@@ -17,12 +17,14 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
     const H = await open("Hôte"), A = await open("Alice"), B = await open("Bruno");
     await H.click("#bHost"); await wait(1200);
     const code = (await H.innerText("#codeBox")).trim();
+    await H.click("#settings .seg[data-k='time'] button[data-v='0']"); // temps illimité : l'hôte peut terminer la manche
     for (const p of [A, B]) { await p.fill("#joinCode", code); await p.click("#bJoin"); await wait(1200); }
     for (const p of [A, B, H]) { await p.click("#bReady"); await wait(300); }
     await wait(3800);
     // Hôte et Alice répondent ; Bruno pas encore → l'hôte termine la manche à la main
     await answer(H, 0.05); await answer(A, 0.1); await wait(500);
-    await H.click("#bForce").catch(() => {}); await H.evaluate("QJ.A.st.ph === 'play' && document.getElementById('bForce').click()");
+    check(await H.isVisible("#bForce"), "temps illimité : l'hôte peut terminer la manche");
+    await H.click("#bForce");
     check((await until(() => A.evaluate("QJ.A.screen === 'reveal'"), 6000)) >= 0, "résultats de la manche affichés");
     await wait(800);
     const tf = () => A.evaluate("document.querySelector('#rvMap .mv-inner').style.transform");

@@ -487,7 +487,9 @@
     const timeUp = A.st.dl && Date.now() > A.st.dl + 1200;
     if (allDone || timeUp) { A.st = Object.assign({}, A.st, { ph: "rev" }); publish(); route(); }
   }
-  function hostForceEnd() { if (isHost() && A.st && A.st.ph === "play") { A.st = Object.assign({}, A.st, { ph: "rev" }); publish(); route(); } }
+  // « Terminer la manche maintenant » : en temps illimité seulement (sinon, on attend la fin du temps)
+  const canForceEnd = () => !!A.st && !A.st.cfg.time;
+  function hostForceEnd() { if (isHost() && A.st && A.st.ph === "play" && canForceEnd()) { A.st = Object.assign({}, A.st, { ph: "rev" }); publish(); route(); } }
   function hostNext() {
     if (!isHost() || !A.st) return;
     if (A.st.i + 1 < A.st.seq.length) A.st = Object.assign({}, A.st, { ph: "play", i: A.st.i + 1, dl: newDeadline(A.st.cfg) });
@@ -909,7 +911,7 @@
         $("waitTxt").innerHTML = esc(base) + "<br>" + esc(extra);
       }
     }
-    $("bForce").classList.toggle("hidden", !(A.mode === "host" && A.R && A.R.phase === "done"));
+    $("bForce").classList.toggle("hidden", !(A.mode === "host" && A.R && A.R.phase === "done" && canForceEnd()));
   }
 
   // ------------------------------------------------------------------ résultats de manche

@@ -58,7 +58,11 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
   await wait(400); await C.screenshot({ path: OUT + "/countdown.png" });
   check((await until(() => C.evaluate("document.getElementById('cd').classList.contains('hidden')"), 4500)) >= 0, "décompte terminé, la manche commence");
   check(/^(2:00|1:5\d)$/.test((await H.innerText("#hTime")).trim()), "chrono plein au début de la manche, décompte non compté (" + (await H.innerText("#hTime")).trim() + ")");
-  await answer(H); await answer(C);
+  await answer(H); await wait(800);
+  check(!(await H.isVisible("#bForce")) && (await H.evaluate("QJ.A.st.cfg.time")) > 0, "temps limité : pas de « Terminer la manche maintenant » pour l'hôte");
+  await H.evaluate("QJ.A.st && document.getElementById('bForce').click()"); await wait(500);
+  check((await H.evaluate("QJ.A.st.ph")) === "play", "la manche ne se termine pas avant la fin du temps");
+  await answer(C);
   await until(() => H.evaluate("QJ.A.screen === 'reveal'"), 6000); await H.click("#bNext");
   check((await until(() => C.evaluate("QJ.A.screen === 'final'"), 6000)) >= 0, "fin de partie chez le client");
   await wait(2500);
