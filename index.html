@@ -43,10 +43,13 @@
       </div>
     </div>
 
-    <!-- jouer : entre amis d'abord (créer, ou rejoindre avec un code), seul ensuite -->
+    <!-- jouer : deux tuiles carrées (seul / en groupe), puis rejoindre une partie avec un code -->
     <div class="card col play">
-      <h2>Jouer entre amis</h2>
-      <button class="btn pri block" id="bHost">Créer une partie</button>
+      <h2>Jouer</h2>
+      <div class="tiles">
+        <button class="tile solo" id="bSolo" type="button"><svg class="tile-fig" viewBox="0 0 64 64" aria-hidden="true"><g class="f1" transform="translate(32 34) scale(1.15)"><circle cx="0" cy="-15" r="9"/><path d="M-15 16 C-15 2 -8 -3 0 -3 C8 -3 15 2 15 16 Z"/></g></svg><b>Seul</b><small>Partie solo</small></button>
+        <button class="tile group" id="bHost" type="button"><svg class="tile-fig" viewBox="0 0 64 64" aria-hidden="true"><g class="f2" transform="translate(15 37) scale(0.82)"><circle cx="0" cy="-15" r="9"/><path d="M-15 16 C-15 2 -8 -3 0 -3 C8 -3 15 2 15 16 Z"/></g><g class="f2" transform="translate(49 37) scale(0.82)"><circle cx="0" cy="-15" r="9"/><path d="M-15 16 C-15 2 -8 -3 0 -3 C8 -3 15 2 15 16 Z"/></g><g class="f1" transform="translate(32 34) scale(1.05)"><circle cx="0" cy="-15" r="9"/><path d="M-15 16 C-15 2 -8 -3 0 -3 C8 -3 15 2 15 16 Z"/></g></svg><b>En groupe</b><small>Créer une partie</small></button>
+      </div>
       <div class="sep"><span>ou rejoindre avec un code</span></div>
       <div class="join">
         <input type="text" class="code" id="joinCode" maxlength="5" placeholder="CODE" autocomplete="off" aria-label="Code de la partie">
@@ -54,8 +57,6 @@
       </div>
       <div class="notice small bad hidden" id="joinErr" role="alert"></div>
       <div class="notice small hidden" id="noRoom">Le multijoueur n'est pas disponible ici : il faut ouvrir l'artefact sur claude.ai (connecté) ou le site déployé avec Docker.</div>
-      <div class="sep"><span>ou</span></div>
-      <button class="btn out block" id="bSolo">Jouer seul</button>
     </div>
 
     <div class="card howto">

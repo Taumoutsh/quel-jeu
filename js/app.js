@@ -216,9 +216,6 @@
     }
     $("noRoom").classList.toggle("hidden", !!A.caps.room);
     $("bHost").disabled = !A.caps.room; $("bJoin").disabled = !A.caps.room;
-    // sans multijoueur (artefact sans capacités) : « Jouer seul » devient le bouton principal
-    $("bSolo").classList.toggle("pri", !A.caps.room); $("bSolo").classList.toggle("out", !!A.caps.room);
-    $("bHost").classList.toggle("pri", !!A.caps.room); $("bHost").classList.toggle("out", !A.caps.room);
     subLib();
     renderLibInfo();
     resumeSession();
