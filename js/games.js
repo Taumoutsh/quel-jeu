@@ -258,7 +258,7 @@
       ["Path of Exile 2", "poe2"], ["Helldivers 2"], ["Lethal Company"], ["Phasmophobia"], ["Rust"],
       ["DayZ"], ["Escape from Tarkov", "tarkov"], ["Satisfactory"], ["Factorio"], ["Microsoft Flight Simulator", "flight simulator", "msfs"],
       ["Euro Truck Simulator 2", "ets2"], ["American Truck Simulator", "ats", "american truck sim"], ["Spore"], ["Grounded"], ["The Forest"], ["Sons of the Forest"],
-      ["Death's Door"], ["Ico"], ["7 Days to Die", "7dtd", "7 days"], ["Hunt: Showdown", "hunt", "hunt showdown"], ["Jak and Daxter"], ["Spyro Reignited Trilogy", "spyro"],
+      ["Death's Door"], ["Ico"], ["7 Days to Die", "7dtd", "7 days"], ["Skull and Bones", "skull & bones", "skull and bones"], ["Hunt: Showdown", "hunt", "hunt showdown"], ["Jak and Daxter"], ["Spyro Reignited Trilogy", "spyro"],
     ]},
   ];
 
