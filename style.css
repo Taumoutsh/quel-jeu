@@ -210,7 +210,13 @@ td.who { white-space: nowrap; }
 
 .mapwrap { height: 42vh; min-height: 220px; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid var(--line); transition: height .25s; }
 .panel.big .mapwrap { height: 68vh; }
+/* carte réduite : seule la barre reste, pour regarder l'image en entier ; flèche retournée pour la rouvrir */
+.panel.mini .mapwrap, .panel.mini .found, .panel.mini #bBig { display: none; }
+.panel.mini .mapbar { margin-top: 0; }
+#bMini svg { transition: transform .2s; }
+.panel.mini #bMini svg { transform: rotate(180deg); }
 .mapbar { display: flex; gap: 8px; margin-top: 10px; }
+.mapbar #bPin { flex: 1 1 auto; min-width: 0; padding-left: 12px; padding-right: 12px; overflow: hidden; text-overflow: ellipsis; } /* prend la place restante, sans déborder sur téléphone */
 .found { font-size: 13px; color: var(--good); margin-bottom: 8px; line-height: 1.4; }
 
 /* ---------- carte ---------- */

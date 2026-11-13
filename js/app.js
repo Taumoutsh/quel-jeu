@@ -781,7 +781,14 @@
     else showNamePanel();
     renderHud(); renderChips();
   }
-  function hidePanels() { for (const p of ["pName", "pMap", "pWait"]) $(p).classList.add("hidden"); $("pMap").classList.remove("big"); $("bBig").textContent = "Agrandir"; }
+  function hidePanels() { for (const p of ["pName", "pMap", "pWait"]) $(p).classList.add("hidden"); $("pMap").classList.remove("big"); $("bBig").textContent = "Agrandir"; setMapMini(false); }
+  // carte réduite (téléphone surtout) : on regarde l'image en entier, la carte et le repère restent tels quels
+  function setMapMini(on) {
+    $("pMap").classList.toggle("mini", on);
+    const lbl = on ? "Afficher la carte" : "Réduire la carte pour voir l'image";
+    $("bMini").title = lbl; $("bMini").setAttribute("aria-label", lbl); $("bMini").setAttribute("aria-expanded", on ? "false" : "true");
+    if (on) { $("pMap").classList.remove("big"); $("bBig").textContent = "Agrandir"; }
+  }
   function showNamePanel() {
     hidePanels(); $("pName").classList.remove("hidden");
     $("gInput").value = ""; setFb(); $("cands").innerHTML = ""; $("sugg").classList.add("hidden");
@@ -1263,6 +1270,7 @@
     attachSuggest($("gInput"), $("sugg"), (t) => { $("gInput").value = t; submitGuess(t); }, () => (A.st && A.st.cfg.hints ? (t) => true : null));
     $("bSkip").onclick = async () => { if (await confirmBox("Passer cette manche ?", "Passer")) failName("Manche passée"); };
     $("bPin").onclick = validatePin;
+    $("bMini").onclick = () => setMapMini(!$("pMap").classList.contains("mini"));
     $("bBig").onclick = () => { const big = $("pMap").classList.toggle("big"); $("bBig").textContent = big ? "Réduire" : "Agrandir"; setTimeout(() => pick && pick.fit(), 280); };
     $("bForce").onclick = hostForceEnd;
     $("bQuit").onclick = async () => { if (await confirmBox("Quitter la partie ?", "Quitter")) goHome(); };

@@ -1,4 +1,4 @@
-// Pincement sur la capture puis relâche d'un doigt : le doigt restant ne doit pas faire sauter l'image.
+// Téléphone : pincement sur la capture et les cartes (zoom sous les doigts, glisser à deux doigts, relâche d'un doigt), carte réduite.
 // Depuis la racine du dépôt : node tests/e2e_pinch.js
 const { chromium } = require("playwright");
 const { spawn } = require("child_process");
@@ -61,5 +61,11 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
     const tx = (s) => +/translate\(([-\d.]+)px/.exec(s)[1];
     check(/scale/.test(m1) && tx(m2) > tx(m1) + 20, "carte : zoom puis glisser à deux doigts (" + tx(m1).toFixed(0) + " → " + tx(m2).toFixed(0) + " px)");
     await T("touchEnd", [[mx + 150, my + 30, 1]]); await T("touchEnd", [[mx - 54, my + 30, 0]]);
+    // carte réduite pour regarder l'image, puis rouverte telle quelle
+    await wait(100); const before = await tr();
+    await p.tap("#bMini"); await wait(300);
+    check(!(await p.isVisible("#mapPick")) && (await p.isVisible("#bPin")), "carte réduite : image visible, bouton Valider gardé");
+    await p.tap("#bMini"); await wait(300);
+    check((await p.isVisible("#mapPick")) && (await tr()) === before, "carte rouverte avec le même zoom");
   } catch (e) { console.log("ÉCHEC", e); process.exitCode = 1; } finally { srv.kill(); await b.close(); process.exit(); }
 })();
