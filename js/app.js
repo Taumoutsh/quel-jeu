@@ -1281,7 +1281,29 @@
   }
 
   // ------------------------------------------------------------------ branchements
+  // pas de zoom au double tap sur téléphone : « touch-action: manipulation » (style.css) ne suffit pas sur iPhone
+  // (Safari zoome encore sur l'image et les zones sans bouton). Un second tap rapproché (moins de 350 ms, à moins
+  // de 40 px) est neutralisé ; s'il tombait sur un bouton, on rejoue son clic pour ne pas perdre le second appui.
+  // Les gestes de la vue et des cartes passent par les événements « pointer », que cela n'empêche pas.
+  function noDoubleTapZoom() {
+    let lastT = 0, lastX = 0, lastY = 0;
+    document.addEventListener("touchend", (e) => {
+      if (e.touches.length || e.changedTouches.length !== 1) { lastT = 0; return; }
+      const t = e.changedTouches[0], now = Date.now();
+      const quick = now - lastT < 350 && Math.hypot(t.clientX - lastX, t.clientY - lastY) < 40;
+      lastT = now; lastX = t.clientX; lastY = t.clientY;
+      if (!quick) return;
+      const el = e.target instanceof Element ? e.target : null;
+      if (el && el.closest("input, textarea, select, [contenteditable]")) return; // saisie : on laisse faire
+      e.preventDefault();
+      const btn = el && el.closest("button, a[href], [role=button], label");
+      if (btn && !btn.disabled) btn.click();
+      lastT = 0; // un troisième tap repart de zéro
+    }, { passive: false });
+  }
+
   function wire() {
+    noDoubleTapZoom();
     renderHome();
     $("pseudo").addEventListener("change", ensureName);
     $("bSolo").onclick = startSolo;
