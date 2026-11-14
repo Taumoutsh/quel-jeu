@@ -274,9 +274,17 @@
         + face(o, { y: 31, dx: 8, my: 40 }, c, h) + blush; },
   };
 
-  // fond : dessiné en premier, sur tout le carré (le cadre arrondi vient de la page) ; id unique pour les dégradés
+  // fond : dessiné en premier, dans un carré aux coins arrondis comme le cadre de l'avatar (motifs découpés
+  // à la même forme) ; ids uniques pour les dégradés et la découpe (plusieurs avatars dans la page)
   let gid = 0;
+  const FOND_R = 14;
   function background(f, c) {
+    const inner = backgroundInner(f, c);
+    if (!inner) return "";
+    const id = "avk" + ++gid;
+    return `<defs><clipPath id="${id}"><rect width="64" height="64" rx="${FOND_R}"/></clipPath></defs><g clip-path="url(#${id})">${inner}</g>`;
+  }
+  function backgroundInner(f, c) {
     if (!f) return "";
     const id = "avg" + ++gid;
     if (f === 1) return `<rect width="64" height="64" fill="${c}" opacity=".28"/>`;
