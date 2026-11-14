@@ -789,6 +789,7 @@
     const info = sceneInfo(sid);
     show("game");
     hidePanels();
+    $("h360").classList.toggle("hidden", !info || !!info.flat); // vue 360° : petit repère discret
     if (!info) {
       if (!A.libReady) { A.pendingRound = i; $("panoLoad").classList.remove("hidden"); return; }
       // vue introuvable (supprimée ?) : on passe
