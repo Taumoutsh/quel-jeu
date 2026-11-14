@@ -96,6 +96,21 @@
     const url = !code ? HOME_PATH + location.search : SERVER ? "/" + code + location.search : HOME_PATH + location.search + "#" + code;
     try { history.replaceState(null, "", url); } catch (e) { /* ignore */ }
   }
+  // lien à partager : /K6P7V sur le site, #K6P7V ailleurs
+  function partyLink(code) { return location.origin + (SERVER ? "/" + code : HOME_PATH + location.search + "#" + code); }
+  // copie dans le presse-papiers, avec repli pour les navigateurs qui la refusent
+  function copyText(txt, okMsg) {
+    const fallback = () => {
+      const ta = document.createElement("textarea");
+      ta.value = txt; ta.setAttribute("readonly", ""); ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand("copy"); } catch (e) { /* ignore */ }
+      ta.remove();
+      toast(ok ? okMsg : txt, ok ? 2500 : 6000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => toast(okMsg), fallback);
+    else fallback();
+  }
   function codeFromLink() {
     // /K6P7V (site), #K6P7V, et les anciens liens #partie-k6p7v
     const m = (SERVER && /^\/([a-z0-9]{5})$/i.exec(location.pathname)) || /^#(?:partie-)?([a-z0-9]{5})$/i.exec(location.hash);
@@ -1323,7 +1338,8 @@
     $("bAvaUndo").onclick = () => { if (A.avaBefore && avaOK(A.avaBefore)) setAvatar(A.avaBefore); openAvatarEditor(false); };
     $("bLibBack").onclick = () => show(A.mode ? "lobby" : "home");
     $("bLobbyBack").onclick = goHome;
-    $("bCopy").onclick = () => { navigator.clipboard.writeText(A.code).then(() => toast("Code copié : " + A.code), () => toast("Code : " + A.code)); };
+    $("bCopy").onclick = () => copyText(A.code, "Code copié : " + A.code);
+    $("bCopyLink").onclick = () => copyText(partyLink(A.code), "Lien copié : " + partyLink(A.code));
     $("bStart").onclick = () => { if (isHost()) hostStart(); };
     $("bReady").onclick = toggleReady;
     for (const b of document.querySelectorAll("#settings [data-step]")) b.onclick = () => { const c = curCfg(); const max = Math.max(1, Math.min(15, pool(c.pack).length)); setCfg("rounds", Math.max(1, Math.min(max, c.rounds + +b.dataset.step))); };
