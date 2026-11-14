@@ -113,6 +113,22 @@ input.code { font-family: var(--fd); text-transform: uppercase; letter-spacing: 
 .ava-prev { width: 76px; height: 76px; flex: none; padding: 6px; border-radius: 18px; background: var(--well); border: 2px solid var(--c, var(--line)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c, transparent) 18%, transparent); }
 .ava-prev svg { width: 100%; height: 100%; display: block; }
 .ava-opts { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+.ava-me.editing .ava-prev { width: 112px; height: 112px; border-radius: 24px; }
+/* pendant l'édition, l'aperçu reste visible en haut de l'écran quand on fait défiler les réglages */
+.ava-me.editing { position: sticky; top: 0; z-index: 3; margin: 0 -16px; padding: 8px 16px; background: var(--panel); border-radius: 0 0 16px 16px; box-shadow: 0 10px 18px -12px rgba(0, 0, 0, .6); }
+.ava-prev { transition: width .2s, height .2s; overflow: hidden; }
+/* rangées de l'éditeur : libellé à gauche, flèches ou pastilles à droite */
+.ava-rows { display: flex; flex-direction: column; gap: 8px; }
+.ava-line { display: grid; grid-template-columns: 80px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 40px; }
+.ava-lab { font-size: 12px; color: var(--mut); text-transform: uppercase; letter-spacing: .5px; }
+.ava-sel { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; align-items: center; gap: 6px; background: var(--well); border: 1px solid var(--line); border-radius: 12px; padding: 3px; }
+.ava-arr { width: 40px; height: 34px; border-radius: 9px; border: 0; background: var(--panel3); color: var(--txt); cursor: pointer; display: grid; place-items: center; transition: background-color .15s, color .15s; }
+.ava-arr:hover { background: var(--acc-soft); color: var(--acc); }
+.ava-arr svg { width: 18px; height: 18px; }
+.ava-val { text-align: center; font-weight: 600; font-size: 13.5px; line-height: 1.2; overflow: hidden; }
+.ava-val small { display: block; font-weight: 400; font-size: 11px; color: var(--dim); }
+.ava-opt.sw.orig { background: repeating-linear-gradient(135deg, var(--panel3) 0 5px, var(--well) 5px 10px) !important; }
+.ava-foot { margin-top: 2px; }
 .ava-row > span { display: block; font-size: 12px; color: var(--mut); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
 .ava-ch { display: flex; flex-wrap: wrap; gap: 6px; }
 .ava-opt { cursor: pointer; border: 2px solid transparent; transition: transform .12s, border-color .15s, background-color .15s; }

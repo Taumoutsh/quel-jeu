@@ -504,36 +504,81 @@
     $("pseudo").value = A.name;
     renderAvatar();
   }
-  // éditeur d'avatar : aperçu, « au hasard », et quatre rangées de choix (tenue, couleur, peau, yeux)
+  // éditeur d'avatar : aperçu (agrandi pendant l'édition), « au hasard », rangées à flèches pour les formes
+  // (tenue, yeux, sourcils, bouche, accessoire, fond) et pastilles pour les couleurs (couleur, peau, cheveux)
   function setAvatar(spec) {
     A.avatar = spec; A.color = AV.color(spec);
     LS.set("avatar", spec); LS.set("color", A.color);
     renderAvatar(); publish();
+  }
+  const ICON_L = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 l-7 7 l7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const ICON_R = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 l7 7 l-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function avaRows(o) {
+    const u = AV.uses(o.t);
+    return [
+      { k: "t", lab: "Tenue", list: AV.TENUES, name: (x) => x.nom },
+      { k: "c", lab: "Couleur", sw: AV.COULEURS },
+      { k: "s", lab: "Peau", sw: AV.PEAUX, hide: !u.s },
+      { k: "h", lab: "Cheveux", sw: AV.CHEVEUX.map((x) => x.c), names: AV.CHEVEUX.map((x) => x.nom), hide: !u.h },
+      { k: "e", lab: "Yeux", list: AV.YEUX, name: (x) => x.nom },
+      { k: "br", lab: "Sourcils", list: AV.SOURCILS, name: (x) => x.nom, hide: !u.br },
+      { k: "b", lab: "Bouche", list: AV.BOUCHES, name: (x) => x.nom, hide: !u.b },
+      { k: "a", lab: "Accessoire", list: AV.ACCESSOIRES, name: (x) => x.nom, hide: !u.a },
+      { k: "f", lab: "Fond", list: AV.FONDS, name: (x) => x.nom },
+    ];
+  }
+  function stepAvatar(k, d) {
+    const o = AV.parse(A.avatar), row = avaRows(o).find((r) => r.k === k);
+    const n = row.list.length, cur = k === "t" ? row.list.findIndex((x) => x.id === o.t) : o[k];
+    const next = (cur + d + n) % n;
+    o[k] = k === "t" ? row.list[next].id : next;
+    setAvatar(AV.format(o));
   }
   function renderAvatar() {
     if (!AV || !avaOK(A.avatar)) return;
     const o = AV.parse(A.avatar), col = AV.COULEURS[o.c];
     $("avaPrev").innerHTML = AV.svg(A.avatar);
     $("avaPrev").style.setProperty("--c", col);
-    const choice = (box, items, isOn, make, label) => {
-      const el = $(box); el.innerHTML = "";
-      items.forEach((it, i) => {
-        const b = document.createElement("button"); b.type = "button";
-        const on = isOn(it, i);
-        b.className = "ava-opt" + (on ? " on" : ""); b.setAttribute("aria-pressed", on ? "true" : "false");
-        b.title = label(it, i); b.setAttribute("aria-label", label(it, i));
-        b.style.setProperty("--c", col);
-        make(b, it, i);
-        b.onclick = () => setAvatar(AV.format(Object.assign({}, o, pickOf(box, it, i))));
-        el.append(b);
-      });
-    };
-    const pickOf = (box, it, i) => box === "avaT" ? { t: it.id } : box === "avaC" ? { c: i } : box === "avaS" ? { s: i } : { e: i };
-    choice("avaT", AV.TENUES, (t) => t.id === o.t, (b, t) => { b.classList.add("fig"); b.innerHTML = AV.svg(AV.format(Object.assign({}, o, { t: t.id }))); }, (t) => t.nom);
-    choice("avaC", AV.COULEURS, (c, i) => i === o.c, (b, c) => { b.classList.add("sw"); b.style.background = c; }, (c, i) => "Couleur " + (i + 1));
-    choice("avaS", AV.PEAUX, (c, i) => i === o.s, (b, c) => { b.classList.add("sw"); b.style.background = c; }, (c, i) => "Peau " + (i + 1));
-    choice("avaE", AV.YEUX, (y, i) => i === o.e, (b, y, i) => { b.classList.add("fig"); b.innerHTML = AV.svg(AV.format(Object.assign({}, o, { e: i }))); }, (y) => y.nom);
-    $("avaS").closest(".ava-row").classList.toggle("hidden", o.t === "robot");
+    if ($("avaOpts").classList.contains("hidden")) return;
+    const box = $("avaRows"), focused = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.f;
+    box.innerHTML = "";
+    for (const r of avaRows(o)) {
+      if (r.hide) continue;
+      const line = document.createElement("div"); line.className = "ava-line";
+      line.innerHTML = '<span class="ava-lab">' + r.lab + "</span>";
+      if (r.list) {
+        const i = r.k === "t" ? r.list.findIndex((x) => x.id === o.t) : o[r.k];
+        const sel = document.createElement("div"); sel.className = "ava-sel";
+        sel.innerHTML = '<button type="button" class="ava-arr" data-f="' + r.k + '-1" aria-label="' + r.lab + ' : précédent">' + ICON_L + "</button>"
+          + '<span class="ava-val" aria-live="polite">' + esc(r.name(r.list[i])) + "<small>" + (i + 1) + " / " + r.list.length + "</small></span>"
+          + '<button type="button" class="ava-arr" data-f="' + r.k + '1" aria-label="' + r.lab + ' : suivant">' + ICON_R + "</button>";
+        const [bl, br] = sel.querySelectorAll("button");
+        bl.onclick = () => stepAvatar(r.k, -1); br.onclick = () => stepAvatar(r.k, 1);
+        line.append(sel);
+      } else {
+        const ch = document.createElement("div"); ch.className = "ava-ch";
+        r.sw.forEach((c, i) => {
+          const b = document.createElement("button"); b.type = "button";
+          const on = o[r.k] === i, label = r.names ? r.names[i] : r.lab + " " + (i + 1);
+          b.className = "ava-opt sw" + (on ? " on" : "") + (c ? "" : " orig"); b.dataset.f = r.k + "s" + i;
+          b.setAttribute("aria-pressed", on ? "true" : "false"); b.title = label; b.setAttribute("aria-label", r.lab + " : " + label);
+          if (c) b.style.background = c;
+          b.onclick = () => { o[r.k] = i; setAvatar(AV.format(o)); };
+          ch.append(b);
+        });
+        line.append(ch);
+      }
+      box.append(line);
+    }
+    // la page est reconstruite à chaque choix : on garde le focus sur la même commande (clavier)
+    if (focused) { const el = box.querySelector('[data-f="' + focused + '"]'); if (el) el.focus(); }
+  }
+  function openAvatarEditor(open) {
+    $("avaOpts").classList.toggle("hidden", !open);
+    $("avaPrev").closest(".ava-me").classList.toggle("editing", open);
+    $("bAvaEdit").classList.toggle("on", open); $("bAvaEdit").setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) A.avaBefore = A.avatar;
+    renderAvatar();
   }
   function ensureName() {
     let n = $("pseudo").value.trim().replace(/\s+/g, " ").slice(0, 16);
@@ -1250,7 +1295,9 @@
     $("rpNo").onclick = () => $("report").classList.add("hidden");
     $("rpYes").onclick = sendReport;
     $("bAvaRnd").onclick = () => AV && setAvatar(AV.random());
-    $("bAvaEdit").onclick = () => { const h = $("avaOpts").classList.toggle("hidden"); $("bAvaEdit").classList.toggle("on", !h); $("bAvaEdit").setAttribute("aria-expanded", h ? "false" : "true"); };
+    $("bAvaEdit").onclick = () => openAvatarEditor($("avaOpts").classList.contains("hidden"));
+    $("bAvaDone").onclick = () => openAvatarEditor(false);
+    $("bAvaUndo").onclick = () => { if (A.avaBefore && avaOK(A.avaBefore)) setAvatar(A.avaBefore); openAvatarEditor(false); };
     $("bLibBack").onclick = () => show(A.mode ? "lobby" : "home");
     $("bLobbyBack").onclick = goHome;
     $("bCopy").onclick = () => { navigator.clipboard.writeText(A.code).then(() => toast("Code copié : " + A.code), () => toast("Code : " + A.code)); };

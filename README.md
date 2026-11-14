@@ -226,7 +226,7 @@ js/demo.js        jeux fictifs, cartes et panoramas générés
 js/pano.js        visionneuse 360° en WebGL pur (sans bibliothèque)
 js/mapview.js     carte zoomable avec repères
 js/app.js         déroulement, points, multijoueur, éditeur
-js/avatars.js     avatars des joueurs à composer (tenue, couleur, peau, yeux ; SVG originaux), tirés au hasard la première fois
+js/avatars.js     avatars des joueurs à composer (tenue, couleur, peau, cheveux, yeux, sourcils, bouche, accessoire, fond ; SVG originaux), tirés au hasard la première fois
 js/admin.js       page d'administration (/admin) : signalements, correction ou suppression des vues
 admin.html, admin.css
 packs/            pack « Vrais jeux » : données (versionnées) et images (packs/img/, téléchargées)
