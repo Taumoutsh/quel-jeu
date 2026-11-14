@@ -43,6 +43,7 @@ PACK = os.path.join(ROOT, "packs", "vrais-jeux.js")
 OUT = os.environ.get("QJ_OUT") or os.path.join(ROOT, "packs", "img")
 SEED = os.environ.get("QJ_SEED") or ""
 PANO_W, MAP_W = 4096, 2400  # mêmes limites que la bibliothèque
+TIMEOUT = int(os.environ.get("QJ_TIMEOUT", "300"))  # secondes par fichier (originaux 360° de 40 Mo)
 
 
 def load_pack():
@@ -66,7 +67,7 @@ class HTTPFail(Exception):
 def _get_python(url):
     try:
         req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "image/avif,image/webp,image/png,image/jpeg,*/*"})
-        with urllib.request.urlopen(req, timeout=120) as r:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
             return r.read()
     except urllib.error.HTTPError as e:
         ra = e.headers.get("Retry-After") if e.headers else None
@@ -77,7 +78,7 @@ def _get_curl(url):
     with tempfile.NamedTemporaryFile(delete=False) as body, tempfile.NamedTemporaryFile(delete=False) as head:
         pass
     try:
-        p = subprocess.run(["curl", "-sS", "-L", "--max-time", "120", "-A", UA, "-H", "Accept: image/avif,image/webp,image/png,image/jpeg,*/*",
+        p = subprocess.run(["curl", "-sS", "-L", "--max-time", str(TIMEOUT), "-A", UA, "-H", "Accept: image/avif,image/webp,image/png,image/jpeg,*/*",
                             "-D", head.name, "-o", body.name, "-w", "%{http_code}", url], capture_output=True, text=True)
         if p.returncode != 0:
             raise ConnectionError("curl : " + (p.stderr.strip() or "code %d" % p.returncode))
