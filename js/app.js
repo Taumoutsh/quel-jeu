@@ -291,10 +291,10 @@
       if (A.nroom) A.nroom.presence(p).catch((e) => console.warn("presence", e)); // salle quittée entre-temps : rien
     }, 40);
   }
-  async function joinRoom(code) {
+  async function joinRoom(code, create) {
     const room = A.caps.room;
     if (!room) throw new Error("Multijoueur indisponible");
-    const nr = await room.join("qj-" + code.toLowerCase());
+    const nr = await room.join("qj-" + code.toLowerCase(), create ? { create: true } : undefined);
     A.nroom = nr; A.code = code; A.peers = nr.peers();
     A.unPeers = nr.onPeers((ch) => { A.peers = ch.peers; onPeers(); }, (e) => toast("Connexion à la partie perdue (" + e.code + ")", 5000));
   }
@@ -405,6 +405,7 @@
   }
   function becomeHost() {
     A.mode = "host"; A.hostLostAt = 0; A.hostPeer = null;
+    if (A.nroom && A.nroom.canCreate) A.nroom.canCreate(true); // pourra rouvrir la salle si le serveur l'a perdue
     A.st = Object.assign({}, A.st, { term: ((A.st && A.st.term) || 0) + 1 });
     // la partie reprend où elle en était : manche en cours, résultats affichés ou classement
     if (A.st.ph === "rev") A.shownReveal = -1;
@@ -603,7 +604,7 @@
   function genCode() { let s = ""; for (let i = 0; i < 5; i++) s += CODE_ABC[(Math.random() * CODE_ABC.length) | 0]; return s; }
 
   async function startSolo() {
-    ensureName(); SS.clear(); A.resume = null; await leaveRoom();
+    ensureName(); hostError(""); SS.clear(); A.resume = null; await leaveRoom();
     A.mode = "solo"; A.gen = rid(8); A.res = [];
     A.st = { gen: A.gen, ph: "lobby", cfg: Object.assign({}, A.cfg), seq: [], i: -1, dl: 0 };
     route();
@@ -611,7 +612,13 @@
   async function startHost() {
     ensureName(); await leaveRoom();
     const code = genCode();
-    try { await joinRoom(code); } catch (e) { toast("Impossible de créer la partie : " + (e.code || e.message), 5000); return; }
+    hostError(""); joinError("");
+    try { await joinRoom(code, true); } catch (e) {
+      // site auto-hébergé : nombre de parties simultanées limité (QJ_MAX_PARTIES)
+      hostError(e.code === "full" ? "Trop de parties en cours sur le serveur (" + (e.max || 20) + " au maximum). Réessaie dans quelques minutes."
+        : "Impossible de créer la partie : " + (e.code || e.message));
+      return;
+    }
     A.mode = "host"; A.gen = rid(8); A.res = []; A.ready = false;
     A.st = { gen: A.gen, ph: "lobby", cfg: Object.assign({}, A.cfg), seq: [], i: -1, dl: 0 };
     setLink(code);
@@ -619,6 +626,7 @@
   }
   // rejoindre : on se connecte à la salle sans s'y montrer, on vérifie qu'un hôte y tient une partie, et
   // seulement alors on y entre ; sinon on repart et on le dit. Le bouton montre le chargement entre-temps.
+  function hostError(msg) { $("hostErr").textContent = msg || ""; $("hostErr").classList.toggle("hidden", !msg); }
   function joinError(msg) { $("joinErr").textContent = msg || ""; $("joinErr").classList.toggle("hidden", !msg); }
   function joinBusy(on) {
     $("bJoin").disabled = $("joinCode").disabled = $("bHost").disabled = on;
@@ -643,7 +651,7 @@
   let joining = false;
   async function startJoin(resume) {
     if (joining) return;
-    ensureName(); joinError("");
+    ensureName(); joinError(""); hostError("");
     const code = $("joinCode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (code.length !== 5) { joinError("Le code fait 5 caractères."); return; }
     joining = true; joinBusy(true);

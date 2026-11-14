@@ -12,6 +12,8 @@ services:
       QJ_JEUX: ${QJ_JEUX:-}
       # mot de passe de la page /admin (signalements, corrections des vues) ; vide = administration désactivée
       QJ_ADMIN_PASSWORD: ${QJ_ADMIN_PASSWORD:-}
+      # parties ouvertes en même temps (au-delà, « Créer une partie » est refusé)
+      QJ_MAX_PARTIES: ${QJ_MAX_PARTIES:-20}
     # signalements et corrections, gardés d'une reconstruction à l'autre
     volumes:
       - gamespotter-data:/app/data

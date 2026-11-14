@@ -10,9 +10,12 @@
   const rid = () => { let s = ""; const a = "abcdefghijklmnopqrstuvwxyz0123456789"; for (let i = 0; i < 16; i++) s += a[(Math.random() * a.length) | 0]; return s; };
 
   const room = {
-    async join(name) {
+    // opts.create : ouvre la salle si elle n'existe pas (création d'une partie) ; sinon, on ne fait qu'y entrer
+    async join(name, opts) {
       const me = rid();
       const base = "api/rooms/" + encodeURIComponent(name) + "/";
+      let create = !!(opts && opts.create);
+      const cr = () => (create ? "&create=1" : "");
       let pres = {}, others = new Map(), meta = {}, closed = false, lastV = -1, lastRid = null, lastMsg = Date.now();
       const hs = [], errs = [];
       // online : connecté au serveur (sinon : coupé, en délai de grâce) ; since : arrivée dans la salle (ms)
@@ -21,7 +24,15 @@
         ...[...others].map(([peer, pr]) => Object.assign({ peer, sameTab: false, isMe: false, presence: pr }, info(peer)))];
       const fire = () => { const ps = snap(); for (const h of hs) { try { h({ peers: ps, joined: [], left: [], updated: [] }); } catch (e) { console.error(e); } } };
       let seq = 0; // numéro d'ordre des présences envoyées (le serveur ignore une présence plus ancienne)
-      const post = (what, body) => fetch(base + what + "?peer=" + me + (what === "presence" ? "&s=" + (++seq) : ""), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}), keepalive: what === "leave" });
+      const post = (what, body) => fetch(base + what + "?peer=" + me + (what === "presence" ? "&s=" + (++seq) + cr() : ""), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}), keepalive: what === "leave" });
+      // création d'une partie : la salle est réservée tout de suite, ou refusée (trop de parties ouvertes)
+      if (create) {
+        const r = await post("presence", {});
+        if (!r.ok) {
+          const d = await r.json().catch(() => ({}));
+          throw Object.assign(new Error(d.error || "refusé"), { code: d.code || String(r.status), max: d.max });
+        }
+      }
 
       let es = null, lostT = null, firstMsg = null;
       // lagging : la relecture a apporté du neuf que le flux n'avait pas livré (flux retenu par un antivirus,
@@ -44,7 +55,7 @@
       // flux en direct ; recréé quand le navigateur l'a fermé (page mise de côté sur téléphone, réseau coupé…)
       const connect = () => {
         if (es) { es.onmessage = es.onopen = es.onerror = null; es.close(); }
-        es = new EventSource(base + "events?peer=" + me);
+        es = new EventSource(base + "events?peer=" + me + cr());
         es.onmessage = (e) => { let d; try { d = JSON.parse(e.data); } catch (err) { return; } apply(d, true); };
         es.onopen = () => {
           clearTimeout(lostT); lostT = null;
@@ -92,6 +103,8 @@
       return {
         name,
         peers: snap,
+        // l'hôte (même devenu hôte en cours de partie) peut rouvrir la salle si le serveur l'a perdue (redémarrage)
+        canCreate(on) { create = !!on; },
         onPeers(h, onErr) { hs.push(h); if (onErr) errs.push(onErr); setTimeout(fire, 0); return () => { const i = hs.indexOf(h); if (i >= 0) hs.splice(i, 1); }; },
         async presence(p) {
           pres = Object.assign({}, pres, p); fire();

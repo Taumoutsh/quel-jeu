@@ -13,7 +13,9 @@ const path = require("path");
 const PORT = +process.env.PORT || 8080;
 const ROOT = path.resolve(process.env.ROOT || path.join(__dirname, ".."));
 const MAX_BODY = 512 * 1024;        // présence maximale (l'hôte y met l'état de la partie)
-const MAX_PEERS = 16, MAX_ROOMS = 500;
+const MAX_PEERS = 16;
+// parties ouvertes en même temps (salles) : au-delà, la création d'une partie est refusée (QJ_MAX_PARTIES, 20 par défaut)
+const MAX_ROOMS = Math.max(1, parseInt(process.env.QJ_MAX_PARTIES, 10) || 20);
 const GRACE_MS = 15000;             // délai avant de retirer un joueur dont la connexion a coupé
 const ROOM_RE = /^qj-[a-z0-9]{1,12}$/, PEER_RE = /^[a-z0-9]{6,24}$/;
 
@@ -169,16 +171,22 @@ function broadcast(name) {
   const data = "data: " + snapshot(room) + "\n\n";
   for (const p of room.values()) for (const res of p.clients) res.write(data);
 }
-function getPeer(name, peer, create) {
+// joueur d'une salle ; newRoom : la salle peut être ouverte si elle n'existe pas (création d'une partie par
+// l'hôte, ?create=1). Rejoindre avec un code n'ouvre jamais de salle : un code inconnu ne prend pas de place.
+// Refus : { err: 404 } salle inconnue, { err: "full" } trop de parties ouvertes, { err: 503 } salle pleine.
+function getPeer(name, peer, newRoom) {
   let room = rooms.get(name);
   if (!room) {
-    if (!create || rooms.size >= MAX_ROOMS) return null;
+    if (!newRoom) return { err: 404 };
+    if (rooms.size >= MAX_ROOMS) return { err: "full" };
     room = new Map(); room.rid = crypto.randomBytes(4).toString("hex"); rooms.set(name, room);
   }
   let p = room.get(peer);
   if (!p) {
-    if (!create || room.size >= MAX_PEERS) return null;
+    if (room.size >= MAX_PEERS) return { err: 503 };
     p = { presence: {}, clients: new Set(), timer: null, since: Date.now() }; room.set(peer, p);
+    // pas encore de flux ouvert (arrivée par un envoi de présence) : retiré s'il ne se connecte jamais
+    p.timer = setTimeout(() => removePeer(name, peer), GRACE_MS);
   }
   return p;
 }
@@ -271,6 +279,12 @@ async function reportApi(req, res) {
   return json(res, 200, { ok: true });
 }
 
+function refuse(res, err) {
+  if (err === "full") return json(res, 503, { error: "trop de parties en cours", code: "full", max: MAX_ROOMS });
+  if (err === 404) return json(res, 404, { error: "partie introuvable", code: "absent" });
+  return json(res, 503, { error: "salle pleine", code: "salle" });
+}
+
 async function api(req, res, url) {
   const m = url.pathname.match(/^\/api\/rooms\/([^/]+)\/(events|presence|leave|state)$/);
   if (url.pathname === "/api/ping") return json(res, 200, { ok: true });
@@ -280,9 +294,10 @@ async function api(req, res, url) {
   const name = m[1], action = m[2], peer = url.searchParams.get("peer") || "";
   if (!ROOM_RE.test(name) || !PEER_RE.test(peer)) return json(res, 400, { error: "salle ou joueur invalide" });
 
+  const newRoom = url.searchParams.get("create") === "1";
   if (action === "events" && req.method === "GET") {
-    const p = getPeer(name, peer, true);
-    if (!p) return json(res, 503, { error: "salle pleine" });
+    const p = getPeer(name, peer, newRoom);
+    if (p.err) return refuse(res, p.err);
     clearTimeout(p.timer); p.timer = null;
     // flux en direct : ni mise en tampon (Nginx : X-Accel-Buffering), ni compression ou transformation par un CDN
     // comme Cloudflare (no-transform, identity), qui retiendrait les messages ; un commentaire de 2 Ko force le départ.
@@ -305,8 +320,8 @@ async function api(req, res, url) {
     let body;
     try { body = JSON.parse(await readBody(req)); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
     if (!body || typeof body !== "object" || Array.isArray(body)) return json(res, 400, { error: "objet attendu" });
-    const p = getPeer(name, peer, true);
-    if (!p) return json(res, 503, { error: "salle pleine" });
+    const p = getPeer(name, peer, newRoom);
+    if (p.err) return refuse(res, p.err);
     // numéro d'ordre : deux envois rapprochés peuvent arriver dans le désordre ; le plus ancien est ignoré
     const seq = Number(url.searchParams.get("s"));
     if (Number.isFinite(seq) && seq > 0) {

@@ -43,6 +43,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 
 ## Signalements et administration (site Docker)
 - Sur l'écran de résultat d'une manche, **« Signaler une erreur »** : position fausse (on peut toucher la carte au bon endroit), mauvais jeu, image inadaptée ou autre, avec un commentaire facultatif. Le bouton n'apparaît que sur le site auto-hébergé (le serveur garde les signalements), pour les vues du pack « Vrais jeux ».
+- **Parties simultanées** : `QJ_MAX_PARTIES` dans `.env` (20 par défaut). Au-delà, « Créer une partie » affiche « Trop de parties en cours sur le serveur » ; rejoindre une partie existante reste possible, et taper un code inconnu n'occupe pas de place.
 - **Page `/admin`**, protégée par le mot de passe `QJ_ADMIN_PASSWORD` du `.env` (vide = désactivée ; 8 essais ratés par quart d'heure et par adresse) : liste des signalements par vue, capture, carte avec la position actuelle, l'originale et celles proposées par les joueurs. On peut changer le jeu, le nom du lieu et la position (toucher la carte, ou « Utiliser sa position »), rétablir l'original, supprimer la vue, et marquer chaque signalement résolu ou ignoré. L'onglet « Toutes les vues » permet de corriger n'importe quelle vue.
 - Les corrections sont gardées par le serveur (volume Docker `gamespotter-data`, fichiers `reports.json` et `overrides.json`) et appliquées au pack servi aux joueurs, sans toucher au dépôt. « Exporter les corrections » les télécharge en JSON pour les reporter dans `packs/vrais-jeux.js`.
 

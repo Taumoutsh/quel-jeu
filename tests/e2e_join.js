@@ -85,7 +85,7 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
   check((await until(() => C.evaluate("QJ.A.mode === 'host' && QJ.A.screen === 'lobby' && QJ.A.st.ph === 'lobby'"), 8000)) >= 0, "hôte parti : l'invité qui attendait devient hôte d'un nouveau salon, même code");
   check((await C.innerText("#codeBox")).trim() === code, "code inchangé");
   // serveur : une présence plus ancienne (numéro d'ordre inférieur) arrivée en retard est ignorée
-  const post = (s, body) => fetch(URL + "api/rooms/qj-ordre/presence?peer=testordre01&s=" + s, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const post = (s, body) => fetch(URL + "api/rooms/qj-ordre/presence?peer=testordre01&create=1&s=" + s, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   await post(2, { n: "Ordre", rd: "neuf" }); await post(1, { n: "Ordre", rd: "" });
   const stt = await (await fetch(URL + "api/rooms/qj-ordre/state?peer=testordre02")).json();
   check(stt.peers.testordre01 && stt.peers.testordre01.rd === "neuf", "serveur : présence périmée ignorée (ordre des envois respecté)");
