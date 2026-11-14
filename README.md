@@ -49,10 +49,11 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 1196 vues de 144 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 1199 vues de 144 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
+    - *Final Fantasy XV* : 3 panoramas Nvidia Ansel 360 publiés sur Flickr (Hammerhead vu d'en haut, ponton de Galdin Quay, marché de Lestallum), en plus des captures plates du jeu.
     - *Xenoblade Chronicles X* : 3 vues du wiki [FrontierNav](https://frontiernav.net/wiki/xenoblade-chronicles-x/visualisations/panoramas) (CC BY-SA 4.0), avec la carte de Mira et la position exacte de chaque vue (cubes en tuiles convertis en équirectangulaire).
   - **Captures plates** (wikis Fandom : une capture par lieu connu, placée sur la carte du jeu du même wiki) :
     | Jeu | Vues |
