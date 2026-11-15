@@ -864,6 +864,14 @@
     const t = A.st.cfg.tries, R = A.R;
     $("tries").innerHTML = t ? Array.from({ length: t }, (_, k) => "<i class='" + (k < R.errors ? "used" : "") + "'></i>").join("") : "<span class='mut small'>essais illimités" + (R.errors ? " · " + R.errors + " erreur" + (R.errors > 1 ? "s" : "") : "") + "</span>";
   }
+  // champ du nom : rouge et petit tremblement, puis retour à la couleur normale
+  let flashT = 0;
+  function flashWrong() {
+    const i = $("gInput");
+    i.classList.remove("ko"); void i.offsetWidth; // relance l'animation si deux ratés se suivent
+    i.classList.add("ko");
+    clearTimeout(flashT); flashT = setTimeout(() => i.classList.remove("ko"), 750);
+  }
   function setFb(kind, html) { const f = $("fb"); f.className = "fb" + (kind ? " show " + kind : ""); f.innerHTML = html || ""; }
 
   function submitGuess(text) {
@@ -887,9 +895,10 @@
       R.errors++;
       $("gInput").value = "";
       const left = A.st.cfg.tries ? A.st.cfg.tries - R.errors : null;
-      // juste « Raté » (demande du propriétaire) : ni la proposition répétée, ni le jeu reconnu ;
-      // les essais restants se voient aux pastilles à côté de la question (renderTries)
-      setFb("bad", "Raté");
+      // pas de message : le champ rougit en tremblant puis redevient jaune (demande du propriétaire) ;
+      // « Raté » reste annoncé aux lecteurs d'écran ; les essais restants se voient aux pastilles (renderTries)
+      setFb("sr", "Raté");
+      flashWrong();
       renderTries();
       if (left != null && left <= 0) failName("Plus d'essais !");
       return;

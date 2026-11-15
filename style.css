@@ -239,6 +239,11 @@ td.who { white-space: nowrap; }
 .fb { min-height: 0; font-size: 14px; margin-top: 8px; padding: 9px 12px; border-radius: 10px; display: none; }
 .fb.show { display: block; }
 .fb.bad { background: var(--bad-soft); color: var(--bad-txt); }
+/* nom raté : le champ rougit et tremble légèrement, puis redevient jaune (transition du champ) */
+.fb.sr { padding: 0; margin: 0; border: 0; } /* « Raté » pour les lecteurs d'écran seulement */
+#gInput { transition: border-color .3s, box-shadow .3s; }
+#gInput.ko { border-color: var(--bad); box-shadow: 0 0 0 3px var(--bad-soft); animation: koShake .42s ease-in-out; }
+@keyframes koShake { 15% { transform: translateX(-4px); } 35% { transform: translateX(4px); } 55% { transform: translateX(-3px); } 75% { transform: translateX(2px); } 100% { transform: none; } }
 .fb.warn { background: var(--sea-soft); color: var(--sea); }
 .fb.good { background: var(--good-soft); color: var(--good); }
 .cands { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
