@@ -887,7 +887,8 @@
       R.errors++;
       $("gInput").value = "";
       const left = A.st.cfg.tries ? A.st.cfg.tries - R.errors : null;
-      setFb("bad", "Raté" + (ev.game ? " : ce n'est pas <b>" + esc(ev.game.t) + "</b>" : "") + "." + (left != null ? " " + (left > 0 ? left + " essai" + (left > 1 ? "s" : "") + " restant" + (left > 1 ? "s" : "") + "." : "") : ""));
+      // jeu reconnu : son titre ; sinon ce qui a été tapé (titre inexistant, numéro qui n'existe pas…)
+      setFb("bad", "Raté : ce n'est pas " + (ev.game ? "<b>" + esc(ev.game.t) + "</b>" : "« " + esc(text.trim()) + " »") + "." + (left != null ? " " + (left > 0 ? left + " essai" + (left > 1 ? "s" : "") + " restant" + (left > 1 ? "s" : "") + "." : "") : ""));
       renderTries();
       if (left != null && left <= 0) failName("Plus d'essais !");
       return;

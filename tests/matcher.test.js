@@ -51,6 +51,8 @@ const cases = [
   ["Assassin's Creed IV: Black Flag", "assassin's creed", "precision"],
   ["Assassin's Creed IV: Black Flag", "black flag", "ok"],
   ["God of War (2018)", "god of war", "precision"],
+  ["Euro Truck Simulator 2", "Euro Truck Simulator 3", "wrong"],
+  ["Euro Truck Simulator 2", "euro truck simulatr 2", "ok"],
 ];
 let fail = 0;
 for (const [ans, input, exp] of cases) {
@@ -60,6 +62,13 @@ for (const [ans, input, exp] of cases) {
   const ok = r.k === exp;
   if (!ok) fail++;
   console.log(ok ? "ok  " : "FAIL", JSON.stringify(input).padEnd(36), "→", r.k.padEnd(9), ok ? "" : "(attendu " + exp + ")", r.candidates ? "[" + r.candidates.length + " choix]" : "");
+}
+// un refus ne doit jamais nommer la bonne réponse (« ce n'est pas Euro Truck Simulator 2 » quand c'était lui)
+for (const [ans, input] of [["Euro Truck Simulator 2", "Euro Truck Simulator 3"], ["Grand Theft Auto V", "grand theft auto 6"], ["Dark Souls III", "dark souls 4"]]) {
+  const r = M.evaluate(input, slug(ans));
+  const ok = r.k === "wrong" && (!r.game || r.game.t !== ans);
+  if (!ok) fail++;
+  console.log(ok ? "ok  " : "FAIL", JSON.stringify(input).padEnd(36), "→", r.k, r.game ? "« " + r.game.t + " »" : "(aucun titre cité)");
 }
 console.log("suggest('zel'):", M.suggest("zel"));
 console.log("suggest('gta s'):", M.suggest("gta s"));

@@ -139,7 +139,9 @@
         if (s > bs) { bs = s; best = g; bestName = n; }
       }
       if (best === ans && bs >= 0.8 && nums(q) === nums(bestName)) return { k: "ok", game: ans, typo: true };
-      return { k: "wrong", game: bs >= 0.85 ? best : null };
+      // titre voisin nommé seulement pour une vraie faute de frappe (mêmes numéros), et jamais la bonne réponse :
+      // « Euro Truck Simulator 3 » (n'existe pas) ne doit pas afficher « ce n'est pas Euro Truck Simulator 2 »
+      return { k: "wrong", game: bs >= 0.85 && best !== ans && nums(q) === nums(bestName) ? best : null };
     }
 
     function suggest(input, limit) {
