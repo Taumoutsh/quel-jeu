@@ -99,7 +99,11 @@ void main(){
       const k = () => this.fov / c.clientHeight;
       const two = () => { const [a, b] = [...ptrs.values()]; return { d: Math.hypot(a[0] - b[0], a[1] - b[1]), m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] }; };
       c.addEventListener("pointerdown", (e) => {
-        c.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+        // premier doigt d'un nouveau geste : on oublie les doigts dont le « doigt levé » s'est perdu (page qui change
+        // sous le doigt…), sinon un seul doigt formait un pincement avec ce doigt fantôme et zoomait au lieu de glisser
+        if (e.isPrimary) { ptrs.clear(); pinch = null; }
+        try { c.setPointerCapture(e.pointerId); } catch (err) { /* doigt déjà levé : on le suit quand même */ }
+        ptrs.set(e.pointerId, [e.clientX, e.clientY]);
         lastX = e.clientX; lastY = e.clientY; this.vy = 0; lastT = performance.now();
         if (ptrs.size === 2) pinch = two();
       });
@@ -147,6 +151,7 @@ void main(){
         if (wasPinch || performance.now() - lastT > 60) this.vy = 0;
       };
       c.addEventListener("pointerup", up); c.addEventListener("pointercancel", up);
+      c.addEventListener("lostpointercapture", (e) => { if (ptrs.has(e.pointerId)) up(e); }); // suivi perdu = doigt levé
       c.addEventListener("wheel", (e) => { e.preventDefault(); this.fov = Math.max(this.flat ? 0.2 : 0.45, Math.min(this.flat ? 1.35 : 1.75, this.fov * Math.exp(e.deltaY * 0.001))); this.dirty = true; }, { passive: false });
       window.addEventListener("resize", () => (this.dirty = true));
       if (root.ResizeObserver) new ResizeObserver(() => (this.dirty = true)).observe(c);

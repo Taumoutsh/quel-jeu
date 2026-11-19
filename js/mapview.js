@@ -94,7 +94,11 @@
       const el = this.el, ptrs = new Map();
       let sx = 0, sy = 0, moved = false, last = null, pinch = null;
       el.addEventListener("pointerdown", (e) => {
-        el.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        // premier doigt d'un nouveau geste : on oublie les doigts dont le « doigt levé » s'est perdu (sinon un seul
+        // doigt pincerait avec un doigt fantôme, et le toucher pour poser le repère ne serait plus reconnu)
+        if (e.isPrimary) { ptrs.clear(); pinch = null; }
+        try { el.setPointerCapture(e.pointerId); } catch (err) { /* doigt déjà levé : on le suit quand même */ }
+        ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (ptrs.size === 1) { sx = e.clientX; sy = e.clientY; moved = false; last = { x: e.clientX, y: e.clientY }; }
         if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: this.s, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; moved = true; }
       });
@@ -127,6 +131,7 @@
         if (ptrs.size === 1) { const p = [...ptrs.values()][0]; last = { x: p.x, y: p.y }; }
       };
       el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+      el.addEventListener("lostpointercapture", up); // suivi perdu = doigt levé (sans toucher : e.type ≠ pointerup)
       el.addEventListener("wheel", (e) => { if (this.opts.pageWheel && !e.ctrlKey) return; e.preventDefault(); const r = el.getBoundingClientRect(); this.zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); this.touched = true; }, { passive: false });
     }
   }
