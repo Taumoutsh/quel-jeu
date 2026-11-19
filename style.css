@@ -348,6 +348,8 @@ table.sc th.n { text-align: right; }
   .dock > * { max-width: 520px; }
   .mapwrap { height: 46vh; }
   .panel.big .mapwrap { height: 72vh; }
+  /* « Agrandir » sur grand écran : la carte gagne aussi en largeur (place disponible à côté de la vue) */
+  .dock > #pMap.big { max-width: min(1280px, 100%); }
 }
 
 /* classement final : détail dépliable de chaque joueur */

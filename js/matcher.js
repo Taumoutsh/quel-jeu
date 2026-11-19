@@ -50,6 +50,7 @@
     return d[m][n];
   }
   const sim = (a, b) => 1 - lev(a, b) / Math.max(a.length, b.length, 1);
+  const MAX_CANDS = 20;
   const nums = (s) => s.split(" ").filter((w) => /^\d+$/.test(w)).sort().join(",");
 
   function createMatcher(seriesList, extraGames) {
@@ -100,7 +101,9 @@
       c = uniq(c);
       if (!c.includes(ans)) c.push(ans);
       c.sort((a, b) => a.t.localeCompare(b.t, "fr"));
-      return { k: "precision", candidates: c.length <= 12 ? c.map((g) => g.t) : null, series: seriesOf(ans) ? seriesOf(ans).t : null };
+      // liste des propositions (mode aide) : jusqu'à 20 titres, pour couvrir les plus grandes séries
+      // (Assassin's Creed : 13 jeux ; avec 12 au plus, « Assassin's Creed » n'affichait aucune proposition)
+      return { k: "precision", candidates: c.length <= MAX_CANDS ? c.map((g) => g.t) : null, series: seriesOf(ans) ? seriesOf(ans).t : null };
     }
 
     function evaluate(input, answerId) {

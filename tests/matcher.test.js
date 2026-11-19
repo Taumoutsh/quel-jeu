@@ -63,6 +63,17 @@ for (const [ans, input, exp] of cases) {
   if (!ok) fail++;
   console.log(ok ? "ok  " : "FAIL", JSON.stringify(input).padEnd(36), "→", r.k.padEnd(9), ok ? "" : "(attendu " + exp + ")", r.candidates ? "[" + r.candidates.length + " choix]" : "");
 }
+// nom d'une série qui est aussi le titre d'un jeu : liste des propositions de toute la série (13 jeux AC),
+// sauf si la réponse est justement ce jeu-là
+{
+  const r = M.evaluate("Assassin's Creed", slug("Assassin's Creed Unity"));
+  const ok = r.k === "precision" && !!r.candidates && r.candidates.includes("Assassin's Creed Unity") && r.candidates.includes("Assassin's Creed");
+  if (!ok) fail++;
+  console.log(ok ? "ok  " : "FAIL", JSON.stringify("Assassin's Creed").padEnd(36), "→", r.k, r.candidates ? "[" + r.candidates.length + " propositions]" : "(pas de liste)");
+  const r2 = M.evaluate("Assassin's Creed", slug("Assassin's Creed"));
+  if (r2.k !== "ok") fail++;
+  console.log(r2.k === "ok" ? "ok  " : "FAIL", "réponse = Assassin's Creed".padEnd(36), "→", r2.k);
+}
 // un refus ne doit jamais nommer la bonne réponse (« ce n'est pas Euro Truck Simulator 2 » quand c'était lui)
 for (const [ans, input] of [["Euro Truck Simulator 2", "Euro Truck Simulator 3"], ["Grand Theft Auto V", "grand theft auto 6"], ["Dark Souls III", "dark souls 4"]]) {
   const r = M.evaluate(input, slug(ans));
