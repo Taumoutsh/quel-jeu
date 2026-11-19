@@ -598,9 +598,18 @@
     if (open) A.avaBefore = A.avatar;
     renderAvatar();
   }
+  // pseudo aléatoire pour qui n'en a pas tapé : un nom et un adjectif (accordés au masculin), 16 caractères au plus
+  const PSEUDO_NOMS = ["Renard", "Loup", "Pixel", "Dragon", "Ninja", "Golem", "Lynx", "Corsaire", "Faucon", "Hibou", "Panda", "Kraken", "Yéti", "Griffon", "Titan", "Pirate", "Sphinx", "Spectre", "Lutin", "Chevalier", "Cyborg", "Gobelin", "Druide", "Samouraï", "Viking", "Phénix", "Moustique", "Raton", "Blaireau", "Paladin"];
+  const PSEUDO_ADJ = ["Agile", "Rusé", "Furtif", "Brave", "Cosmique", "Sauvage", "Malin", "Turbo", "Rapide", "Mystique", "Rebelle", "Zen", "Épique", "Nocturne", "Funky", "Perdu", "Curieux", "Têtu", "Discret", "Légendaire", "Pressé", "Joyeux", "Grognon", "Doré", "Masqué", "Égaré", "Intrépide", "Distrait"];
+  function randomPseudo() {
+    for (;;) {
+      const n = PSEUDO_NOMS[(Math.random() * PSEUDO_NOMS.length) | 0] + " " + PSEUDO_ADJ[(Math.random() * PSEUDO_ADJ.length) | 0];
+      if (n.length <= 16) return n;
+    }
+  }
   function ensureName() {
     let n = $("pseudo").value.trim().replace(/\s+/g, " ").slice(0, 16);
-    if (!n) n = "Joueur " + (10 + ((Math.random() * 89) | 0));
+    if (!n) n = randomPseudo();
     A.name = n; LS.set("name", n); $("pseudo").value = n;
   }
   function genCode() { let s = ""; for (let i = 0; i < 5; i++) s += CODE_ABC[(Math.random() * CODE_ABC.length) | 0]; return s; }
@@ -1421,6 +1430,6 @@
   }
 
   // accès pour les tests automatisés
-  window.QJ = { A, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t) => submitGuess(t), startSolo, hostStart, validatePin, get pano() { return pano; } };
+  window.QJ = { A, randomPseudo, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t) => submitGuess(t), startSolo, hostStart, validatePin, get pano() { return pano; } };
   wire();
 })();
