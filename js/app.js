@@ -321,10 +321,13 @@
   // présent ET disponible : page visible (ou cachée depuis moins de 4 s). Un téléphone peut garder la page
   // en marche un moment après être passé sur une autre application : l'hôte paraît vivant mais ne joue plus.
   const AWAY_MS = 4000;
-  function active(p) {
+  // hôte à l'onglet caché sur l'écran des résultats (tout le monde attend son « Manche suivante ») : remplacé
+  // au bout de 15 s ; pendant une manche, il garde la main (sa page termine la manche toute seule)
+  const HOST_AWAY_REV_MS = 15000;
+  function active(p, ms) {
     if (!p || p.sameTab) return true;
     const s = A.seen[p.peer];
-    return alive(p) && !(s && s.hid && Date.now() - s.hid > AWAY_MS);
+    return alive(p) && !(s && s.hid && Date.now() - s.hid > (ms || AWAY_MS));
   }
   // joueurs de la partie en cours (même génération), gardés même après leur départ pour le classement final
   function trackPlayers() {
@@ -368,10 +371,11 @@
     const now = Date.now();
     if (A.lastCheck && now - A.lastCheck > 2500) freshenSeen(now);
     A.lastCheck = now;
-    // pendant une manche ou ses résultats, un hôte passé sur une autre application bloque la partie : il est
-    // remplacé ; dans le salon (partage du code par message…) ou au classement final, seul son départ compte
-    const busy = !!A.st && (A.st.ph === "play" || A.st.ph === "rev");
-    const avail = (p) => (busy ? active(p) : alive(p));
+    // un hôte à l'onglet caché (autre onglet, autre application) n'est remplacé que s'il bloque la partie :
+    // sur l'écran des résultats, au bout de 15 s. Pendant une manche, sa page continue de tourner et termine la
+    // manche (chrono, réponses) : seul son départ compte, comme dans le salon et au classement final.
+    // Une page figée (téléphone en veille) n'envoie plus de signal de vie : elle est vue absente (alive).
+    const avail = (p) => (A.st && A.st.ph === "rev" ? active(p, HOST_AWAY_REV_MS) : alive(p));
     const hosts = A.peers.filter((p) => !p.sameTab && p.presence && p.presence.h === 1 && p.presence.st && avail(p));
     const rank = (p) => [-((p.presence.st && p.presence.st.term) || 0), p.peer];
     hosts.sort((a, b) => { const x = rank(a), y = rank(b); return x[0] - y[0] || (x[1] < y[1] ? -1 : 1); });
@@ -495,7 +499,9 @@
   function hostCheck() {
     if (!isHost() || !A.st || A.st.ph !== "play") return;
     const i = A.st.i, ps = players(true);
-    const live = ps.filter((p) => p.active !== false);
+    // l'hôte lui-même, onglet caché depuis plus de 4 s, n'est plus attendu (comme un invité indisponible)
+    const meAway = A.hidSince && Date.now() - A.hidSince > AWAY_MS;
+    const live = ps.filter((p) => p.active !== false && !(p.me && meAway));
     const allDone = live.length > 0 && live.every((p) => p.r[i] && p.r[i][0] >= 2);
     const timeUp = A.st.dl && Date.now() > A.st.dl + 1200;
     if (allDone || timeUp) { A.st = Object.assign({}, A.st, { ph: "rev" }); publish(); route(); }
@@ -1407,7 +1413,10 @@
     setInterval(() => { if (A.nroom) { A.hb = ((A.hb || 0) + 1) % 1e6; publish(); } }, HB_MS);
     setInterval(() => { if (A.nroom) { checkHost(); if (A.mode === "host") hostRecordGone(); renderPlayers(); } }, 1000);
     // retour sur la page (téléphone) : signal de vie immédiat pour ne pas passer pour absent
-    document.addEventListener("visibilitychange", () => { if (A.nroom) { A.hb = ((A.hb || 0) + 1) % 1e6; publish(); } });
+    document.addEventListener("visibilitychange", () => {
+      A.hidSince = document.visibilityState === "hidden" ? A.hidSince || Date.now() : 0;
+      if (A.nroom) { A.hb = ((A.hb || 0) + 1) % 1e6; publish(); }
+    });
 
     const linked = codeFromLink();
     if (linked) $("joinCode").value = linked;

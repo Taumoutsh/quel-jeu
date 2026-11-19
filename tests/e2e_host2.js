@@ -1,5 +1,6 @@
-// Hôte qui passe sur une autre application (page cachée mais toujours active), joueur parti avant d'avoir
-// répondu, une seule joueuse restante : relève en pleine manche et classement complet.
+// Hôte qui change d'onglet (page cachée mais toujours active) : il garde la main pendant la manche, n'est
+// remplacé qu'au bout de 15 s sur l'écran des résultats ; joueur parti avant d'avoir répondu, une seule joueuse
+// restante : classement complet ; hôte parti par le bouton : relève en pleine manche.
 // Depuis la racine du dépôt : node tests/e2e_host2.js /tmp/qj
 const { chromium } = require("playwright");
 const { spawn } = require("child_process");
@@ -32,13 +33,18 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
     // Bruno quitte pendant la manche 1 sans avoir répondu ; Alice répond
     await B.click("#bQuit"); await wait(200); await B.click("#cfYes"); await wait(500);
     await answer(A); await wait(500);
-    // l'hôte passe sur une autre application : page cachée, mais toujours active (son signal continue)
+    // l'hôte change d'onglet (page cachée, mais toujours active : son signal continue). Pendant la manche,
+    // il garde la main ; sa page termine la manche sans attendre sa propre réponse
     await H.evaluate("Object.defineProperty(document, 'visibilityState', { get: () => 'hidden', configurable: true }); document.dispatchEvent(new Event('visibilitychange'))");
+    check((await until(() => A.evaluate("QJ.A.screen === 'reveal'"), 12000)) >= 0, "manche terminée par l'hôte à l'onglet caché, sans attendre sa réponse");
+    check((await A.evaluate("QJ.A.mode")) === "guest" && (await H.evaluate("QJ.A.mode")) === "host", "onglet caché pendant la manche : l'hôte garde la main");
+    // sur l'écran des résultats, tout le monde attend son « Manche suivante » : remplacé au bout de ≈ 15 s
+    const t0 = Date.now();
+    await wait(9000);
+    check((await A.evaluate("QJ.A.mode")) === "guest", "résultats : pas de relève avant 15 s d'onglet caché");
     const t = await until(() => A.evaluate("QJ.A.mode === 'host'"), 20000);
-    check(t >= 0 && t < 10000, "hôte passé sur une autre application : relève en pleine manche (" + (t / 1000).toFixed(1) + " s)");
-    check((await A.evaluate("QJ.A.st.i")) === 0, "relève pendant la manche 1, sans attendre sa fin");
-    // Alice a fini : la manche se termine sans attendre l'hôte caché
-    check((await until(() => A.evaluate("QJ.A.screen === 'reveal'"), 6000)) >= 0, "manche terminée sans attendre l'hôte absent");
+    check(t >= 0, "résultats : hôte à l'onglet caché remplacé (" + ((Date.now() - t0) / 1000).toFixed(1) + " s après la fin de la manche)");
+    check((await A.evaluate("QJ.A.st.i")) === 0 && (await A.evaluate("QJ.A.screen")) === "reveal", "relève sur les résultats de la manche 1");
     await A.click("#bNext"); await wait(1500);
     await answer(A);
     await until(() => A.evaluate("QJ.A.screen === 'reveal'"), 6000); await A.click("#bNext");
