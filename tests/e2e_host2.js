@@ -1,5 +1,5 @@
-// Hôte qui change d'onglet (page cachée mais toujours active) : il garde la main pendant la manche, n'est
-// remplacé qu'au bout de 15 s sur l'écran des résultats ; joueur parti avant d'avoir répondu, une seule joueuse
+// Hôte qui change d'onglet (page cachée mais toujours active) : il garde la main, pendant la manche comme sur
+// l'écran des résultats ; il part par le bouton : relève ; joueur parti avant d'avoir répondu, une seule joueuse
 // restante : classement complet ; hôte parti par le bouton : relève en pleine manche.
 // Depuis la racine du dépôt : node tests/e2e_host2.js /tmp/qj
 const { chromium } = require("playwright");
@@ -38,12 +38,13 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
     await H.evaluate("Object.defineProperty(document, 'visibilityState', { get: () => 'hidden', configurable: true }); document.dispatchEvent(new Event('visibilitychange'))");
     check((await until(() => A.evaluate("QJ.A.screen === 'reveal'"), 12000)) >= 0, "manche terminée par l'hôte à l'onglet caché, sans attendre sa réponse");
     check((await A.evaluate("QJ.A.mode")) === "guest" && (await H.evaluate("QJ.A.mode")) === "host", "onglet caché pendant la manche : l'hôte garde la main");
-    // sur l'écran des résultats, tout le monde attend son « Manche suivante » : remplacé au bout de ≈ 15 s
-    const t0 = Date.now();
-    await wait(9000);
-    check((await A.evaluate("QJ.A.mode")) === "guest", "résultats : pas de relève avant 15 s d'onglet caché");
-    const t = await until(() => A.evaluate("QJ.A.mode === 'host'"), 20000);
-    check(t >= 0, "résultats : hôte à l'onglet caché remplacé (" + ((Date.now() - t0) / 1000).toFixed(1) + " s après la fin de la manche)");
+    // sur l'écran des résultats non plus : il est toujours dans la partie, il garde la main
+    await wait(20000);
+    check((await A.evaluate("QJ.A.mode")) === "guest" && (await H.evaluate("QJ.A.mode")) === "host", "résultats : onglet caché depuis plus de 20 s, l'hôte garde la main");
+    // il quitte vraiment la partie (onglet fermé) : relève en quelques secondes
+    await H.close();
+    const t = await until(() => A.evaluate("QJ.A.mode === 'host'"), 12000);
+    check(t >= 0 && t < 8000, "hôte parti (onglet fermé) sur les résultats : relève (" + (t / 1000).toFixed(1) + " s)");
     check((await A.evaluate("QJ.A.st.i")) === 0 && (await A.evaluate("QJ.A.screen")) === "reveal", "relève sur les résultats de la manche 1");
     await A.click("#bNext"); await wait(1500);
     await answer(A);

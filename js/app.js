@@ -321,9 +321,6 @@
   // présent ET disponible : page visible (ou cachée depuis moins de 4 s). Un téléphone peut garder la page
   // en marche un moment après être passé sur une autre application : l'hôte paraît vivant mais ne joue plus.
   const AWAY_MS = 4000;
-  // hôte à l'onglet caché sur l'écran des résultats (tout le monde attend son « Manche suivante ») : remplacé
-  // au bout de 15 s ; pendant une manche, il garde la main (sa page termine la manche toute seule)
-  const HOST_AWAY_REV_MS = 15000;
   function active(p, ms) {
     if (!p || p.sameTab) return true;
     const s = A.seen[p.peer];
@@ -371,11 +368,10 @@
     const now = Date.now();
     if (A.lastCheck && now - A.lastCheck > 2500) freshenSeen(now);
     A.lastCheck = now;
-    // un hôte à l'onglet caché (autre onglet, autre application) n'est remplacé que s'il bloque la partie :
-    // sur l'écran des résultats, au bout de 15 s. Pendant une manche, sa page continue de tourner et termine la
-    // manche (chrono, réponses) : seul son départ compte, comme dans le salon et au classement final.
-    // Une page figée (téléphone en veille) n'envoie plus de signal de vie : elle est vue absente (alive).
-    const avail = (p) => (A.st && A.st.ph === "rev" ? active(p, HOST_AWAY_REV_MS) : alive(p));
+    // l'hôte n'est remplacé que s'il n'est plus là : parti (bouton, onglet fermé) ou page qui ne donne plus
+    // signe de vie (téléphone en veille, réseau coupé). Onglet caché (autre onglet, autre application) : il est
+    // toujours dans la partie et garde la main (demande du propriétaire), sa page continue de terminer les manches.
+    const avail = alive;
     const hosts = A.peers.filter((p) => !p.sameTab && p.presence && p.presence.h === 1 && p.presence.st && avail(p));
     const rank = (p) => [-((p.presence.st && p.presence.st.term) || 0), p.peer];
     hosts.sort((a, b) => { const x = rank(a), y = rank(b); return x[0] - y[0] || (x[1] < y[1] ? -1 : 1); });
