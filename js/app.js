@@ -1102,11 +1102,12 @@
     const ps = players(true).map((p) => ({ p, x: p.r[i], tot: totalOf(p.r) }));
     ps.sort((a, b) => ((b.x ? b.x[1] + b.x[2] : 0) - (a.x ? a.x[1] + a.x[2] : 0)) || b.tot - a.tot);
     const rows = ps.map(({ p, x, tot }) => {
-      const nm = !x ? "—" : x[0] === 3 ? "<span style='color:var(--bad)'>✗</span>" : "✓ " + fmt(x[1]) + (x[3] ? " <span class='mut small'>(" + x[3] + " err.)</span>" : "");
+      // nom du jeu : seulement les points obtenus (0 en rouge si le jeu n'a pas été trouvé), sans le détail des erreurs
+      const nm = !x ? "—" : x[0] === 3 ? "<span class='ko'>0</span>" : fmt(x[1]);
       const loc = !x || x[0] !== 2 ? "—" : fmt(x[2]);
-      return "<tr><td class='who'>" + whoCell(p) + "</td><td class='nm'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(x ? x[1] + x[2] : 0) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
+      return "<tr><td class='who'>" + whoCell(p) + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(x ? x[1] + x[2] : 0) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
     }).join("");
-    setHTML($("rvTable"), "<tr><th>Joueur</th><th>Nom</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
+    setHTML($("rvTable"), "<tr><th>Joueur</th><th class='n'>Nom</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
     if (A.screen === "reveal") renderRevealPins();
   }
 

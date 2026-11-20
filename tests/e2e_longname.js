@@ -28,9 +28,11 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
     await wait(4000);
     for (const p of [H, G]) { await p.evaluate("QJ.submitGuess(QJ.A.R.game.t)"); await wait(150); await p.evaluate("(()=>{const R=QJ.A.R; R.pin={x:R.info.x+.05,y:R.info.y}; QJ.validatePin();})()"); }
     await G.waitForFunction("QJ.A.screen === 'reveal'", null, { timeout: 15000 }); await wait(800);
-    const rv = await G.evaluate(() => { const t = document.getElementById("rvTable"), c = t.parentElement; const me = t.querySelector(".wn.me"); return { tw: t.scrollWidth, cw: c.clientWidth, doc: document.documentElement.scrollWidth, vw: innerWidth, meW: me ? me.getBoundingClientRect().width : 0 }; });
+    const rv = await G.evaluate(() => { const t = document.getElementById("rvTable"), c = t.parentElement; const me = t.querySelector(".wn.me"); return { tw: t.scrollWidth, cw: c.clientWidth, doc: document.documentElement.scrollWidth, vw: innerWidth, meW: me ? me.getBoundingClientRect().width : 0, cut: me ? me.scrollWidth > me.clientWidth + 1 : true }; });
     check(rv.tw <= rv.cw && rv.doc <= rv.vw, "résultats : le tableau tient dans sa carte (" + rv.tw + " ≤ " + rv.cw + " px), pas de défilement de côté");
-    check(rv.meW > 10, "résultats : son propre nom reste visible (" + Math.round(rv.meW) + " px)");
+    check(!rv.cut && rv.meW > 100, "résultats : son propre nom en entier, sans « … » (" + Math.round(rv.meW) + " px)");
+    const cells = await G.evaluate(() => [...document.querySelectorAll("#rvTable td.n")].map((td) => td.textContent.trim()));
+    check(cells.length > 0 && cells.every((c) => /^(\d[\d\s\u202f]*|—)$/.test(c)), "colonne Nom : seulement les points, sans détail des erreurs (" + cells.slice(0, 4).join(" | ") + ")");
     check(errs.length === 0, "erreurs JS : " + (errs.join(" | ") || "aucune"));
   } catch (e) { console.log("ÉCHEC", e); process.exitCode = 1; } finally { srv.kill(); await b.close(); process.exit(); }
 })();
