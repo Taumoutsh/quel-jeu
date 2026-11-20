@@ -140,7 +140,15 @@ input.code { font-family: var(--fd); text-transform: uppercase; letter-spacing: 
 .ava-opt.sw.on { border-color: var(--txt); box-shadow: 0 0 0 3px color-mix(in srgb, var(--txt) 25%, transparent); }
 .ava { display: inline-block; vertical-align: middle; flex: none; border-radius: 8px; background: var(--well); overflow: hidden; }
 .ava svg { width: 100%; height: 100%; display: block; }
-td.who { white-space: nowrap; }
+td.who { white-space: nowrap; width: 100%; max-width: 0; } /* prend la place libre, sans jamais pousser les autres colonnes */
+td.who .whoin { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; vertical-align: middle; }
+td.who .whoin > * { flex: none; }
+td.who .wn { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+td.who .fin-tog { vertical-align: middle; }
+td.who .fin-tog + .whoin { max-width: calc(100% - 24px); }
+table.sc td.nm { white-space: nowrap; }
+td.who .wn.me { color: var(--acc); font-weight: 700; } /* sa propre ligne, repérable même sans l'étiquette « toi » */
+@media (max-width: 520px) { td.who .tag { display: none; } } /* téléphone : la place va au nom */
 .pod-ava { width: 56px; height: 56px; margin: 0 auto 4px; }
 .pod-ava svg { width: 100%; height: 100%; display: block; }
 .swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform .12s; }
@@ -162,6 +170,8 @@ td.who { white-space: nowrap; }
 .players { display: flex; flex-direction: column; gap: 8px; }
 .pl { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--well); border: 1px solid var(--line-soft); border-radius: 10px; }
 .pl.me { border-color: var(--line); }
+.pl > b.grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* pseudo long : « … » au lieu de passer sous les boutons */
+.pl > .tag { flex: none; }
 .pl .btn.icon.sm { width: 32px; height: 32px; border-radius: 9px; color: var(--mut); flex: none; }
 .pl .btn.icon.sm svg { width: 17px; height: 17px; }
 .pl .btn.icon.sm:hover { color: var(--txt); }
@@ -270,7 +280,7 @@ td.who { white-space: nowrap; }
 .pin { position: absolute; width: 0; height: 0; pointer-events: none; }
 .pin .pi { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .pin .head { width: 26px; height: 26px; border-radius: 50% 50% 50% 0; transform: translate(-50%, -100%) rotate(-45deg); border: 3px solid var(--pin-ring); box-shadow: 0 3px 10px rgba(0, 0, 0, .5); position: absolute; left: 0; top: 0; margin-top: -4px; }
-.pin .lbl { position: absolute; left: 0; top: -50px; transform: translateX(-50%); background: var(--pin-lbl); padding: 2px 7px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.pin .lbl { position: absolute; left: 0; top: -50px; transform: translateX(-50%); background: var(--pin-lbl); padding: 2px 7px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
 .pin.goal .head { border-radius: 50%; background: var(--sea) !important; transform: translate(-50%, -50%); margin: 0; width: 30px; height: 30px; border-color: var(--sea-ink); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 6px var(--sea-soft), 0 3px 10px rgba(0, 0, 0, .5); }
 .pin.goal .head::after { content: "★"; color: var(--sea-ink); font-size: 16px; font-weight: 900; }
 .pin.goal .lbl { top: -44px; background: var(--sea); color: var(--sea-ink); }

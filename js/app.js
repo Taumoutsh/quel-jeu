@@ -1073,6 +1073,11 @@
     if (!rvMap.touched && key !== rvMap.pinKey) rvMap.focus(pins);
     rvMap.pinKey = key;
   }
+  // cellule « joueur » des tableaux : avatar, nom raccourci par « … » s'il manque de place (un pseudo long
+  // poussait les autres colonnes hors de l'écran), étiquette « toi » toujours visible
+  function whoCell(p) {
+    return "<span class='whoin'>" + ava(p, 24) + "<span class='wn" + (p.me ? " me" : "") + "' title='" + esc(p.name) + "'>" + esc(p.name) + "</span>" + (p.me ? "<span class='tag'>toi</span>" : "") + "</span>";
+  }
   function renderRevealTable() {
     if (!A.st) return;
     const i = A.st.i;
@@ -1081,7 +1086,7 @@
     const rows = ps.map(({ p, x, tot }) => {
       const nm = !x ? "—" : x[0] === 3 ? "<span style='color:var(--bad)'>✗</span>" : "✓ " + fmt(x[1]) + (x[3] ? " <span class='mut small'>(" + x[3] + " err.)</span>" : "");
       const loc = !x || x[0] !== 2 ? "—" : fmt(x[2]);
-      return "<tr><td class='who'>" + ava(p, 24) + " " + esc(p.name) + (p.me ? " <span class='tag'>toi</span>" : "") + "</td><td>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(x ? x[1] + x[2] : 0) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
+      return "<tr><td class='who'>" + whoCell(p) + "</td><td class='nm'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(x ? x[1] + x[2] : 0) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
     }).join("");
     setHTML($("rvTable"), "<tr><th>Joueur</th><th>Nom</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
     if (A.screen === "reveal") renderRevealPins();
@@ -1219,7 +1224,7 @@
       const fresh = setHTML($("finTable"), "<tr><th>#</th><th>Joueur</th><th class='n'>Jeux trouvés</th><th class='n'>Total</th></tr>" +
         ps.map((x, k) => {
           const id = String(x.p.peer), open = !!A.finOpen[id];
-          return "<tr class='fin-pl" + (open ? " open" : "") + (x.p.gone ? " gone" : "") + "' data-pl='" + esc(id) + "'><td>" + (k + 1) + "</td><td class='who'><button type='button' class='fin-tog' aria-expanded='" + open + "' aria-label='Détail de la partie de " + esc(x.p.name) + "'>▸</button>" + ava(x.p, 24) + " " + esc(x.p.name) + (x.p.me ? " <span class='tag'>toi</span>" : "") + "</td><td class='n'>" + x.found + "/" + x.played + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>"
+          return "<tr class='fin-pl" + (open ? " open" : "") + (x.p.gone ? " gone" : "") + "' data-pl='" + esc(id) + "'><td>" + (k + 1) + "</td><td class='who'><button type='button' class='fin-tog' aria-expanded='" + open + "' aria-label='Détail de la partie de " + esc(x.p.name) + "'>▸</button>" + whoCell(x.p) + "</td><td class='n'>" + x.found + "/" + x.played + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>"
             + "<tr class='fin-det" + (open ? "" : " hidden") + "'><td colspan='4'>" + playerDetail(x.p) + "</td></tr>";
         }).join(""));
       if (fresh) for (const tr of $("finTable").querySelectorAll("tr.fin-pl")) tr.onclick = () => {
