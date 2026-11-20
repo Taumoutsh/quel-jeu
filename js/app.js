@@ -1119,7 +1119,7 @@
       const loc = !x || x[0] !== 2 ? "—" : fmt(x[2]);
       return "<tr><td class='who'>" + whoCell(p) + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(x ? x[1] + x[2] : 0) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
     }).join("");
-    setHTML($("rvTable"), "<tr><th>Joueur</th><th class='n'>Nom</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
+    setHTML($("rvTable"), "<tr><th>Joueur</th><th class='n' title='Points pour le nom du jeu'>Jeu</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
     if (A.screen === "reveal") renderRevealPins();
   }
 

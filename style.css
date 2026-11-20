@@ -407,7 +407,12 @@ tr.fin-pl.gone td { opacity: .75; }
 #rvTable td .ko { color: var(--bad); }
 #rvTable th.n, #rvTable td.n { padding-left: 14px; }
 @media (max-width: 520px) {
-  #rvTable tr { display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; }
+  /* chaque ligne est sa propre grille : colonnes strictement égales (minmax(0, 1fr)), sinon un titre large
+     (« POSITION ») élargissait sa colonne dans la ligne des titres seulement et les chiffres n'étaient plus
+     en face ; tableau en bloc pour que Safari traite les lignes comme Chrome */
+  #rvTable, #rvTable tbody { display: block; width: 100%; }
+  #rvTable tr { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; }
+  #rvTable th { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: .2px; }
   #rvTable th:first-child { display: none; }
   #rvTable th, #rvTable td.n { text-align: right; padding-left: 2px; padding-right: 2px; }
   #rvTable td.who { grid-column: 1 / -1; width: auto; max-width: none; padding: 10px 2px 2px; }
