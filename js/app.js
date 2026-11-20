@@ -1385,7 +1385,8 @@
       box.classList.remove("hidden");
     };
     const itemAt = (e) => { const b = e.target.closest && e.target.closest("button[data-k]"); return b && box.contains(b) ? b.textContent : null; };
-    const pick = (t) => { onPick(t); items = []; render(); };
+    let lastPick = 0;
+    const pick = (t) => { lastPick = Date.now(); onPick(t); items = []; render(); };
     // gestes suivis sur la liste entière (pas bouton par bouton) : souris = choix tout de suite (pointerdown, le
     // champ garde le focus) ; doigt = choix au doigt levé sans glissement (glisser pour replier le clavier ou
     // faire défiler ne choisit rien), même si la liste a été redessinée entre-temps
@@ -1400,6 +1401,13 @@
       const st = start; start = null;
       if (!st || e.pointerId !== st.id || Math.hypot(e.clientX - st.x, e.clientY - st.y) > 10) return;
       e.preventDefault(); pick(st.t); // la suggestion touchée, même si le clavier a changé la liste entre-temps
+    });
+    // rattrapage : un téléphone peut interrompre le geste (pointercancel, page qui bouge avec le clavier) tout en
+    // envoyant le clic d'un vrai tap ; on choisit alors la suggestion cliquée, sauf si le choix vient d'être fait
+    // (souris : déjà choisie au pointerdown). Un glissement n'envoie pas de clic.
+    box.addEventListener("click", (e) => {
+      const t = itemAt(e); if (!t || Date.now() - lastPick < 800) return;
+      e.preventDefault(); pick(t);
     });
     input.addEventListener("input", () => { sel = -1; items = filter() ? A.matcher.suggest(input.value, 6).filter(filter()) : []; render(); });
     input.addEventListener("keydown", (e) => {

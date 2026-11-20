@@ -30,6 +30,22 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
       check(items.length === 1 && (await p.evaluate("QJ.A.R.phase")) === "map", what + " : « " + items.join(", ") + " » validé");
       await ctx.close();
     }
+    // geste interrompu par le téléphone (pointercancel) puis clic du tap : la suggestion est quand même choisie ;
+    // et une suggestion qui n'est pas la réponse (Titanfall 2) compte bien un raté
+    for (const [typed, ans] of [["subn", "map"], ["titanfall", "raté"]]) {
+      const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+      const p = await ctx.newPage(); p.on("pageerror", (e) => errs.push(String(e)));
+      await p.goto(URL); await p.fill("#pseudo", "Test"); await p.click("#bSolo"); await wait(300); await p.click("#bStart");
+      await p.waitForFunction("QJ.A.R && QJ.A.R.phase === 'name'");
+      await p.focus("#gInput"); await p.keyboard.type(typed); await wait(250);
+      const t = await p.textContent("#sugg button");
+      await p.evaluate(() => { const bt = document.querySelector("#sugg button"), r = bt.getBoundingClientRect(), o = { bubbles: true, pointerId: 7, pointerType: "touch", isPrimary: true, clientX: r.left + 20, clientY: r.top + 10 };
+        bt.dispatchEvent(new PointerEvent("pointerdown", o)); bt.dispatchEvent(new PointerEvent("pointercancel", o)); bt.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: o.clientX, clientY: o.clientY })); });
+      await wait(300);
+      const ph = await p.evaluate("QJ.A.R.phase"), er = await p.evaluate("QJ.A.R.errors");
+      check(ans === "map" ? ph === "map" : ph === "name" && er === 1, "geste interrompu puis clic : « " + t + " » envoyé (" + (ph === "map" ? "bonne réponse" : er + " raté") + ")");
+      await ctx.close();
+    }
     check(errs.length === 0, "erreurs JS : " + (errs.join(" | ") || "aucune"));
   } catch (e) { console.log("ÉCHEC", e); process.exitCode = 1; } finally { srv.kill(); await b.close(); process.exit(); }
 })();
