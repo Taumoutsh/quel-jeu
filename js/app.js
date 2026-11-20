@@ -70,7 +70,16 @@
   // remplace le contenu d'un élément seulement s'il a changé : les présences arrivent plusieurs fois par seconde
   // (signal de vie de chaque joueur) et reconstruire un tableau sous le doigt faisait perdre le clic sur le bouton voisin
   function setHTML(el, html) { if (el._html === html) return false; el.innerHTML = html; el._html = html; return true; }
-  function show(id) { for (const s of SCREENS) $(s).classList.toggle("hidden", s !== id); A.screen = id; if (id !== "game" && cdT) stopCountdown(); unbusyAll(); }
+  function show(id) { for (const s of SCREENS) $(s).classList.toggle("hidden", s !== id); A.screen = id; if (id !== "game" && cdT) stopCountdown(); unbusyAll(); placeFooter(id); }
+  // pied de page : nom du site, année, version ; en bas de l'écran affiché (chaque écran défile seul),
+  // jamais pendant une manche ni sur ses résultats
+  function placeFooter(id) {
+    const f = $("siteFoot"); if (!f) return;
+    if (!f._init) { f._init = true; $("footYear").textContent = new Date().getFullYear(); $("footVer").textContent = "v" + (window.GS_VERSION || "?"); }
+    const off = id === "game" || id === "reveal";
+    f.classList.toggle("hidden", off);
+    if (!off && f.parentNode !== $(id)) $(id).append(f);
+  }
   // bouton d'action (« Manche suivante », « Rejouer ») : roue de chargement et bouton bloqué dès le premier appui,
   // jusqu'au changement d'écran (ou 6 s) ; un second appui ne relance pas l'action (deux manches sautées)
   const busyBtns = new Set();

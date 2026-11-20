@@ -229,6 +229,10 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 
 Pour d'autres jeux, ajoute tes propres vues via la bibliothèque, ou complète `packs/vrais-jeux.js` (voir plus bas).
 
+## Version
+
+Le numéro de version est dans `js/version.js` (`GS_VERSION`) et s'affiche dans le pied de page, hors jeu : « GameSpotter · année · vX.Y.Z ». On le change à chaque livraison : correctif → `1.0.x`, nouveauté → `1.x.0`, grand changement → `x.0.0`.
+
 ## Structure
 
 ```
@@ -240,6 +244,7 @@ js/demo.js        jeux fictifs, cartes et panoramas générés
 js/pano.js        visionneuse 360° en WebGL pur (sans bibliothèque)
 js/mapview.js     carte zoomable avec repères
 js/app.js         déroulement, points, multijoueur, éditeur
+js/version.js     version du site (GS_VERSION), affichée dans le pied de page
 js/avatars.js     avatars des joueurs à composer (tenue, couleur, peau, cheveux, yeux, sourcils, bouche, accessoire, fond ; SVG originaux), tirés au hasard la première fois
 js/admin.js       page d'administration (/admin) : signalements, correction ou suppression des vues
 admin.html, admin.css
