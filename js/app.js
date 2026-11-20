@@ -67,7 +67,30 @@
 
   // ------------------------------------------------------------------ utilitaires d'interface
   const SCREENS = ["home", "lobby", "game", "reveal", "final", "library"];
-  function show(id) { for (const s of SCREENS) $(s).classList.toggle("hidden", s !== id); A.screen = id; if (id !== "game" && cdT) stopCountdown(); }
+  // remplace le contenu d'un élément seulement s'il a changé : les présences arrivent plusieurs fois par seconde
+  // (signal de vie de chaque joueur) et reconstruire un tableau sous le doigt faisait perdre le clic sur le bouton voisin
+  function setHTML(el, html) { if (el._html === html) return false; el.innerHTML = html; el._html = html; return true; }
+  function show(id) { for (const s of SCREENS) $(s).classList.toggle("hidden", s !== id); A.screen = id; if (id !== "game" && cdT) stopCountdown(); unbusyAll(); }
+  // bouton d'action (« Manche suivante », « Rejouer ») : roue de chargement et bouton bloqué dès le premier appui,
+  // jusqu'au changement d'écran (ou 6 s) ; un second appui ne relance pas l'action (deux manches sautées)
+  const busyBtns = new Set();
+  function busy(id, fn) {
+    return () => {
+      const b = $(id);
+      if (b.classList.contains("busy")) return;
+      b.dataset.label = b.textContent; b.classList.add("busy"); b.setAttribute("aria-busy", "true");
+      b.style.minWidth = b.offsetWidth + "px";
+      b.innerHTML = '<span class="spin"></span><span class="sr">' + esc(b.dataset.label) + "</span>";
+      busyBtns.add(b); clearTimeout(b._busyT); b._busyT = setTimeout(() => unbusy(b), 6000);
+      setTimeout(() => { try { fn(); } catch (e) { unbusy(b); throw e; } }, 30); // laisse la roue s'afficher
+    };
+  }
+  function unbusy(b) {
+    if (!b.classList.contains("busy")) return;
+    clearTimeout(b._busyT); b.classList.remove("busy"); b.removeAttribute("aria-busy"); b.style.minWidth = "";
+    b.textContent = b.dataset.label || ""; busyBtns.delete(b);
+  }
+  function unbusyAll() { for (const b of [...busyBtns]) unbusy(b); }
   let toastT = null;
   function toast(msg, ms) { const t = $("toast"); t.textContent = msg; t.classList.remove("hidden"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add("hidden"), ms || 2600); }
   function confirmBox(html, yes) {
@@ -1042,7 +1065,8 @@
       if (x && x[0] === 2 && x[4] >= 0) { const pt = { x: x[4], y: x[5] }; pins.push({ x: pt.x, y: pt.y, color: p.color, label: p.me ? "Toi" : p.name }); lines.push({ a: pt, b: goal, color: p.color }); }
     }
     pins.push({ x: goal.x, y: goal.y, goal: true, label: "Ici !" });
-    rvMap.setPins(pins, lines);
+    const draw = JSON.stringify([i, pins]); // repères redessinés seulement s'ils ont changé
+    if (rvMap.drawKey !== draw) { rvMap.drawKey = draw; rvMap.setPins(pins, lines); }
     // recadrage sur les repères seulement quand il en arrive un nouveau, et jamais une fois la carte zoomée ou
     // déplacée par la personne (les mises à jour des joueurs, toutes les 1 à 2 s, annulaient son zoom)
     const key = pins.map((p) => p.x.toFixed(4) + "," + p.y.toFixed(4)).join("|");
@@ -1059,7 +1083,7 @@
       const loc = !x || x[0] !== 2 ? "—" : fmt(x[2]);
       return "<tr><td class='who'>" + ava(p, 24) + " " + esc(p.name) + (p.me ? " <span class='tag'>toi</span>" : "") + "</td><td>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(x ? x[1] + x[2] : 0) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
     }).join("");
-    $("rvTable").innerHTML = "<tr><th>Joueur</th><th>Nom</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows;
+    setHTML($("rvTable"), "<tr><th>Joueur</th><th>Nom</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
     if (A.screen === "reveal") renderRevealPins();
   }
 
@@ -1185,28 +1209,29 @@
     const mine = ps.find((x) => x.p.me) || ps[0];
     // récapitulatif du joueur : sur les manches qu'il a jouées (arrivé en cours de partie : pas sur toute la partie)
     const cnt = multi ? Math.max(mine.played, 1) : n, maxMine = cnt * (NAME_MAX + LOC_MAX);
-    $("finSolo").innerHTML = "<div class='bigscore'>" + fmt(mine.tot) + "</div><p class='mut' style='text-align:center;margin:8px 0 0'>sur " + fmt(maxMine) + " points possibles · " + mine.found + "/" + cnt + " jeu" + (cnt > 1 ? "x" : "") + " trouvé" + (mine.found > 1 ? "s" : "") + "</p>";
+    setHTML($("finSolo"), "<div class='bigscore'>" + fmt(mine.tot) + "</div><p class='mut' style='text-align:center;margin:8px 0 0'>sur " + fmt(maxMine) + " points possibles · " + mine.found + "/" + cnt + " jeu" + (cnt > 1 ? "x" : "") + " trouvé" + (mine.found > 1 ? "s" : "") + "</p>");
     renderPodium(ps);
     if (multi) {
       // chaque joueur se déplie pour montrer le détail de sa partie, manche par manche
       A.finOpen = A.finOpen || {};
       // jeux trouvés sur les manches jouées : un joueur arrivé en cours de partie ou parti avant la fin
       // n'est compté que sur les manches auxquelles il a participé
-      $("finTable").innerHTML = "<tr><th>#</th><th>Joueur</th><th class='n'>Jeux trouvés</th><th class='n'>Total</th></tr>" +
+      const fresh = setHTML($("finTable"), "<tr><th>#</th><th>Joueur</th><th class='n'>Jeux trouvés</th><th class='n'>Total</th></tr>" +
         ps.map((x, k) => {
           const id = String(x.p.peer), open = !!A.finOpen[id];
           return "<tr class='fin-pl" + (open ? " open" : "") + (x.p.gone ? " gone" : "") + "' data-pl='" + esc(id) + "'><td>" + (k + 1) + "</td><td class='who'><button type='button' class='fin-tog' aria-expanded='" + open + "' aria-label='Détail de la partie de " + esc(x.p.name) + "'>▸</button>" + ava(x.p, 24) + " " + esc(x.p.name) + (x.p.me ? " <span class='tag'>toi</span>" : "") + "</td><td class='n'>" + x.found + "/" + x.played + "</td><td class='n'><b>" + fmt(x.tot) + "</b></td></tr>"
             + "<tr class='fin-det" + (open ? "" : " hidden") + "'><td colspan='4'>" + playerDetail(x.p) + "</td></tr>";
-        }).join("");
-      for (const tr of $("finTable").querySelectorAll("tr.fin-pl")) tr.onclick = () => {
+        }).join(""));
+      if (fresh) for (const tr of $("finTable").querySelectorAll("tr.fin-pl")) tr.onclick = () => {
         const id = tr.dataset.pl, open = !A.finOpen[id];
         A.finOpen[id] = open;
         tr.classList.toggle("open", open); tr.querySelector(".fin-tog").setAttribute("aria-expanded", open);
         tr.nextElementSibling.classList.toggle("hidden", !open);
+        $("finTable")._html = null; // l'état déplié a changé : le prochain rendu reconstruira à l'identique
       };
     } else {
-      $("finTable").innerHTML = "<tr><th>#</th><th>Jeu</th><th class='n'>Nom</th><th class='n'>Position</th></tr>" +
-        A.st.seq.map((sid, k) => { const info = sceneInfo(sid), x = A.res[k]; return "<tr><td>" + (k + 1) + "</td><td>" + esc(info ? gameTitle(info.game) : "?") + "</td><td class='n'>" + (x && x[0] !== 3 ? fmt(x[1]) : "<span style='color:var(--bad)'>✗</span>") + "</td><td class='n'>" + (x && x[0] === 2 ? fmt(x[2]) : "—") + "</td></tr>"; }).join("");
+      setHTML($("finTable"), "<tr><th>#</th><th>Jeu</th><th class='n'>Nom</th><th class='n'>Position</th></tr>" +
+        A.st.seq.map((sid, k) => { const info = sceneInfo(sid), x = A.res[k]; return "<tr><td>" + (k + 1) + "</td><td>" + esc(info ? gameTitle(info.game) : "?") + "</td><td class='n'>" + (x && x[0] !== 3 ? fmt(x[1]) : "<span style='color:var(--bad)'>✗</span>") + "</td><td class='n'>" + (x && x[0] === 2 ? fmt(x[2]) : "—") + "</td></tr>"; }).join(""));
     }
     $("bAgain").classList.toggle("hidden", !(isHost() || A.mode === "guest"));
   }
@@ -1313,7 +1338,22 @@
       if (!items.length) { box.classList.add("hidden"); return; }
       box.innerHTML = items.map((t, k) => "<button type='button' class='" + (k === sel ? "on" : "") + "'>" + esc(t) + "</button>").join("");
       box.classList.remove("hidden");
-      [...box.children].forEach((b, k) => b.addEventListener("pointerdown", (e) => { e.preventDefault(); onPick(items[k]); items = []; render(); }));
+      // souris : choix tout de suite (pointerdown, sans faire perdre le focus au champ) ; doigt : seulement s'il se
+      // lève sans avoir glissé (un glissement pour replier le clavier ou faire défiler ne choisit plus rien)
+      [...box.children].forEach((b, k) => {
+        let start = null;
+        const pick = () => { onPick(items[k]); items = []; render(); };
+        b.addEventListener("pointerdown", (e) => {
+          if (e.pointerType === "mouse") { e.preventDefault(); pick(); return; }
+          start = { id: e.pointerId, x: e.clientX, y: e.clientY };
+        });
+        b.addEventListener("pointermove", (e) => { if (start && e.pointerId === start.id && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) start = null; });
+        b.addEventListener("pointercancel", () => { start = null; });
+        b.addEventListener("pointerup", (e) => {
+          if (!start || e.pointerId !== start.id || Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) { start = null; return; }
+          start = null; e.preventDefault(); pick();
+        });
+      });
     };
     input.addEventListener("input", () => { sel = -1; items = filter() ? A.matcher.suggest(input.value, 6).filter(filter()) : []; render(); });
     input.addEventListener("keydown", (e) => {
@@ -1387,8 +1427,8 @@
     $("bBig").onclick = () => { const big = $("pMap").classList.toggle("big"); $("bBig").textContent = big ? "Réduire" : "Agrandir"; setTimeout(() => pick && pick.fit(), 280); };
     $("bForce").onclick = hostForceEnd;
     $("bQuit").onclick = async () => { if (await confirmBox("Quitter la partie ?", "Quitter")) goHome(); };
-    $("bNext").onclick = hostNext;
-    $("bAgain").onclick = () => (isHost() ? hostReplay() : guestAgain());
+    $("bNext").onclick = busy("bNext", hostNext);
+    $("bAgain").onclick = busy("bAgain", () => (isHost() ? hostReplay() : guestAgain()));
     $("bHome").onclick = goHome;
 
     // éditeur
