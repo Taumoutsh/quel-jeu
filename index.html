@@ -148,7 +148,7 @@
       <div class="qtitle"><span>Quel est ce jeu ?</span><span class="tries" id="tries"></span></div>
       <form class="guess" id="fGuess" autocomplete="off">
         <div class="sugg hidden" id="sugg"></div>
-        <input type="text" id="gInput" class="grow" placeholder="Nom du jeu…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send">
+        <input type="text" id="gInput" class="grow" placeholder="Nom du jeu…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send">
         <button class="btn pri" type="submit">OK</button>
       </form>
       <div class="fb" id="fb" role="status" aria-live="polite"></div>
@@ -213,7 +213,7 @@
       <h2>Ajouter une vue</h2>
       <div class="step"><i>1</i> Le jeu</div>
       <div class="acwrap">
-        <input type="text" id="eGame" placeholder="Titre exact du jeu (ex. : The Witcher 3: Wild Hunt)" autocomplete="off">
+        <input type="text" id="eGame" placeholder="Titre exact du jeu (ex. : The Witcher 3: Wild Hunt)" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
         <div class="sugg hidden" id="eSugg"></div>
       </div>
       <div class="mut small" id="eGameInfo"></div>
@@ -254,6 +254,7 @@
 </section>
 
 <div class="cd hidden" id="cd" role="status" aria-live="assertive"><p>La partie commence</p><b id="cdNum">3</b></div>
+<div class="linkwait hidden" id="linkWait" role="status" aria-live="polite"><span class="spin"></span><p>Connexion à la partie <b id="linkCode"></b>…</p></div>
 <div class="toast hidden" id="toast"></div>
 <div class="overlay hidden" id="report"><div class="card col report-card">
   <h3>Signaler une erreur</h3>

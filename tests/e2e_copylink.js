@@ -30,9 +30,8 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
     // le lien ouvre bien la partie chez un ami
     const q = await b.newPage(); await q.goto(URL); await q.evaluate("localStorage.setItem('qj.avatar', JSON.stringify('pilote.1.1.0'))");
     await q.goto(link); await wait(600);
-    check((await q.inputValue("#joinCode")) === code, "lien ouvert chez l'ami : code prérempli");
-    await q.click("#bJoin"); await q.waitForFunction("QJ.A.code === " + JSON.stringify(code) + " && QJ.A.screen === 'lobby'", null, { timeout: 15000 });
-    check(true, "l'ami entre dans la partie " + code);
+    await q.waitForFunction("QJ.A.code === " + JSON.stringify(code) + " && QJ.A.screen === 'lobby'", null, { timeout: 15000 });
+    check(true, "lien ouvert chez l'ami : directement dans la partie " + code);
     check(errs.length === 0, "erreurs JS : " + (errs.join(" | ") || "aucune"));
   } catch (e) { console.log("ÉCHEC", e); process.exitCode = 1; } finally { srv.kill(); await b.close(); process.exit(); }
 })();

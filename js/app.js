@@ -265,7 +265,16 @@
     $("bHost").disabled = !A.caps.room; $("bJoin").disabled = !A.caps.room;
     subLib();
     renderLibInfo();
-    resumeSession();
+    // lien de partie : on entre directement dans le salon ; une partie retenue par l'onglet (rechargement)
+    // reste prioritaire si c'est la même
+    const linked = codeFromLink(), kept = SS.get();
+    if (linked && A.caps.room && !(kept && kept.code === linked)) { SS.clear(); joinFromLink(linked); }
+    else { $("linkWait").classList.add("hidden"); resumeSession(); }
+  }
+  async function joinFromLink(code) {
+    $("joinCode").value = code; $("linkCode").textContent = code;
+    $("linkWait").classList.remove("hidden");
+    try { await startJoin(); } finally { $("linkWait").classList.add("hidden"); }
   }
 
   function subLib() {
@@ -1365,28 +1374,33 @@
   }
 
   function attachSuggest(input, box, onPick, filter) {
-    let sel = -1, items = [];
+    let sel = -1, items = [], drawn = null, start = null;
     const render = () => {
       if (!items.length) { box.classList.add("hidden"); return; }
-      box.innerHTML = items.map((t, k) => "<button type='button' class='" + (k === sel ? "on" : "") + "'>" + esc(t) + "</button>").join("");
+      // liste reconstruite seulement si elle change : un clavier de téléphone qui valide le mot en cours
+      // (autocorrection) au moment du toucher redéclenche une saisie ; reconstruire la liste sous le doigt
+      // faisait perdre le tap (cas fréquent avec une seule suggestion, « Subnautica »)
+      const key = items.join("\n") + "|" + sel;
+      if (key !== drawn) { drawn = key; box.innerHTML = items.map((t, k) => "<button type='button' data-k='" + k + "' class='" + (k === sel ? "on" : "") + "'>" + esc(t) + "</button>").join(""); }
       box.classList.remove("hidden");
-      // souris : choix tout de suite (pointerdown, sans faire perdre le focus au champ) ; doigt : seulement s'il se
-      // lève sans avoir glissé (un glissement pour replier le clavier ou faire défiler ne choisit plus rien)
-      [...box.children].forEach((b, k) => {
-        let start = null;
-        const pick = () => { onPick(items[k]); items = []; render(); };
-        b.addEventListener("pointerdown", (e) => {
-          if (e.pointerType === "mouse") { e.preventDefault(); pick(); return; }
-          start = { id: e.pointerId, x: e.clientX, y: e.clientY };
-        });
-        b.addEventListener("pointermove", (e) => { if (start && e.pointerId === start.id && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) start = null; });
-        b.addEventListener("pointercancel", () => { start = null; });
-        b.addEventListener("pointerup", (e) => {
-          if (!start || e.pointerId !== start.id || Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) { start = null; return; }
-          start = null; e.preventDefault(); pick();
-        });
-      });
     };
+    const itemAt = (e) => { const b = e.target.closest && e.target.closest("button[data-k]"); return b && box.contains(b) ? b.textContent : null; };
+    const pick = (t) => { onPick(t); items = []; render(); };
+    // gestes suivis sur la liste entière (pas bouton par bouton) : souris = choix tout de suite (pointerdown, le
+    // champ garde le focus) ; doigt = choix au doigt levé sans glissement (glisser pour replier le clavier ou
+    // faire défiler ne choisit rien), même si la liste a été redessinée entre-temps
+    box.addEventListener("pointerdown", (e) => {
+      const t = itemAt(e); if (!t) return;
+      if (e.pointerType === "mouse") { e.preventDefault(); pick(t); return; }
+      start = { id: e.pointerId, x: e.clientX, y: e.clientY, t };
+    });
+    box.addEventListener("pointermove", (e) => { if (start && e.pointerId === start.id && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) start = null; });
+    box.addEventListener("pointercancel", () => { start = null; });
+    box.addEventListener("pointerup", (e) => {
+      const st = start; start = null;
+      if (!st || e.pointerId !== st.id || Math.hypot(e.clientX - st.x, e.clientY - st.y) > 10) return;
+      e.preventDefault(); pick(st.t); // la suggestion touchée, même si le clavier a changé la liste entre-temps
+    });
     input.addEventListener("input", () => { sel = -1; items = filter() ? A.matcher.suggest(input.value, 6).filter(filter()) : []; render(); });
     input.addEventListener("keydown", (e) => {
       if (!items.length) return;
@@ -1500,7 +1514,7 @@
     });
 
     const linked = codeFromLink();
-    if (linked) $("joinCode").value = linked;
+    if (linked) { $("joinCode").value = linked; $("linkCode").textContent = linked; $("linkWait").classList.remove("hidden"); } // pas d'accueil entrevu avant le salon
     show("home");
     initCaps();
   }
