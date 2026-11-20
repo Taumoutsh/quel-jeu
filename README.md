@@ -210,7 +210,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Fallout 2 (plans de zones isométriques du jeu) | Arroyo, Klamath, New Reno, Vault City, la Tanière (Den), Gecko, Redding, Broken Hills |
     | South Park: The Stick of Truth | École primaire de South Park, hôtel de ville, terrain de basket du parc, centre communautaire, U-Stor-It, ferme |
     | LEGO City Undercover | Commissariat, château de Fort Meadows, île de Lady Liberty, Unisphère, aéroport, Honey Hotel, île Albatross, tour Fusileani |
-    | Outer Wilds | Âtrebois (Timber Hearth), Cravité (Brittle Hollow), Léviathe (Giant's Deep), Jumeaux du sablier, Lanterne |
+    | Outer Wilds | Timber Hearth, Brittle Hollow, Giant's Deep, Jumeaux du sablier (Ash Twin), Hollow's Lantern |
     | The Legend of Zelda: Tears of the Kingdom | Ville Gerudo, Village de Hateno, Pics jumeaux, Île d'Eventide |
 
     Les captures portant le logo ou le nom du jeu ont été écartées. Les positions ont été relevées à la main sur les cartes (noms de lieux quand la carte en a, sinon repères visibles) : elles sont justes à quelques pourcents de la carte.
