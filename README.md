@@ -50,7 +50,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 1491 vues de 153 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 1522 vues de 153 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
@@ -83,7 +83,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Yakuza Kiwami 2 | Theater Square, Millennium Tower, Pink Street, Tenkaichi Street, Nakamichi Street (Kamurocho), Champion District, Shichifuku Street, Taihei Boulevard |
     | The Elder Scrolls Online | Daggerfall, Wayrest, Elden Root, Mournhold, Vivec, Sentinelle, Anvil, Cité impériale, Balmora, Rifton (Riften) |
     | World of Warcraft | Hurlevent, Forgefer, Baie-du-Butin, ruines de Lordaeron, Lune-d'Argent (Quel'Thalas), Mont Rochenoire (Blackrock Mountain) |
-    | Mafia: Definitive Edition | Bar de Salieri, aéroport, Works Quarter, hôtel de ville, Porte de Chinatown |
+    | Mafia: Definitive Edition | Bar de Salieri, aéroport, Works Quarter, hôtel de ville, Porte de Chinatown, Dépôt postal fédéral, Église d'Oakwood, Gare centrale (Works Quarter), Galerie d'art de Lost Heaven, Fourrière des douanes fédérales |
     | Mafia III | Opéra, hôtel de ville, églises de Frisco Fields et de Pointe Verdun, fresque de Delray Hollow |
     | Sleeping Dogs | Business District, North Point, Kennedy Town, Aberdeen, Cimetière de Hong Kong, Victoria Park, Government House, Parc de Yau Ling, Boardwalk (promenade) |
     | Assassin's Creed Brotherhood | Colisée, arc de Constantin, Panthéon (Rome), Château Saint-Ange |
@@ -99,7 +99,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Fallout 76 | Charleston, Flatwoods, Morgantown, Watoga, Whitespring, Top of the World, Black Bear Lodge, Abri 76, Lewisburg, Palace of the Winding Path |
     | Bloodborne | Yharnam central, quartier de la cathédrale, Vieux Yharnam, Hemwick, château de Cainhurst, Forêt interdite, Byrgenwerth, Cauchemar de Mensis, Haut du quartier de la cathédrale |
     | L.A. Noire | Grauman's Chinese Theatre, décor d'Intolérance, Hall of Records, MacArthur Park, Angels Flight, Gare Union Station, Viaduc de la 4e Rue, Grand magasin Bullocks Wilshire, Siège du Los Angeles Examiner, Chambre de commerce de Hollywood |
-    | Batman: Arkham City | Palais de justice, Park Row, Institut d'histoire naturelle Cyrus Pinkney, Aciérie Sionis |
+    | Batman: Arkham City | Palais de justice, Park Row, Institut d'histoire naturelle Cyrus Pinkney, Aciérie Sionis, Wonder Tower |
     | Just Cause 3 | Mines de Cava Montana, province de Prospere, monastère, Citate di Ravello, Alte Potentia, Manaea, Costa Del Porto, Soliana, Cava Geminos Sud, Monastère Sancte Malco |
     | Grand Theft Auto III | Red Light District, Callahan Bridge, Belleville Park, Torrington, Cochrane Dam, Liberty Memorial Coliseum (Aspatria), Aéroport Francis International (Shoreside Vale), Chinatown (Portland) |
     | Grand Theft Auto: Liberty City Stories | Fort Staunton, Saint Mark's, Chinatown, Wichita Gardens, Bedford Point |
@@ -116,7 +116,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Euro Truck Simulator 2 | Londres, Paris, Berlin, Prague, Vienne, Cologne, Milan, Liverpool, Cracovie, Hanovre |
     | American Truck Simulator | Los Angeles, Las Vegas, San Francisco, Phoenix, Sacramento, San Diego, Tucson, Oakland (port), Reno, Elko |
     | Final Fantasy XII | Cité impériale d'Archadès, Jahara, terre des Garifs, Mont Bur-Omisace, Plaine d'Ozmone, Bois de Feywood, Forteresse de Nalbina, Côte de Phon, Hauts plateaux de Tchita, Cité céleste de Bhujerba, Nécropole de Nabudis |
-    | Dragon's Dogma | Cathédrale de Gran Soren, Tour de Lune-Bleue, Le Campement, Butte de Hillfigure, Bois de la Sorcière, Cassardis, Les Catacombes |
+    | Dragon's Dogma | Cathédrale de Gran Soren, Tour de Lune-Bleue, Le Campement, Butte de Hillfigure, Bois de la Sorcière, Cassardis, Les Catacombes, Le Grand Mur (campement) |
     | Dark Souls II | Majula, Tour de flamme de Heide, Bastille perdue, Donjon de fer, Forêt des géants déchus, Château de Drangleic, Donjon d'Aldia, Ravin noir, Quai de Personne, Sanctuaire de l'hiver |
     | Shadow of the Colossus | Temple de l'Adoration, Clairière ombragée (nord-ouest), Chutes brumeuses, Gorge de l'arche de pierre, Falaise de l'est, Forteresse du désert, Forêt d'automne, Sceau brisé, Cap de l'ouest, Repaire sur la mesa |
     | The Legend of Zelda: Echoes of Wisdom | Bourg d'Hyrule, Village Cocorico, Village Goron, Village Gerudo, Lac Hylia, Ranch d'Hyrule, Village de Suthorn, Lac Cœur, Village Zora de la rivière, Sanctuaire du Nord |
@@ -186,8 +186,8 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Silent Hill: Homecoming | Cimetière de Rose Heights, Hôtel de ville de Shepherd's Glen, Casse de Curtis, Maison des Shepherd, Commissariat de Shepherd's Glen |
     | Silent Hill | Église Balkan, Queen Burger, Maison Gordon, Fish-n-Fries, Sundries Shop, Food and Liquor, Ghoul, Blue Belle, Café 5to2 |
     | Deus Ex: Mankind Divided | Station Palisade, Station Pilgrim, Station Monument, Station Čapek, Quartier rouge, Appartements Libuše, Appartements Zeleň, The Time Machine, Chez Chikane, 33 Hlavní |
-    | Saints Row 2 | Aéroport Wardill, Cecil Park, Mission Beach, Brighton, Misty Lane |
-    | Gotham Knights | Le Beffroi (Belfry), Iceberg Lounge, Asile d'Arkham, Prison de Blackgate |
+    | Saints Row 2 | Aéroport Wardill, Cecil Park, Mission Beach, Brighton, Misty Lane, Ultor Dome |
+    | Gotham Knights | Le Beffroi (Belfry), Iceberg Lounge, Asile d'Arkham, Prison de Blackgate, Elliot Center |
     | Once Human | Overlook Town, Greywater Camp, Deadsville, Silo Psi, Épreuve de l'Ancien, Blackfell, Silo Theta, Silo Alpha, Tall Grass Inn, Silo EX1 |
     | Satisfactory | Côte des Flèches, Cratère bleu, Jungle rouge, Forêt des Titans, Plages de l'Ouest, Marais, Lacs du cratère, Champs de bambou rouge, Canyons du désert, Falaises de l'abysse |
     | Stray | Usine Neco, Place du marché, Prison, Toits, Cité morte, Bar de Midtown, Boîte de nuit, Station de métro de Midtown, Bibliothèque, Égouts |
@@ -199,18 +199,18 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | Hunt: Showdown | Pitching Crematorium, Stillwater Bend, Lockbay Docks, Darrow Livestock, Cyprus Huts, Port Reeker, Alice Farm, Alain & Son's Fish, Davant Ranch, Scupper Lake |
     | Clair Obscur: Expedition 33 | Village gestral, Le Carrousel, Casino volant, Colisée de Sirène, Île des Visages, Lumière, Robe de Sirène, Cimetière flottant, Île des Yeux, Sables blancs |
     | Test Drive Unlimited 2 | Zenith loft, Salines mansion, Seaside apartment, Portinatx residence, Fujinoki residence, Sant Jordi residence, Sant Llorenç hacienda, Fontanelles house, Eivissa house, Santa Eulària residence |
-    | Apex Legends | Le Baromètre, Ship Fall, North Pad, Le Moulin (The Mill), Storm Catcher, Cenote Cave, Checkpoint, L'Antenne (The Antenna) |
+    | Apex Legends | Le Baromètre, Ship Fall, North Pad, Le Moulin (The Mill), Storm Catcher, Cenote Cave, Checkpoint, L'Antenne (The Antenna), Repaire des Prowlers (Prowler Den) |
     | Skull and Bones | Three Brothers, Île Michel, Sunken Goldmine, The Oubliette, Great Ukuta, Dragon's Back, Return Fleet Bight, Vorona Falls, Ruined Lighthouse, Dutchman's Camp |
     | Borderlands 2 | Sanctuary, Opportunity, Friendship Gulag, Bloodshot Stronghold, Frostburn Canyon, Southern Shelf Bay, Thousand Cuts, Lynchwood, Tundra Express, Wildlife Exploitation Preserve |
-    | Alan Wake | Bright Falls (Bright's Diner), Stucky's Gas Station, Cauldron Lake Lodge, Sparkling River Estates, station KBF-FM, ville fantôme |
-    | Ni no Kuni: La Vengeance de la Sorcière Céleste | Castaway Cove, Al Mamoon, Ding Dong Dell, Hamelin, Nevermore, la Fée-Terre |
-    | Among Us (vues d'*Among Us 3D*, carte de la Skeld) | Cafétéria, Infirmerie, Armes, Navigation, Stockage, Réacteur, Boucliers, Sécurité |
-    | Burnout Paradise | Quartier général des garde-côtes, Maplemount Country Club, Paradise Square, stade des Wildcats, barrage de Rockridge |
-    | Tower of Fantasy | Usines et fermes de Banges, quai de Loen, ruines de la station de signal, forêt du Septième Jour, tour Omnium de Navia |
-    | Fallout 2 (plans de zones isométriques du jeu) | Arroyo, Klamath, New Reno, Vault City, la Tanière (Den), Gecko, Redding, Broken Hills |
-    | South Park: The Stick of Truth | École primaire de South Park, hôtel de ville, terrain de basket du parc, centre communautaire, U-Stor-It, ferme |
-    | LEGO City Undercover | Commissariat, château de Fort Meadows, île de Lady Liberty, Unisphère, aéroport, Honey Hotel, île Albatross, tour Fusileani |
-    | Outer Wilds | Timber Hearth, Brittle Hollow, Giant's Deep, Jumeaux du sablier (Ash Twin), Hollow's Lantern |
+    | Alan Wake | Bright Falls (Bright's Diner), Stucky's Gas Station, Cauldron Lake Lodge, Sparkling River Estates, station KBF-FM, ville fantôme, Mirror Peak, Lovers' Peak |
+    | Ni no Kuni: La Vengeance de la Sorcière Céleste | Castaway Cove, Al Mamoon, Ding Dong Dell, Hamelin, Nevermore, la Fée-Terre, Temple des Épreuves, Yule |
+    | Among Us (vues d'*Among Us 3D*, carte de la Skeld) | Cafétéria, Infirmerie, Armes, Navigation, Stockage, Réacteur, Boucliers, Sécurité, Administration, Oxygène (O2) |
+    | Burnout Paradise | Quartier général des garde-côtes, Maplemount Country Club, Paradise Square, stade des Wildcats, barrage de Rockridge, Waterfront Plaza |
+    | Tower of Fantasy | Usines et fermes de Banges, quai de Loen, ruines de la station de signal, forêt du Septième Jour, tour Omnium de Navia, Cimetière d'Astra, Anchorville, Ceinture rouillée (Rusty Belt), Piliers cramoisis |
+    | Fallout 2 (plans de zones isométriques du jeu) | Arroyo, Klamath, New Reno, Vault City, la Tanière (Den), Gecko, Redding, Broken Hills, Navarro (base principale), Ghost Farm |
+    | South Park: The Stick of Truth | École primaire de South Park, hôtel de ville, terrain de basket du parc, centre communautaire, U-Stor-It, ferme, Centre commercial de South Park, Étang de Stark |
+    | LEGO City Undercover | Commissariat, château de Fort Meadows, île de Lady Liberty, Unisphère, aéroport, Honey Hotel, île Albatross, tour Fusileani, Mont Cashmore, Bibliothèque de LEGO City |
+    | Outer Wilds | Timber Hearth, Brittle Hollow, Giant's Deep, Jumeaux du sablier (Ash Twin), Hollow's Lantern, Ember Twin (canon gravitationnel), Canon sondeur orbital, Dark Bramble (cimetière nomaï), Interloper (cœur de la comète) |
     | The Legend of Zelda: Tears of the Kingdom | Ville Gerudo, Village de Hateno, Pics jumeaux, Île d'Eventide |
 
     Les captures portant le logo ou le nom du jeu ont été écartées. Les positions ont été relevées à la main sur les cartes (noms de lieux quand la carte en a, sinon repères visibles) : elles sont justes à quelques pourcents de la carte.
