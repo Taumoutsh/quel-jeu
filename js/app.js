@@ -70,17 +70,6 @@
   // remplace le contenu d'un élément seulement s'il a changé : les présences arrivent plusieurs fois par seconde
   // (signal de vie de chaque joueur) et reconstruire un tableau sous le doigt faisait perdre le clic sur le bouton voisin
   function setHTML(el, html) { if (el._html === html) return false; el.innerHTML = html; el._html = html; return true; }
-  // mode diagnostic (adresse avec ?debug=1) : journal des gestes en haut de l'écran, pour comprendre un souci
-  // sur un téléphone qu'on n'a pas sous la main ; sans ce paramètre, rien n'est affiché ni enregistré
-  const DEBUG = /[?&]debug=1\b/.test(location.search);
-  function dbg(msg) {
-    if (!DEBUG) return;
-    let box = document.getElementById("dbg");
-    if (!box) { box = document.createElement("div"); box.id = "dbg"; box.className = "dbg"; document.body.append(box); }
-    const t = new Date(), line = document.createElement("div");
-    line.textContent = String(t.getSeconds()).padStart(2, "0") + "." + String(t.getMilliseconds()).padStart(3, "0") + " " + msg;
-    box.prepend(line); while (box.childNodes.length > 14) box.lastChild.remove();
-  }
   function show(id) { for (const s of SCREENS) $(s).classList.toggle("hidden", s !== id); A.screen = id; if (id !== "game" && cdT) stopCountdown(); unbusyAll(); placeFooter(id); }
   // pied de page : nom du site, année, version ; en bas de l'écran affiché (chaque écran défile seul),
   // jamais pendant une manche ni sur ses résultats
@@ -939,10 +928,9 @@
 
   function submitGuess(text) {
     const R = A.R;
-    if (!R || R.phase !== "name") { dbg("proposition ignorée (phase " + (R ? R.phase : "aucune") + ")"); return; }
+    if (!R || R.phase !== "name") return;
     $("sugg").classList.add("hidden");
     const ev = A.matcher.evaluate(text, R.game.id);
-    dbg("proposition « " + text + " » → " + ev.k);
     $("cands").innerHTML = "";
     if (ev.k === "empty") return;
     if (ev.k === "vague") { setFb("warn", "Trop vague : tape le titre d'un jeu."); return; }
@@ -1394,25 +1382,24 @@
       // (autocorrection) au moment du toucher redéclenche une saisie ; reconstruire la liste sous le doigt
       // faisait perdre le tap (cas fréquent avec une seule suggestion, « Subnautica »)
       const key = items.join("\n") + "|" + sel;
-      if (key !== drawn) { dbg("liste redessinée : " + items.length + " suggestion(s)"); drawn = key; box.innerHTML = items.map((t, k) => "<button type='button' data-k='" + k + "' class='" + (k === sel ? "on" : "") + "'>" + esc(t) + "</button>").join(""); }
+      if (key !== drawn) { drawn = key; box.innerHTML = items.map((t, k) => "<button type='button' data-k='" + k + "' class='" + (k === sel ? "on" : "") + "'>" + esc(t) + "</button>").join(""); }
       box.classList.remove("hidden");
     };
     const itemAt = (e) => { const b = e.target.closest && e.target.closest("button[data-k]"); return b && box.contains(b) ? b.textContent : null; };
     let lastPick = 0;
-    const pick = (t) => { dbg("choix : « " + t + " »"); lastPick = Date.now(); onPick(t); items = []; render(); };
+    const pick = (t) => { lastPick = Date.now(); onPick(t); items = []; render(); };
     // gestes suivis sur la liste entière (pas bouton par bouton) : souris = choix tout de suite (pointerdown, le
     // champ garde le focus) ; doigt = choix au doigt levé sans glissement (glisser pour replier le clavier ou
     // faire défiler ne choisit rien), même si la liste a été redessinée entre-temps
     box.addEventListener("pointerdown", (e) => {
-      const t = itemAt(e); dbg("pointerdown " + e.pointerType + " sur « " + (t || e.target.tagName) + " »"); if (!t) return;
+      const t = itemAt(e); if (!t) return;
       if (e.pointerType === "mouse") { e.preventDefault(); pick(t); return; }
       start = { id: e.pointerId, x: e.clientX, y: e.clientY, t };
     });
-    box.addEventListener("pointermove", (e) => { if (start && e.pointerId === start.id && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) { dbg("glissement > 10 px : annulé"); start = null; } });
-    box.addEventListener("pointercancel", () => { dbg("pointercancel"); start = null; });
+    box.addEventListener("pointermove", (e) => { if (start && e.pointerId === start.id && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) start = null; });
+    box.addEventListener("pointercancel", () => { start = null; });
     box.addEventListener("pointerup", (e) => {
       const st = start; start = null;
-      dbg("pointerup " + e.pointerType + (st ? " (début noté, " + Math.round(Math.hypot(e.clientX - st.x, e.clientY - st.y)) + " px)" : " (sans début)"));
       if (!st || e.pointerId !== st.id || Math.hypot(e.clientX - st.x, e.clientY - st.y) > 10) return;
       e.preventDefault(); pick(st.t); // la suggestion touchée, même si le clavier a changé la liste entre-temps
     });
@@ -1420,7 +1407,7 @@
     // envoyant le clic d'un vrai tap ; on choisit alors la suggestion cliquée, sauf si le choix vient d'être fait
     // (souris : déjà choisie au pointerdown). Un glissement n'envoie pas de clic.
     box.addEventListener("click", (e) => {
-      const t = itemAt(e); dbg("click sur « " + (t || e.target.tagName) + " »" + (Date.now() - lastPick < 800 ? " (déjà choisi)" : "")); if (!t || Date.now() - lastPick < 800) return;
+      const t = itemAt(e); if (!t || Date.now() - lastPick < 800) return;
       e.preventDefault(); pick(t);
     });
     input.addEventListener("input", () => { sel = -1; items = filter() ? A.matcher.suggest(input.value, 6).filter(filter()) : []; render(); });
@@ -1431,7 +1418,7 @@
       else if (e.key === "Enter" && sel >= 0) { e.preventDefault(); onPick(items[sel]); items = []; render(); }
       else if (e.key === "Escape") { items = []; render(); }
     });
-    input.addEventListener("blur", () => { dbg("champ quitté (blur)"); setTimeout(() => { items = []; render(); }, 150); });
+    input.addEventListener("blur", () => setTimeout(() => { items = []; render(); }, 150));
   }
 
   // ------------------------------------------------------------------ branchements
@@ -1453,7 +1440,6 @@
       if (!quick) return;
       const el = e.target instanceof Element ? e.target : null;
       if (el && el.closest("input, textarea, select, [contenteditable]")) return; // saisie : on laisse faire
-      dbg("double tap neutralisé");
       e.preventDefault();
       const btn = el && el.closest("button, a[href], [role=button], label");
       if (btn && !btn.disabled) btn.click();
