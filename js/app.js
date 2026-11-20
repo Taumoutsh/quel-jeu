@@ -1052,7 +1052,7 @@
     $("bReport").textContent = A.reported[rid] ? "Erreur signalée" : "Signaler une erreur";
     if (!rvMap) rvMap = new MapView($("rvMap"));
     const m = info && mapInfo(info.game);
-    if (m) requestAnimationFrame(() => { rvMap.setImage(m.url, m.w, m.h); rvMap.pinKey = null; renderRevealPins(); });
+    if (m) requestAnimationFrame(() => { rvMap.setImage(m.url, m.w, m.h); rvMap.pinKey = null; rvMap.drawKey = null; renderRevealPins(); });
     renderRevealTable();
   }
   function renderRevealPins() {

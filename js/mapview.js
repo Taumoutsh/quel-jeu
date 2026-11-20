@@ -19,7 +19,7 @@
       el.append(z);
       this.w = 1; this.h = 1; this.s = 1; this.tx = 0; this.ty = 0; this.pins = [];
       this._bind();
-      if (root.ResizeObserver) { let lw = 0, lh = 0; new ResizeObserver(() => { const cw = el.clientWidth, ch = el.clientHeight; if (cw && ch && (cw !== lw || ch !== lh)) { const first = !lw; lw = cw; lh = ch; first || this.autoFit ? this.fit() : this._clamp(); } }).observe(el); }
+      if (root.ResizeObserver) { let lw = 0, lh = 0; new ResizeObserver(() => { const cw = el.clientWidth, ch = el.clientHeight; if (cw && ch && (cw !== lw || ch !== lh)) { const first = !lw; lw = cw; lh = ch; if (this._focusPts && !this.touched) this.focus(this._focusPts); /* cadrage sur des repères : refait à la vraie taille */ else if (first || this.autoFit) this.fit(); else this._clamp(); } }).observe(el); }
     }
     setImage(src, w, h) {
       this.w = w; this.h = h; this.autoFit = true; this.touched = false; // touched : vue réglée par la personne
@@ -27,17 +27,21 @@
       this.svg.setAttribute("viewBox", "0 0 " + w + " " + h);
       this.img.src = src;
       this.fit();
+      // repères déjà posés : replacés aux dimensions de la nouvelle image (sinon ils restaient calés sur l'ancienne,
+      // ou tous au coin haut gauche s'ils avaient été posés avant la première image)
+      if (this._last) this.setPins(this._last[0], this._last[1]);
     }
     fit() {
       const cw = this.el.clientWidth || 300, ch = this.el.clientHeight || 200;
       this.minS = Math.min(cw / this.w, ch / this.h);
       this.s = this.minS; this.tx = (cw - this.w * this.s) / 2; this.ty = (ch - this.h * this.s) / 2;
-      this.autoFit = true;
+      this.autoFit = true; this._focusPts = null;
       this._apply();
     }
     focus(points) {
       // cadre l'ensemble des points (coordonnées normalisées)
       if (!points.length) return this.fit();
+      this._focusPts = points; // gardé pour refaire le cadrage si la carte change de taille (écran encore caché, etc.)
       const cw = this.el.clientWidth || 300, ch = this.el.clientHeight || 200;
       let x0 = 1, x1 = 0, y0 = 1, y1 = 0;
       for (const p of points) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
@@ -71,6 +75,7 @@
       for (const l of this.svg.children) l.setAttribute("stroke-width", 3 * inv);
     }
     setPins(pins, lines) {
+      this._last = [pins, lines];
       this.pinLayer.innerHTML = ""; this.svg.innerHTML = "";
       for (const l of lines || []) {
         const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
