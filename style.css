@@ -414,3 +414,6 @@ tr.fin-pl.gone td { opacity: .75; }
   #rvTable td.who .tag { display: inline-block; }
   #rvTable td.n { border-top: 0; padding-top: 2px; padding-bottom: 10px; font-size: 15px; }
 }
+
+/* mode diagnostic (?debug=1) : journal des gestes, en haut, sans gêner les touchers */
+.dbg { position: fixed; top: max(4px, env(safe-area-inset-top)); left: 4px; right: 4px; z-index: 99; pointer-events: none; font: 11px/1.35 ui-monospace, monospace; color: #b9ffcf; background: rgba(0, 0, 0, .72); border-radius: 8px; padding: 4px 6px; max-height: 40vh; overflow: hidden; }
