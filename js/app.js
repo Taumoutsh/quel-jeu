@@ -920,7 +920,7 @@
       setFb("warn", "<b>Précise !</b> " + (ev.series ? "Il existe plusieurs jeux <i>" + esc(ev.series) + "</i>." : "« " + esc(text.trim()) + " » ne suffit pas.") + " Donne le titre complet.");
       if (A.st.cfg.hints && ev.candidates) {
         $("cands").innerHTML = ev.candidates.map((c) => "<button type='button'>" + esc(c) + "</button>").join("");
-        for (const b of $("cands").children) b.onclick = () => submitGuess(b.textContent);
+        for (const b of $("cands").children) onTap(b, () => submitGuess(b.textContent));
       }
       $("gInput").focus();
       return;
@@ -1332,6 +1332,24 @@
   }
 
   // ------------------------------------------------------------------ autocomplétion
+  // bouton qui ne réagit qu'à un vrai tap au doigt : un glissement (pour replier le clavier ou faire défiler) ne
+  // le déclenche pas. Souris et clavier : clic normal. Le clic que le navigateur envoie après un toucher est ignoré
+  // (le tap est déjà traité au doigt levé), comme celui que rejoue noDoubleTapZoom.
+  function onTap(el, fn) {
+    let start = null, touchT = 0;
+    el.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse") return; touchT = Date.now(); start = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+    el.addEventListener("pointermove", (e) => { if (start && e.pointerId === start.id && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) start = null; });
+    el.addEventListener("pointercancel", () => { start = null; });
+    el.addEventListener("pointerup", (e) => {
+      if (e.pointerType === "mouse") return;
+      touchT = Date.now();
+      const ok = start && e.pointerId === start.id && Math.hypot(e.clientX - start.x, e.clientY - start.y) <= 10;
+      start = null;
+      if (ok) { e.preventDefault(); fn(); }
+    });
+    el.addEventListener("click", (e) => { if (Date.now() - touchT < 1000) { e.preventDefault(); return; } fn(); });
+  }
+
   function attachSuggest(input, box, onPick, filter) {
     let sel = -1, items = [];
     const render = () => {
@@ -1372,10 +1390,14 @@
   // de 40 px) est neutralisé ; s'il tombait sur un bouton, on rejoue son clic pour ne pas perdre le second appui.
   // Les gestes de la vue et des cartes passent par les événements « pointer », que cela n'empêche pas.
   function noDoubleTapZoom() {
-    let lastT = 0, lastX = 0, lastY = 0;
+    let lastT = 0, lastX = 0, lastY = 0, sx = 0, sy = 0;
+    document.addEventListener("touchstart", (e) => { if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; } }, { passive: true });
     document.addEventListener("touchend", (e) => {
       if (e.touches.length || e.changedTouches.length !== 1) { lastT = 0; return; }
       const t = e.changedTouches[0], now = Date.now();
+      // un glissement n'est pas un tap : ni zoom à craindre, ni clic à rejouer (deux glissements rapprochés pour
+      // replier le clavier validaient une proposition)
+      if (Math.hypot(t.clientX - sx, t.clientY - sy) > 10) { lastT = 0; return; }
       const quick = now - lastT < 350 && Math.hypot(t.clientX - lastX, t.clientY - lastY) < 40;
       lastT = now; lastX = t.clientX; lastY = t.clientY;
       if (!quick) return;

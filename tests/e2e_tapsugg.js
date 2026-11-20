@@ -8,7 +8,7 @@ const PORT = 8837, URL = "http://localhost:" + PORT + "/";
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg); if (!ok) process.exitCode = 1; };
 (async () => {
-  const srv = spawn(process.execPath, [path.join(__dirname, "..", "server", "server.js")], { env: Object.assign({}, process.env, { PORT: String(PORT), QJ_JEUX: "gtav,rdr2" }), stdio: "ignore" });
+  const srv = spawn(process.execPath, [path.join(__dirname, "..", "server", "server.js")], { env: Object.assign({}, process.env, { PORT: String(PORT), QJ_JEUX: "rdr2" }), stdio: "ignore" });
   await wait(800);
   const b = await chromium.launch(); const errs = [];
   try {
@@ -32,8 +32,28 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
     await touch("touchStart", r2.x + r2.width / 2, r2.y + r2.height / 2); await wait(60); await touch("touchEnd"); await wait(500);
     const ph = await p.evaluate("QJ.A.R.phase"), errsN = await p.evaluate("QJ.A.R.errors");
     check(ph === "map" || errsN === 1, "tap sur « " + t2 + " » : proposition envoyée (" + (ph === "map" ? "bon jeu" : "raté") + ")");
+    // propositions d'une licence (pastilles #cands) : glisser, puis deux glissements rapprochés, ne valident rien
+    await p.fill("#gInput", "red dead"); await p.press("#gInput", "Enter"); await wait(300);
+    const nc = await p.$$eval("#cands button", (bs) => bs.length);
+    check(nc > 1, "propositions de la licence affichées (" + nc + ")");
+    const drag = async (r) => {
+      await touch("touchStart", r.x + r.width / 2, r.y + r.height / 2);
+      for (let k = 1; k <= 5; k++) await touch("touchMove", r.x + r.width / 2, r.y + r.height / 2 + k * 10);
+      await touch("touchEnd");
+    };
+    // certains téléphones envoient quand même un clic à la fin d'un glissement (clic « fantôme »)
+    const ghostClick = (r) => p.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); if (e) e.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: x, clientY: y })); }, [r.x + r.width / 2, r.y + r.height / 2]);
+    const c = await p.locator("#cands button", { hasText: /^Red Dead Redemption 2$/ }).boundingBox(); // la bonne réponse : la valider par erreur se verrait
+    await drag(c); await ghostClick(c); await wait(400);
+    check((await p.evaluate("QJ.A.R.phase")) === "name" && (await p.evaluate("QJ.A.R.errors")) === 1, "glissement sur une proposition : rien n'est validé");
+    await drag(c); await drag(c); await wait(400);
+    check((await p.evaluate("QJ.A.R.phase")) === "name" && (await p.evaluate("QJ.A.R.errors")) === 1, "deux glissements rapprochés : rien n'est validé");
+    const pill = p.locator("#cands button", { hasText: /^Red Dead Redemption 2$/ }), c2 = await pill.boundingBox(), ct = await pill.innerText();
+    await touch("touchStart", c2.x + c2.width / 2, c2.y + c2.height / 2); await wait(60); await touch("touchEnd"); await wait(400);
+    const ph0 = await p.evaluate("QJ.A.R.phase"), e0 = await p.evaluate("QJ.A.R.errors");
+    check(ph0 === "map" && e0 === 1, "tap sur « " + ct + " » : proposition envoyée, bonne réponse (" + ph0 + ", " + e0 + " erreur)");
     // passer la manche, puis « Manche suivante » : roue, et un double appui ne saute pas de manche
-    if (ph !== "map") { await p.evaluate("QJ.submitGuess(QJ.A.R.game.t)"); await wait(300); }
+    if ((await p.evaluate("QJ.A.R.phase")) !== "map") { await p.evaluate("QJ.submitGuess(QJ.A.R.game.t)"); await wait(300); }
     await p.evaluate("(()=>{const R=QJ.A.R; R.pin={x:R.info.x,y:R.info.y}; QJ.validatePin();})()");
     await p.waitForFunction("QJ.A.screen === 'reveal'");
     await wait(300);
