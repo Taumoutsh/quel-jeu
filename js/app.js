@@ -79,7 +79,11 @@
   // jamais pendant une manche ni sur ses résultats
   function placeFooter(id) {
     const f = $("siteFoot"); if (!f) return;
-    if (!f._init) { f._init = true; $("footYear").textContent = new Date().getFullYear(); $("footVer").textContent = "v" + (window.GS_VERSION || "?"); }
+    if (!f._init) { f._init = true; $("footYear").textContent = new Date().getFullYear(); $("footVer").textContent = "v" + (window.GS_VERSION || "?");
+      // date de la dernière mise à jour (AAAA-MM-JJ dans version.js), écrite à la française, sur sa propre ligne : « Mis à jour le 21 novembre 2026 »
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(window.GS_UPDATED || "");
+      if (m) { const d = new Date(+m[1], +m[2] - 1, +m[3]); $("footDate").textContent = "Mis à jour le " + d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }); $("footDate").title = "Dernière mise à jour du site"; }
+    }
     const off = id === "game" || id === "reveal";
     f.classList.toggle("hidden", off);
     if (!off && f.parentNode !== $(id)) $(id).append(f);
