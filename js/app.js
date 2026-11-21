@@ -80,9 +80,14 @@
   function placeFooter(id) {
     const f = $("siteFoot"); if (!f) return;
     if (!f._init) { f._init = true; $("footYear").textContent = new Date().getFullYear(); $("footVer").textContent = "v" + (window.GS_VERSION || "?");
-      // date de la dernière mise à jour (AAAA-MM-JJ dans version.js), écrite à la française, sur sa propre ligne : « Mis à jour le 21 novembre 2026 »
+      // date de la dernière mise à jour (AAAA-MM-JJ dans version.js), sur la même ligne : en toutes lettres sur
+      // grand écran (« 21 novembre 2026 »), courte sur téléphone (« 21/11/26 ») pour tenir sur une ligne
       const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(window.GS_UPDATED || "");
-      if (m) { const d = new Date(+m[1], +m[2] - 1, +m[3]); $("footDate").textContent = "Mis à jour le " + d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }); $("footDate").title = "Dernière mise à jour du site"; }
+      if (m) {
+        const d = new Date(+m[1], +m[2] - 1, +m[3]);
+        $("footDate").innerHTML = " · mis à jour le <span class='dl'>" + d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) + "</span><span class='ds'>" + m[3] + "/" + m[2] + "/" + m[1].slice(2) + "</span>";
+        $("footDate").title = "Dernière mise à jour du site";
+      }
     }
     const off = id === "game" || id === "reveal";
     f.classList.toggle("hidden", off);

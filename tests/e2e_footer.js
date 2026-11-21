@@ -17,9 +17,14 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
   try {
     const p = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage(); p.on("pageerror", (e) => errs.push(String(e)));
     await p.goto(URL); await wait(400);
-    const foot = () => p.evaluate(() => { const f = document.getElementById("siteFoot"), d = document.getElementById("footDate"); return { txt: f.textContent.replace(d.textContent, "").trim(), date: d.textContent, on: f.offsetParent !== null, in: f.parentNode.id }; });
+    const foot = () => p.evaluate(() => { const f = document.getElementById("siteFoot"); const r = document.createRange(); r.selectNodeContents(f); return { txt: f.innerText.replace(/\s+/g, " ").trim(), lines: new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size, on: f.offsetParent !== null, in: f.parentNode.id }; });
     let f = await foot();
-    check(f.on && f.in === "home" && f.txt === "GameSpotter · " + new Date().getFullYear() + " · v" + ver && f.date === "Mis à jour le " + updFr, "accueil : « " + f.txt + " » / « " + f.date + " »");
+    const short = upd[3] + "/" + upd[2] + "/" + upd[1].slice(2), head = "GameSpotter · " + new Date().getFullYear() + " · v" + ver + " · mis à jour le ";
+    check(f.on && f.in === "home" && f.txt === head + short && f.lines === 1, "téléphone (390 px) : « " + f.txt + " », " + f.lines + " ligne");
+    for (const w of [320, 360]) { await p.setViewportSize({ width: w, height: 844 }); await wait(150); const g = await foot(); check(g.lines === 1, w + " px : une seule ligne (" + g.lines + ")"); }
+    await p.setViewportSize({ width: 1280, height: 800 }); await wait(150); f = await foot();
+    check(f.txt === head + updFr && f.lines === 1, "grand écran : « " + f.txt + " »");
+    await p.setViewportSize({ width: 390, height: 844 }); await wait(150);
     await p.click("#bSolo"); await wait(300); f = await foot();
     check(f.on && f.in === "lobby", "salon : pied de page en bas de l'écran");
     await p.click("#bStart"); await p.waitForFunction("QJ.A.R && QJ.A.R.phase === 'name'"); f = await foot();

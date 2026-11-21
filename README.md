@@ -233,7 +233,7 @@ Pour d'autres jeux, ajoute tes propres vues via la bibliothèque, ou complète `
 
 ## Version
 
-Le numéro de version et la date de la dernière mise à jour sont dans `js/version.js` (`GS_VERSION`, `GS_UPDATED` au format AAAA-MM-JJ) et s'affichent dans le pied de page, hors jeu : « GameSpotter · année · vX.Y.Z », puis « Mis à jour le … ». On les change à chaque livraison : correctif → `1.0.x`, nouveauté → `1.x.0`, grand changement → `x.0.0`.
+Le numéro de version et la date de la dernière mise à jour sont dans `js/version.js` (`GS_VERSION`, `GS_UPDATED` au format AAAA-MM-JJ) et s'affichent dans le pied de page, hors jeu : « GameSpotter · année · vX.Y.Z · mis à jour le 21 novembre 2026 » (date courte, « 21/11/26 », sur téléphone). On les change à chaque livraison : correctif → `1.0.x`, nouveauté → `1.x.0`, grand changement → `x.0.0`.
 
 ## Structure
 
