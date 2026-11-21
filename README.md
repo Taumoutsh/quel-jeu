@@ -39,6 +39,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 - Le classement final garde les joueurs partis en cours de partie ; « Jeux trouvés » se lit sur les manches jouées par chacun (ex. 2/2 pour un joueur arrivé à la manche 2 d'une partie de 3).
 
 - Sur téléphone, quitter le navigateur puis y revenir ne fait plus perdre la partie : la connexion se rétablit seule au retour, et si le téléphone a rechargé la page, elle rejoint automatiquement la partie en cours avec les réponses déjà données.
+- Chaque navigateur reçoit un identifiant de joueur anonyme, tiré une fois et gardé sur l'appareil (sans inscription). Un joueur coupé qui revient, même par un nouvel onglet ou en rouvrant le lien, est reconnu : il n'apparaît qu'une fois et retrouve ses réponses. Deux onglets du même navigateur dans la même partie comptent donc pour un seul joueur.
 - Anti-triche (site Docker) : les captures et les cartes sont servies sous des codes neutres et les détails des vues sont brouillés ; l'onglet Réseau des outils du navigateur (F12) ne montre plus le nom du jeu ni du lieu.
 
 ## Signalements et administration (site Docker)

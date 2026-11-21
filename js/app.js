@@ -48,6 +48,10 @@
   if (!COLORS.includes(A.color)) { const k = OLD_COLORS.indexOf(String(A.color).toLowerCase()); A.color = COLORS[k >= 0 ? k : 0]; LS.set("color", A.color); }
   // avatar : celui enregistré (les anciennes figurines sont converties), sinon un avatar au hasard ;
   // sa couleur est celle du joueur (repères et traits sur la carte)
+  // identifiant de joueur, tiré une fois et gardé par le navigateur (sans inscription) : après une coupure et
+  // une reconnexion (nouvel identifiant de connexion), on reconnaît le même joueur au lieu d'en afficher deux
+  A.uid = LS.get("pid", "");
+  if (!/^[a-z0-9]{12}$/.test(A.uid)) { A.uid = rid(12); LS.set("pid", A.uid); }
   A.avatar = LS.get("avatar", null);
   if (AV) {
     A.avatar = avaOK(A.avatar) ? AV.format(AV.parse(A.avatar)) : AV.random();
@@ -308,7 +312,7 @@
 
   // ------------------------------------------------------------------ multijoueur (présence dans un salon nommé)
   function players(forScore) {
-    const me = { me: true, name: A.name, color: A.color, avatar: A.avatar, r: A.res, host: A.mode === "host" || A.mode === "solo", peer: "me", j: A.j || 0, alive: true, ready: !!A.ready };
+    const me = { me: true, u: A.uid, name: A.name, color: A.color, avatar: A.avatar, r: A.res, host: A.mode === "host" || A.mode === "solo", peer: "me", j: A.j || 0, alive: true, ready: !!A.ready };
     if (!A.nroom) return [me];
     const out = []; let sawMe = false;
     for (const p of A.peers) {
@@ -316,9 +320,25 @@
       if (!pr.n) continue;
       if (p.sameTab) { sawMe = true; out.push(me); continue; }
       if (forScore && pr.g !== A.gen) continue;
-      out.push({ me: false, name: String(pr.n).slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(pr.c) ? pr.c : "#ffffff", avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], host: pr.h === 1, peer: p.peer, j: pr.j | 0, alive: alive(p), active: active(p), ready: !!pr.rd && pr.rd === A.gen });
+      out.push({ me: false, u: uidOf(pr), since: p.since || 0, name: String(pr.n).slice(0, 16), color: /^#[0-9a-f]{6}$/i.test(pr.c) ? pr.c : "#ffffff", avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], host: pr.h === 1, peer: p.peer, j: pr.j | 0, alive: alive(p), active: active(p), ready: !!pr.rd && pr.rd === A.gen });
     }
     if (!sawMe) out.unshift(me);
+    return dedupe(out);
+  }
+  const uidOf = (pr) => (pr && typeof pr.u === "string" && /^[a-z0-9]{12}$/.test(pr.u) ? pr.u : "");
+  // un même joueur (même identifiant de navigateur) revenu après une coupure n'apparaît qu'une fois : sa nouvelle
+  // connexion remplace l'ancienne (encore là le temps que le serveur la retire) ; ses propres anciennes connexions
+  // disparaissent de sa liste. Entre deux connexions d'un autre joueur : la vivante, sinon la plus récente.
+  function dedupe(list) {
+    const out = [], at = new Map();
+    for (const q of list) {
+      if (!q.me && q.u && q.u === A.uid) continue;
+      if (q.me || !q.u) { out.push(q); continue; }
+      if (!at.has(q.u)) { at.set(q.u, out.length); out.push(q); continue; }
+      const k = at.get(q.u), prev = out[k];
+      const qa = q.alive !== false, pa = prev.alive !== false;
+      if ((qa && !pa) || (qa === pa && q.since > prev.since)) out[k] = q;
+    }
     return out;
   }
   let pubT = null;
@@ -327,7 +347,7 @@
     saveSession();
     clearTimeout(pubT);
     pubT = setTimeout(() => {
-      const p = { v: 1, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null), hb: A.hb || 0, j: A.j || 0, vh: document.visibilityState === "hidden" ? 1 : 0, rd: A.ready && A.gen ? A.gen : 0 };
+      const p = { v: 1, u: A.uid, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null), hb: A.hb || 0, j: A.j || 0, vh: document.visibilityState === "hidden" ? 1 : 0, rd: A.ready && A.gen ? A.gen : 0 };
       p.st = A.mode === "host" ? A.st : null;
       if (A.nroom) A.nroom.presence(p).catch((e) => console.warn("presence", e)); // salle quittée entre-temps : rien
     }, 40);
@@ -375,7 +395,7 @@
       if (p.sameTab) continue;
       const pr = p.presence || {};
       here.add(p.peer);
-      if (pr.n && pr.g === A.gen) A.track[p.peer] = { peer: p.peer, name: String(pr.n).slice(0, 16), color: pr.c, avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], j: pr.j | 0, gen: A.gen, absent: false };
+      if (pr.n && pr.g === A.gen) A.track[p.peer] = { peer: p.peer, u: uidOf(pr), name: String(pr.n).slice(0, 16), color: pr.c, avatar: avaOK(pr.a) ? pr.a : null, r: Array.isArray(pr.r) ? pr.r : [], j: pr.j | 0, gen: A.gen, absent: false };
     }
     for (const t of Object.values(A.track)) if (t.gen !== A.gen) delete A.track[t.peer]; else if (!here.has(t.peer)) t.absent = true;
   }
@@ -385,14 +405,15 @@
     const gone = (A.st.gone || []).slice();
     // joueurs encore là et qui répondent (un joueur figé, réseau coupé ou téléphone verrouillé, compte comme parti)
     const live = players(true).filter((p) => !p.me && p.alive !== false), liveNames = new Set(live.map((p) => p.name).concat([A.name]));
-    const livePeers = new Set(live.map((p) => p.peer));
+    const livePeers = new Set(live.map((p) => p.peer)), liveUids = new Set(live.map((p) => p.u).concat([A.uid]).filter(Boolean));
     let changed = false;
     for (const t of Object.values(A.track)) {
-      if (livePeers.has(t.peer) || gone.some((g) => g.peer === t.peer)) continue;
-      gone.push({ peer: t.peer, name: t.name, color: t.color, avatar: t.avatar, r: t.r, j: t.j, left: A.st.i });
+      if (livePeers.has(t.peer) || (t.u && liveUids.has(t.u)) || gone.some((g) => g.peer === t.peer || (t.u && g.u === t.u))) continue;
+      gone.push({ peer: t.peer, u: t.u, name: t.name, color: t.color, avatar: t.avatar, r: t.r, j: t.j, left: A.st.i });
       changed = true;
     }
-    const keep = gone.filter((g) => !livePeers.has(g.peer) && !liveNames.has(g.name)); // revenu : il reprend sa place
+    // revenu (même connexion, même navigateur ou même pseudo) : il reprend sa place
+    const keep = gone.filter((g) => !livePeers.has(g.peer) && !liveNames.has(g.name) && !(g.u && liveUids.has(g.u)));
     if (keep.length !== gone.length) changed = true;
     if (changed) { A.st = Object.assign({}, A.st, { gone: keep }); publish(); }
   }
@@ -476,6 +497,13 @@
       A.j = st.ph === "lobby" ? 0 : st.ph === "play" ? st.i : st.ph === "rev" ? st.i + 1 : st.seq.length; // arrivé en cours de partie ?
       // page rechargée en pleine partie : on reprend ses réponses et sa manche d'arrivée
       if (A.resume && A.resume.gen === st.gen) { A.res = Array.isArray(A.resume.res) ? A.resume.res.slice() : []; A.j = A.resume.j | 0; }
+      else if (st.ph !== "lobby") {
+        // revenu dans la même partie sans la mémoire de l'onglet (onglet fermé par le téléphone, lien rouvert) :
+        // on reprend ses réponses à son ancienne connexion (encore dans la salle) ou au départ noté par l'hôte
+        const old = A.peers.filter((p) => !p.sameTab).map((p) => p.presence || {}).find((pr) => uidOf(pr) === A.uid && pr.g === st.gen && Array.isArray(pr.r))
+          || (st.gone || []).find((g) => g.u === A.uid && Array.isArray(g.r));
+        if (old) { A.res = old.r.slice(); A.j = old.j | 0; }
+      }
       A.resume = null;
       publish();
     }
@@ -1226,8 +1254,8 @@
     const n = A.st.seq.length;
     // joueurs encore là + joueurs partis en cours de partie (notés par l'hôte dans st.gone)
     const goneList = A.st.gone || [], gonePeers = new Set(goneList.map((g) => g.peer));
-    const here = players(true).filter((p) => !gonePeers.has(p.peer)), names = new Set(here.map((p) => p.name));
-    const gone = goneList.filter((g) => !names.has(g.name)).map((g) => ({ me: false, name: g.name, color: g.color || "#8b9fb1", avatar: avaOK(g.avatar) ? g.avatar : null, r: g.r || [], j: g.j | 0, gone: true, left: g.left, peer: "g-" + g.peer }));
+    const here = players(true).filter((p) => !gonePeers.has(p.peer)), names = new Set(here.map((p) => p.name)), hereU = new Set(here.map((p) => p.u).filter(Boolean));
+    const gone = goneList.filter((g) => !names.has(g.name) && !(g.u && hereU.has(g.u))).map((g) => ({ me: false, name: g.name, color: g.color || "#8b9fb1", avatar: avaOK(g.avatar) ? g.avatar : null, r: g.r || [], j: g.j | 0, gone: true, left: g.left, peer: "g-" + g.peer }));
     const ps = here.concat(gone).map((p) => ({ p, tot: totalOf(p.r), found: (p.r || []).filter((x) => x && x[0] >= 1 && x[0] <= 2).length, played: (p.r || []).filter((x) => x).length })).sort((a, b) => b.tot - a.tot);
     const multi = ps.length > 1 || A.mode === "host" || A.mode === "guest";
     const mine = ps.find((x) => x.p.me) || ps[0];
@@ -1529,6 +1557,6 @@
   }
 
   // accès pour les tests automatisés
-  window.QJ = { A, randomPseudo, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t) => submitGuess(t), startSolo, hostStart, validatePin, get pano() { return pano; } };
+  window.QJ = { A, players: (s) => players(s), randomPseudo, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t) => submitGuess(t), startSolo, hostStart, validatePin, get pano() { return pano; } };
   wire();
 })();
