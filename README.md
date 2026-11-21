@@ -52,7 +52,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 1522 vues de 153 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 1528 vues de 154 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
@@ -213,6 +213,7 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
     | South Park: The Stick of Truth | École primaire de South Park, hôtel de ville, terrain de basket du parc, centre communautaire, U-Stor-It, ferme, Centre commercial de South Park, Étang de Stark |
     | LEGO City Undercover | Commissariat, château de Fort Meadows, île de Lady Liberty, Unisphère, aéroport, Honey Hotel, île Albatross, tour Fusileani, Mont Cashmore, Bibliothèque de LEGO City |
     | Outer Wilds | Timber Hearth, Brittle Hollow, Giant's Deep, Jumeaux du sablier (Ash Twin), Hollow's Lantern, Ember Twin (canon gravitationnel), Canon sondeur orbital, Dark Bramble (cimetière nomaï), Interloper (cœur de la comète) |
+    | Grand Theft Auto VI (carte officielle « Visit Leonida ») | Starlet Motel à Port Gellhorn, Sahara Arena (Downtown Vice City), Watson Bay, The Rusty Anchor à Key Lento, Ambrosia, Hotel Valetta à Vice Beach |
     | The Legend of Zelda: Tears of the Kingdom | Ville Gerudo, Village de Hateno, Pics jumeaux, Île d'Eventide |
 
     Les captures portant le logo ou le nom du jeu ont été écartées. Les positions ont été relevées à la main sur les cartes (noms de lieux quand la carte en a, sinon repères visibles) : elles sont justes à quelques pourcents de la carte.
