@@ -285,6 +285,15 @@ Au démarrage, `docker compose logs quel-jeu` affiche les images réellement ser
 
 **Reconstructions rapides** : les images téléchargées sont gardées dans un cache de construction Docker (BuildKit, `id=quel-jeu-images`). Un `docker compose up -d --build` après un `git pull` ne télécharge que les vues nouvelles ou dont la source a changé ; le reste de l'image vient du cache habituel de Docker. Seule la toute première construction télécharge tout (quelques minutes). `docker builder prune` vide ce cache.
 
+**Espace disque** : le jeu n'écrit presque rien. Les parties vivent en mémoire : un joueur déconnecté est retiré au bout de 15 s et une salle vide disparaît aussitôt. Le volume `gamespotter-data` ne contient que `reports.json` (signalements, 5 000 au plus), `overrides.json` (corrections de l'admin) et `secret.txt` (quelques octets), et le serveur n'écrit que trois lignes de journal au démarrage. C'est Docker qui peut grossir : chaque construction garde l'ancienne version de ses couches dans son cache. Jusqu'à la version 1.1.6, les images (~750 Mo) étaient copiées après le code, donc recopiées à chaque mise à jour du site (≈ 1,5 Go de plus par déploiement). Le Dockerfile les copie maintenant avant le code et monte `packs/img` au lieu de le copier : un déploiement qui ne change que le code ne prend plus de place, un ajout de vues en prend une copie (~750 Mo). Pour faire le point et récupérer l'espace :
+
+```bash
+docker system df          # « Build Cache » : la place prise par les anciennes constructions
+docker builder prune -f   # la récupère (l'image en service n'est pas touchée)
+```
+
+Après un `docker builder prune -f`, la construction suivante reprend les images depuis `packs/img` (dépôt d'images cloné), sans rien télécharger.
+
 **Si un site refuse ton serveur** (bilan de construction avec `ÉCHEC … HTTP Error 403`) : le téléchargement passe par `curl`, que certains CDN acceptent quand ils refusent le client HTTP de Python. Pour voir ce qui passe depuis ta machine :
 ```bash
 python3 tools/diag_acces.py     # code HTTP par site, avec Python, curl et wget
