@@ -347,7 +347,7 @@
     saveSession();
     clearTimeout(pubT);
     pubT = setTimeout(() => {
-      const p = { v: 1, u: A.uid, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null), hb: A.hb || 0, j: A.j || 0, vh: document.visibilityState === "hidden" ? 1 : 0, rd: A.ready && A.gen ? A.gen : 0 };
+      const p = { v: 1, u: A.uid, n: A.name, c: A.color, a: A.avatar, h: A.mode === "host" ? 1 : 0, g: A.gen, r: A.res.map((x) => x || null), hb: A.hb || 0, j: A.j || 0, vh: document.visibilityState === "hidden" ? 1 : 0, rd: A.ready && A.gen ? A.gen : 0, nx: A.nx != null ? A.nx : -1 };
       p.st = A.mode === "host" ? A.st : null;
       if (A.nroom) A.nroom.presence(p).catch((e) => console.warn("presence", e)); // salle quittée entre-temps : rien
     }, 40);
@@ -482,7 +482,7 @@
   function onPeers() {
     refreshSeen(); trackPlayers();
     checkHost();
-    if (A.mode === "host") { hostRecordGone(); hostCheck(); hostReadyCheck(); }
+    if (A.mode === "host") { hostRecordGone(); hostCheck(); hostReadyCheck(); hostNextRequests(); }
     renderPlayers();
     if (A.screen === "reveal") renderRevealTable();
     if (A.screen === "final") renderFinal();
@@ -574,6 +574,26 @@
   // « Terminer la manche maintenant » : en temps illimité seulement (sinon, on attend la fin du temps)
   const canForceEnd = () => !!A.st && !A.st.cfg.time;
   function hostForceEnd() { if (isHost() && A.st && A.st.ph === "play" && canForceEnd()) { A.st = Object.assign({}, A.st, { ph: "rev" }); publish(); route(); } }
+  // Résultats d'une manche, hôte parti sur une autre application ou un autre onglet depuis plus de 20 s : les
+  // autres voient aussi « Manche suivante ». Leur appui est une demande (présence nx = numéro de la manche) que
+  // la page de l'hôte, toujours en marche, exécute ; l'hôte reste hôte et rien ne bouge s'il est sur la page.
+  const NEXT_AWAY_MS = 20000;
+  function hostAwayLong() {
+    if (A.mode !== "guest" || !A.st || A.st.ph !== "rev") return false;
+    const h = A.peers.find((p) => !p.sameTab && p.presence && p.presence.h === 1 && p.presence.g === A.gen);
+    return !!h && alive(h) && !active(h, NEXT_AWAY_MS);
+  }
+  const canNext = () => isHost() || hostAwayLong();
+  function guestNext() {
+    if (!hostAwayLong()) return;
+    A.nx = A.st.i; publish();
+  }
+  function hostNextRequests() {
+    if (!isHost() || !A.st || A.st.ph !== "rev") return;
+    if (!(A.hidSince && Date.now() - A.hidSince > NEXT_AWAY_MS - 3000)) return; // l'hôte est là : c'est lui qui décide
+    const ask = A.peers.some((p) => !p.sameTab && alive(p) && p.presence && p.presence.g === A.gen && p.presence.nx === A.st.i);
+    if (ask) hostNext();
+  }
   function hostNext() {
     if (!isHost() || !A.st) return;
     if (A.st.i + 1 < A.st.seq.length) A.st = Object.assign({}, A.st, { ph: "play", i: A.st.i + 1, dl: newDeadline(A.st.cfg) });
@@ -845,7 +865,7 @@
     if (A.screen === "lobby") renderReady();
     if (A.screen === "game") renderChips();
     // rôle changé pendant les résultats (relève) : « Manche suivante » chez le nouvel hôte seulement
-    if (A.screen === "reveal") { $("bNext").classList.toggle("hidden", !isHost()); $("rvWait").classList.toggle("hidden", isHost()); }
+    if (A.screen === "reveal") { $("bNext").classList.toggle("hidden", !canNext()); $("rvWait").classList.toggle("hidden", canNext()); $("rvAway").classList.toggle("hidden", isHost() || !canNext()); }
   }
   // ---- salon à plusieurs : chacun clique sur « Je suis prêt » ; la partie démarre (décompte 3, 2, 1) quand
   // tous les joueurs présents sont prêts (un joueur absent, connexion coupée, ne bloque pas).
@@ -1089,8 +1109,9 @@
     $("rvCredit").innerHTML = info && info.credit ? esc(info.credit) + (info.source ? " · <a href='" + esc(info.source) + "' target='_blank' rel='noopener'>source</a>" : "") : "";
     const last = i + 1 >= A.st.seq.length;
     $("bNext").textContent = last ? "Voir le classement" : "Manche suivante";
-    $("bNext").classList.toggle("hidden", !isHost());
-    $("rvWait").classList.toggle("hidden", isHost());
+    $("bNext").classList.toggle("hidden", !canNext());
+    $("rvWait").classList.toggle("hidden", canNext());
+    $("rvAway").classList.toggle("hidden", isHost() || !canNext());
     // signaler une erreur : seulement pour les vrais jeux, sur le site auto-hébergé (le serveur garde les signalements)
     const rid = A.st.seq[i];
     $("bReport").classList.toggle("hidden", !(SERVER && rid && rid.startsWith("r-")));
@@ -1514,7 +1535,7 @@
     $("bBig").onclick = () => { const big = $("pMap").classList.toggle("big"); $("bBig").textContent = big ? "Réduire" : "Agrandir"; setTimeout(() => pick && pick.fit(), 280); };
     $("bForce").onclick = hostForceEnd;
     $("bQuit").onclick = async () => { if (await confirmBox("Quitter la partie ?", "Quitter")) goHome(); };
-    $("bNext").onclick = busy("bNext", hostNext);
+    $("bNext").onclick = busy("bNext", () => (isHost() ? hostNext() : guestNext()));
     $("bAgain").onclick = busy("bAgain", () => (isHost() ? hostReplay() : guestAgain()));
     $("bHome").onclick = goHome;
 
@@ -1543,7 +1564,7 @@
 
     setInterval(() => { hostCheck(); tickTimer(); }, 250);
     setInterval(() => { if (A.nroom) { A.hb = ((A.hb || 0) + 1) % 1e6; publish(); } }, HB_MS);
-    setInterval(() => { if (A.nroom) { checkHost(); if (A.mode === "host") hostRecordGone(); renderPlayers(); } }, 1000);
+    setInterval(() => { if (A.nroom) { checkHost(); if (A.mode === "host") { hostRecordGone(); hostNextRequests(); } renderPlayers(); } }, 1000);
     // retour sur la page (téléphone) : signal de vie immédiat pour ne pas passer pour absent
     document.addEventListener("visibilitychange", () => {
       A.hidSince = document.visibilityState === "hidden" ? A.hidSince || Date.now() : 0;

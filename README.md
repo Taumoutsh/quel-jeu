@@ -36,6 +36,7 @@ Le multijoueur utilise la capacité « room » des artefacts Claude, ou les sall
 Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact (partagé depuis claude.ai) ou ton site Docker.
 
 - Si l'hôte quitte ou ne répond plus (téléphone verrouillé, réseau coupé), le joueur arrivé le plus tôt devient hôte automatiquement (en 2 à 8 secondes environ) et la partie continue ; l'ancien hôte qui revient redevient simple joueur. Un joueur qui ne répond plus ne bloque pas la fin d'une manche.
+- Un hôte simplement passé sur un autre onglet ou une autre application reste hôte. Sur l'écran des résultats, s'il n'est plus sur la page depuis 20 secondes, tout le monde voit « Manche suivante » et peut lancer la suite.
 - Le classement final garde les joueurs partis en cours de partie ; « Jeux trouvés » se lit sur les manches jouées par chacun (ex. 2/2 pour un joueur arrivé à la manche 2 d'une partie de 3).
 
 - Sur téléphone, quitter le navigateur puis y revenir ne fait plus perdre la partie : la connexion se rétablit seule au retour, et si le téléphone a rechargé la page, elle rejoint automatiquement la partie en cours avec les réponses déjà données.
