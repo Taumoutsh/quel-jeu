@@ -20,16 +20,13 @@
 
   // ------------------------------------------------------------------ points
   const NAME_MAX = 1000, NAME_STEP = 200, NAME_MIN = 200, LOC_MAX = 1000;
-  // bonus de rapidité (réglage « Bonus de rapidité », activé par défaut) : jusqu'à SPEED_MAX points pour une manche
-  // finie vite (jeu trouvé et repère validé) : plein bonus en moins de SPEED_FULL s, puis il baisse jusqu'à 0 à
-  // 90 s (ou à la durée de la manche si elle est plus courte). Il est proportionnel aux points de position : un
-  // repère posé n'importe où ne rapporte pas de bonus.
-  const SPEED_MAX = 500, SPEED_FULL = 15;
-  const speedEnd = (cfg) => (cfg && cfg.time ? Math.min(90, cfg.time) : 90);
-  function speedFactor(sec, cfg) { const end = speedEnd(cfg); return sec <= SPEED_FULL ? 1 : sec >= end ? 0 : 1 - (sec - SPEED_FULL) / (end - SPEED_FULL); }
-  const speedPoints = (sec, locPts, cfg) => Math.round(SPEED_MAX * speedFactor(sec, cfg) * Math.max(0, Math.min(1, locPts / LOC_MAX)));
-  // points d'une manche : nom + position + bonus de rapidité (x[6], absent des anciennes réponses)
-  const roundPts = (x) => (x ? (x[1] || 0) + (x[2] || 0) + (x[6] || 0) : 0);
+  // points qui baissent avec le temps (réglage « Points qui baissent avec le temps », activé par défaut) : le
+  // coefficient passe de 100 % à 50 % en 90 s (ou en la durée de la manche si elle est plus courte). Le jeu baisse
+  // tant qu'il n'est pas trouvé ; la position, à partir de là et jusqu'à la validation du repère.
+  const DECAY_MIN = 0.5;
+  const decayEnd = (cfg) => (cfg && cfg.time ? Math.min(90, cfg.time) : 90);
+  const decay = (sec, cfg) => 1 - (1 - DECAY_MIN) * Math.min(1, Math.max(0, sec) / decayEnd(cfg));
+  const roundPts = (x) => (x ? (x[1] || 0) + (x[2] || 0) : 0);
   const namePoints = (errors) => Math.max(NAME_MIN, NAME_MAX - NAME_STEP * errors);
   function mapDist(a, b, w, h) {
     // distance normalisée par la diagonale de la carte (0 = parfait, 1 = coins opposés)
@@ -944,7 +941,7 @@
     A.R = { i, sid, info, game: g, errors: 0, phase: "name", pin: null, namePts: 0 };
     if (!A.res[i] || A.res[i][0] < 2) A.res[i] = null;
     maybeCountdown(i);
-    A.R.t0 = Date.now() + (cdT ? CD_MS : 0); // départ du bonus de rapidité (après le décompte 3, 2, 1)
+    A.R.t0 = Date.now() + (cdT ? CD_MS : 0); // départ de la baisse des points (après le décompte 3, 2, 1)
     if (!pano) pano = new Pano($("pano"));
     if (pano.failed) toast("WebGL est désactivé sur cet appareil : la vue 360° ne peut pas s'afficher.", 6000);
     $("panoLoad").classList.remove("hidden");
@@ -1028,7 +1025,8 @@
   }
   function nameFound(typo) {
     const R = A.R;
-    R.phase = "map"; R.namePts = namePoints(R.errors);
+    R.phase = "map"; R.t1 = Date.now(); // départ de la baisse des points de position
+    R.namePts = Math.round(namePoints(R.errors) * (A.st.cfg.speed && R.t0 ? decay((R.t1 - R.t0) / 1000, A.st.cfg) : 1));
     A.res[R.i] = [1, R.namePts, 0, R.errors, -1, -1]; publish();
     hidePanels(); $("pMap").classList.remove("hidden");
     $("foundTxt").innerHTML = "✓ <b>" + esc(R.game.t) + "</b>" + (typo ? " <span class='mut'>(faute de frappe acceptée)</span>" : "") + " · +" + fmt(R.namePts) + " — où a été prise cette vue ?";
@@ -1041,10 +1039,11 @@
   }
   function finishLoc(locPts) {
     const R = A.R, p = R.pin || { x: -1, y: -1 };
-    const spd = A.st.cfg.speed && R.pin && R.t0 ? speedPoints((Date.now() - R.t0) / 1000, locPts, A.st.cfg) : 0;
-    A.res[R.i] = [2, R.namePts, locPts, R.errors, Math.round(p.x * 1e4) / 1e4, Math.round(p.y * 1e4) / 1e4, spd];
+    const raw = locPts;
+    if (A.st.cfg.speed && R.t1) locPts = Math.round(locPts * decay((Date.now() - R.t1) / 1000, A.st.cfg));
+    A.res[R.i] = [2, R.namePts, locPts, R.errors, Math.round(p.x * 1e4) / 1e4, Math.round(p.y * 1e4) / 1e4];
     R.phase = "done"; publish();
-    showWait(locPts >= 900 ? "Dans le mille !" : locPts >= 500 ? "Bien joué !" : "Jeu trouvé !", "Nom : " + fmt(R.namePts) + " · Position : " + fmt(locPts) + (A.st.cfg.speed ? " · Rapidité : " + fmt(spd) : ""), "+" + fmt(R.namePts + locPts + spd));
+    showWait(raw >= 900 ? "Dans le mille !" : raw >= 500 ? "Bien joué !" : "Jeu trouvé !", "Nom : " + fmt(R.namePts) + " · Position : " + fmt(locPts), "+" + fmt(R.namePts + locPts));
     hostCheck();
   }
   function validatePin() {
@@ -1080,16 +1079,17 @@
     $("hScore").textContent = fmt(totalOf(A.res));
     tickTimer();
   }
-  // badge « Bonus +500 » qui fond pendant la manche (jeu à trouver puis repère à poser)
+  // compteur en direct : points encore possibles pour l'étape en cours (jeu, puis position), qui baissent
   function tickSpeed() {
     const el = $("hSpeed"), R = A.R;
     const on = !!(A.st && A.st.cfg.speed && A.st.ph === "play" && A.screen === "game" && R && R.t0 && (R.phase === "name" || R.phase === "map"));
     el.classList.toggle("hidden", !on);
     if (!on) return;
-    const sec = Math.max(0, (Date.now() - R.t0) / 1000), v = Math.round(SPEED_MAX * speedFactor(sec, A.st.cfg));
-    const txt = "+" + v;
+    const map = R.phase === "map", now = Date.now();
+    const v = map ? Math.round(LOC_MAX * decay((now - (R.t1 || now)) / 1000, A.st.cfg)) : Math.round(namePoints(R.errors) * decay(Math.max(0, now - R.t0) / 1000, A.st.cfg));
+    const lbl = map ? "Position" : "Jeu", txt = fmt(v);
+    if ($("hSpeedL").textContent !== lbl) $("hSpeedL").textContent = lbl;
     if ($("hSpeedV").textContent !== txt) $("hSpeedV").textContent = txt;
-    el.classList.toggle("low", v === 0);
   }
   function tickTimer() {
     tickSpeed();
@@ -1184,16 +1184,13 @@
     const i = A.st.i;
     const ps = players(true).map((p) => ({ p, x: p.r[i], tot: totalOf(p.r) }));
     ps.sort((a, b) => (roundPts(b.x) - roundPts(a.x)) || b.tot - a.tot);
-    const spdOn = !!A.st.cfg.speed;
     const rows = ps.map(({ p, x, tot }) => {
       // nom du jeu : seulement les points obtenus (0 en rouge si le jeu n'a pas été trouvé), sans le détail des erreurs
       const nm = !x ? "—" : x[0] === 3 ? "<span class='ko'>0</span>" : fmt(x[1]);
       const loc = !x || x[0] !== 2 ? "—" : fmt(x[2]);
-      const spd = spdOn ? "<td class='n'>" + (!x || x[0] !== 2 ? "—" : fmt(x[6] || 0)) + "</td>" : "";
-      return "<tr><td class='who'>" + whoCell(p) + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td>" + spd + "<td class='n'><b>" + fmt(roundPts(x)) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
+      return "<tr><td class='who'>" + whoCell(p) + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(roundPts(x)) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
     }).join("");
-    setHTML($("rvTable"), "<tr><th>Joueur</th><th class='n' title='Points pour le nom du jeu'>Jeu</th><th class='n'><span class='lg'>Position</span><span class='sh'>Pos.</span></th>" + (spdOn ? "<th class='n' title='Bonus de rapidité'><span class='lg'>Vitesse</span><span class='sh'>Vit.</span></th>" : "") + "<th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
-    $("rvTable").classList.toggle("spd", spdOn);
+    setHTML($("rvTable"), "<tr><th>Joueur</th><th class='n' title='Points pour le nom du jeu'>Jeu</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
     if (A.screen === "reveal") renderRevealPins();
   }
 
@@ -1259,7 +1256,6 @@
       else {
         nm = fmt(x[1]) + (x[3] > 0 ? "<br><span class='mut small'>" + x[3] + " erreur" + (x[3] > 1 ? "s" : "") + "</span>" : "");
         loc = x[0] === 2 ? fmt(x[2]) : "<span class='mut'>—</span>";
-        if (x[6]) loc += "<br><span class='mut small'>+" + fmt(x[6]) + " vitesse</span>";
         tot = "<b>" + fmt(roundPts(x[0] === 2 ? x : [x[0], x[1], 0])) + "</b>";
       }
       return "<tr><td class='mut'>" + (k + 1) + "</td><td>" + game + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'>" + tot + "</td></tr>";
@@ -1319,7 +1315,7 @@
     const multi = ps.length > 1 || A.mode === "host" || A.mode === "guest";
     const mine = ps.find((x) => x.p.me) || ps[0];
     // récapitulatif du joueur : sur les manches qu'il a jouées (arrivé en cours de partie : pas sur toute la partie)
-    const cnt = multi ? Math.max(mine.played, 1) : n, maxMine = cnt * (NAME_MAX + LOC_MAX + (A.st.cfg.speed ? SPEED_MAX : 0));
+    const cnt = multi ? Math.max(mine.played, 1) : n, maxMine = cnt * (NAME_MAX + LOC_MAX);
     setHTML($("finSolo"), "<div class='bigscore'>" + fmt(mine.tot) + "</div><p class='mut' style='text-align:center;margin:8px 0 0'>sur " + fmt(maxMine) + " points possibles · " + mine.found + "/" + cnt + " jeu" + (cnt > 1 ? "x" : "") + " trouvé" + (mine.found > 1 ? "s" : "") + "</p>");
     renderPodium(ps);
     if (multi) {
@@ -1616,6 +1612,6 @@
   }
 
   // accès pour les tests automatisés
-  window.QJ = { A, speedPoints, speedFactor, players: (s) => players(s), randomPseudo, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t, exact) => submitGuess(t, exact), startSolo, hostStart, validatePin, get pano() { return pano; } };
+  window.QJ = { A, decay, players: (s) => players(s), randomPseudo, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t, exact) => submitGuess(t, exact), startSolo, hostStart, validatePin, get pano() { return pano; } };
   wire();
 })();

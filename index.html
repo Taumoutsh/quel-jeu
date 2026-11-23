@@ -65,7 +65,7 @@
         <li>Observe la vue : glisse pour regarder, molette ou pincement pour zoomer.</li>
         <li><b>Devine le jeu.</b> Trop vague (« Zelda », « GTA ») ? On te demande de préciser, sans pénalité.</li>
         <li><b>Place ton repère</b> sur la carte du jeu.</li>
-        <li>Jusqu'à <b>1 000</b> points pour le nom (−200 par erreur) et <b>1 000</b> pour la position.</li>
+        <li>Jusqu'à <b>1 000</b> points pour le nom (−200 par erreur) et <b>1 000</b> pour la position, qui baissent avec le temps (jusqu'à −50 %).</li>
       </ol>
     </div>
 
@@ -115,8 +115,8 @@
           <div class="seg" data-k="hints"><button data-v="1">Oui</button><button data-v="0">Non (difficile)</button></div>
         </div>
         <div>
-          <div class="lab"><span>Bonus de rapidité</span></div>
-          <div class="seg" data-k="speed"><button data-v="1">Oui (jusqu'à +500)</button><button data-v="0">Non</button></div>
+          <div class="lab"><span>Points qui baissent avec le temps</span></div>
+          <div class="seg" data-k="speed"><button data-v="1">Oui (jusqu'à −50 %)</button><button data-v="0">Non</button></div>
         </div>
         <div id="packSetting">
           <div class="lab"><span>Images</span></div>
@@ -144,7 +144,7 @@
     <div class="pill timer" id="hTimer"><small>Temps</small><span id="hTime">2:00</span></div>
     <div class="pill"><small>Score</small><span id="hScore">0</span></div>
   </div>
-  <div class="spdb hidden" id="hSpeed" title="Bonus de rapidité : il baisse avec le temps passé à trouver le jeu et à placer le repère"><span aria-hidden="true">⚡</span> Bonus <b id="hSpeedV">+500</b></div>
+  <div class="spdb hidden" id="hSpeed" title="Points encore possibles pour l'étape en cours : ils baissent avec le temps (jusqu'à −50 %)"><span aria-hidden="true">⏳</span> <span id="hSpeedL">Jeu</span> <b id="hSpeedV">1 000</b></div>
   <div class="v360 hidden" id="h360" title="Vue à 360° : fais glisser pour regarder tout autour" role="img" aria-label="Vue à 360°"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="9" ry="4"/><path d="M15.5 6.2 18 8.2l-2.9.9"/></svg>360°</div>
   <div class="board hidden" id="hChips"></div>
   <div class="dock">
