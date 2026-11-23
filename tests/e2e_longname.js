@@ -37,7 +37,7 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
     for (const w of [320, 360, 430]) {
       await G.setViewportSize({ width: w, height: 760 }); await wait(250);
       const al = await G.evaluate(() => { const th = [...document.querySelectorAll("#rvTable th")].filter((x) => x.offsetParent).map((x) => Math.round(x.getBoundingClientRect().right)); const rows = [...document.querySelectorAll("#rvTable tr")].slice(1).map((tr) => [...tr.querySelectorAll("td.n")].map((x) => Math.round(x.getBoundingClientRect().right))); return { th, rows }; });
-      check(al.th.length === 4 && al.rows.every((r) => r.length === 4 && r.every((x, i) => Math.abs(x - al.th[i]) <= 1)), w + " px : titres en face des scores (" + al.th.join(",") + " / " + al.rows.map((r) => r.join(",")).join(" ; ") + ")");
+      check(al.th.length >= 4 && al.rows.every((r) => r.length === al.th.length && r.every((x, i) => Math.abs(x - al.th[i]) <= 1)), w + " px : titres en face des scores (" + al.th.join(",") + " / " + al.rows.map((r) => r.join(",")).join(" ; ") + ")");
     }
     check(errs.length === 0, "erreurs JS : " + (errs.join(" | ") || "aucune"));
   } catch (e) { console.log("ÉCHEC", e); process.exitCode = 1; } finally { srv.kill(); await b.close(); process.exit(); }

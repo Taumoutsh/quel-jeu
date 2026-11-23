@@ -422,3 +422,12 @@ tr.fin-pl.gone td { opacity: .75; }
   #rvTable td.who .tag { display: inline-block; }
   #rvTable td.n { border-top: 0; padding-top: 2px; padding-bottom: 10px; font-size: 15px; }
 }
+
+/* bonus de rapidité : badge qui fond pendant la manche, en haut à gauche sous la barre (le classement est à droite) */
+.spdb { position: absolute; left: 12px; top: calc(max(10px, env(safe-area-inset-top)) + 46px); z-index: 1; background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--glass-line); border-radius: 99px; padding: 4px 11px; font-size: 12px; color: var(--mut); font-variant-numeric: tabular-nums; pointer-events: none; }
+.spdb b { font-family: var(--fd); font-size: 14px; color: var(--acc); }
+.spdb.low b { color: var(--mut); }
+.spdb:not(.hidden) ~ .v360 { top: calc(max(10px, env(safe-area-inset-top)) + 80px); } /* repère 360° sous le bonus */
+/* résultats sur téléphone avec la colonne Vitesse : 5 scores sous le nom */
+#rvTable th .sh { display: none; }
+@media (max-width: 520px) { #rvTable.spd tr { grid-template-columns: repeat(5, minmax(0, 1fr)); } #rvTable.spd td.n { font-size: 14px; } #rvTable.spd th { letter-spacing: 0; } #rvTable.spd th .lg { display: none; } #rvTable.spd th .sh { display: inline; } }

@@ -20,6 +20,16 @@
 
   // ------------------------------------------------------------------ points
   const NAME_MAX = 1000, NAME_STEP = 200, NAME_MIN = 200, LOC_MAX = 1000;
+  // bonus de rapidité (réglage « Bonus de rapidité », activé par défaut) : jusqu'à SPEED_MAX points pour une manche
+  // finie vite (jeu trouvé et repère validé) : plein bonus en moins de SPEED_FULL s, puis il baisse jusqu'à 0 à
+  // 90 s (ou à la durée de la manche si elle est plus courte). Il est proportionnel aux points de position : un
+  // repère posé n'importe où ne rapporte pas de bonus.
+  const SPEED_MAX = 500, SPEED_FULL = 15;
+  const speedEnd = (cfg) => (cfg && cfg.time ? Math.min(90, cfg.time) : 90);
+  function speedFactor(sec, cfg) { const end = speedEnd(cfg); return sec <= SPEED_FULL ? 1 : sec >= end ? 0 : 1 - (sec - SPEED_FULL) / (end - SPEED_FULL); }
+  const speedPoints = (sec, locPts, cfg) => Math.round(SPEED_MAX * speedFactor(sec, cfg) * Math.max(0, Math.min(1, locPts / LOC_MAX)));
+  // points d'une manche : nom + position + bonus de rapidité (x[6], absent des anciennes réponses)
+  const roundPts = (x) => (x ? (x[1] || 0) + (x[2] || 0) + (x[6] || 0) : 0);
   const namePoints = (errors) => Math.max(NAME_MIN, NAME_MAX - NAME_STEP * errors);
   function mapDist(a, b, w, h) {
     // distance normalisée par la diagonale de la carte (0 = parfait, 1 = coins opposés)
@@ -35,7 +45,7 @@
   const A = {
     name: LS.get("name", ""),
     color: LS.get("color", COLORS[(Math.random() * COLORS.length) | 0]),
-    cfg: Object.assign({ rounds: 5, time: 120, tries: 3, hints: 1, pack: "real" }, LS.get("cfg", {})),
+    cfg: Object.assign({ rounds: 5, time: 120, tries: 3, hints: 1, speed: 1, pack: "real" }, LS.get("cfg", {})),
     caps: { db: null, room: null, assets: null, user: null },
     lib: { scenes: {}, maps: {}, games: {} }, libReady: false,
     matcher: null,
@@ -934,6 +944,7 @@
     A.R = { i, sid, info, game: g, errors: 0, phase: "name", pin: null, namePts: 0 };
     if (!A.res[i] || A.res[i][0] < 2) A.res[i] = null;
     maybeCountdown(i);
+    A.R.t0 = Date.now() + (cdT ? CD_MS : 0); // départ du bonus de rapidité (après le décompte 3, 2, 1)
     if (!pano) pano = new Pano($("pano"));
     if (pano.failed) toast("WebGL est désactivé sur cet appareil : la vue 360° ne peut pas s'afficher.", 6000);
     $("panoLoad").classList.remove("hidden");
@@ -952,7 +963,7 @@
     const nm = nx && mapInfo(nx.game);
     if (nm && nm.url && !nm.url.startsWith("data:")) { const im2 = new Image(); im2.src = nm.url; }
     // déjà terminé (rechargement) ?
-    if (A.res[i] && A.res[i][0] >= 2) { A.R.phase = "done"; showWait("Manche terminée", "En attente des autres joueurs…", fmt(A.res[i][1] + A.res[i][2]) + " pts"); }
+    if (A.res[i] && A.res[i][0] >= 2) { A.R.phase = "done"; showWait("Manche terminée", "En attente des autres joueurs…", fmt(roundPts(A.res[i])) + " pts"); }
     else showNamePanel();
     renderHud(); renderChips();
   }
@@ -1030,9 +1041,10 @@
   }
   function finishLoc(locPts) {
     const R = A.R, p = R.pin || { x: -1, y: -1 };
-    A.res[R.i] = [2, R.namePts, locPts, R.errors, Math.round(p.x * 1e4) / 1e4, Math.round(p.y * 1e4) / 1e4];
+    const spd = A.st.cfg.speed && R.pin && R.t0 ? speedPoints((Date.now() - R.t0) / 1000, locPts, A.st.cfg) : 0;
+    A.res[R.i] = [2, R.namePts, locPts, R.errors, Math.round(p.x * 1e4) / 1e4, Math.round(p.y * 1e4) / 1e4, spd];
     R.phase = "done"; publish();
-    showWait(locPts >= 3500 ? "Dans le mille !" : locPts >= 1500 ? "Bien joué !" : "Jeu trouvé !", "Nom : " + fmt(R.namePts) + " · Position : " + fmt(locPts), "+" + fmt(R.namePts + locPts));
+    showWait(locPts >= 900 ? "Dans le mille !" : locPts >= 500 ? "Bien joué !" : "Jeu trouvé !", "Nom : " + fmt(R.namePts) + " · Position : " + fmt(locPts) + (A.st.cfg.speed ? " · Rapidité : " + fmt(spd) : ""), "+" + fmt(R.namePts + locPts + spd));
     hostCheck();
   }
   function validatePin() {
@@ -1061,14 +1073,26 @@
     else failName("Temps écoulé !");
   }
 
-  function totalOf(r) { let t = 0; for (const x of r || []) if (x) t += (x[1] || 0) + (x[2] || 0); return t; }
+  function totalOf(r) { let t = 0; for (const x of r || []) if (x) t += roundPts(x); return t; }
   function renderHud() {
     if (!A.st) return;
     $("hRound").textContent = (A.st.i + 1) + "/" + A.st.seq.length;
     $("hScore").textContent = fmt(totalOf(A.res));
     tickTimer();
   }
+  // badge « Bonus +500 » qui fond pendant la manche (jeu à trouver puis repère à poser)
+  function tickSpeed() {
+    const el = $("hSpeed"), R = A.R;
+    const on = !!(A.st && A.st.cfg.speed && A.st.ph === "play" && A.screen === "game" && R && R.t0 && (R.phase === "name" || R.phase === "map"));
+    el.classList.toggle("hidden", !on);
+    if (!on) return;
+    const sec = Math.max(0, (Date.now() - R.t0) / 1000), v = Math.round(SPEED_MAX * speedFactor(sec, A.st.cfg));
+    const txt = "+" + v;
+    if ($("hSpeedV").textContent !== txt) $("hSpeedV").textContent = txt;
+    el.classList.toggle("low", v === 0);
+  }
   function tickTimer() {
+    tickSpeed();
     if (!A.st || A.st.ph !== "play" || A.screen !== "game") return;
     const dl = A.st.dl;
     if (!dl) { $("hTime").textContent = "∞"; $("hTimer").classList.remove("low"); $("hBar").classList.add("hidden"); $("hVig").classList.remove("on"); return; }
@@ -1159,14 +1183,17 @@
     if (!A.st) return;
     const i = A.st.i;
     const ps = players(true).map((p) => ({ p, x: p.r[i], tot: totalOf(p.r) }));
-    ps.sort((a, b) => ((b.x ? b.x[1] + b.x[2] : 0) - (a.x ? a.x[1] + a.x[2] : 0)) || b.tot - a.tot);
+    ps.sort((a, b) => (roundPts(b.x) - roundPts(a.x)) || b.tot - a.tot);
+    const spdOn = !!A.st.cfg.speed;
     const rows = ps.map(({ p, x, tot }) => {
       // nom du jeu : seulement les points obtenus (0 en rouge si le jeu n'a pas été trouvé), sans le détail des erreurs
       const nm = !x ? "—" : x[0] === 3 ? "<span class='ko'>0</span>" : fmt(x[1]);
       const loc = !x || x[0] !== 2 ? "—" : fmt(x[2]);
-      return "<tr><td class='who'>" + whoCell(p) + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(x ? x[1] + x[2] : 0) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
+      const spd = spdOn ? "<td class='n'>" + (!x || x[0] !== 2 ? "—" : fmt(x[6] || 0)) + "</td>" : "";
+      return "<tr><td class='who'>" + whoCell(p) + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td>" + spd + "<td class='n'><b>" + fmt(roundPts(x)) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
     }).join("");
-    setHTML($("rvTable"), "<tr><th>Joueur</th><th class='n' title='Points pour le nom du jeu'>Jeu</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
+    setHTML($("rvTable"), "<tr><th>Joueur</th><th class='n' title='Points pour le nom du jeu'>Jeu</th><th class='n'><span class='lg'>Position</span><span class='sh'>Pos.</span></th>" + (spdOn ? "<th class='n' title='Bonus de rapidité'><span class='lg'>Vitesse</span><span class='sh'>Vit.</span></th>" : "") + "<th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
+    $("rvTable").classList.toggle("spd", spdOn);
     if (A.screen === "reveal") renderRevealPins();
   }
 
@@ -1232,7 +1259,8 @@
       else {
         nm = fmt(x[1]) + (x[3] > 0 ? "<br><span class='mut small'>" + x[3] + " erreur" + (x[3] > 1 ? "s" : "") + "</span>" : "");
         loc = x[0] === 2 ? fmt(x[2]) : "<span class='mut'>—</span>";
-        tot = "<b>" + fmt(x[1] + (x[0] === 2 ? x[2] : 0)) + "</b>";
+        if (x[6]) loc += "<br><span class='mut small'>+" + fmt(x[6]) + " vitesse</span>";
+        tot = "<b>" + fmt(roundPts(x[0] === 2 ? x : [x[0], x[1], 0])) + "</b>";
       }
       return "<tr><td class='mut'>" + (k + 1) + "</td><td>" + game + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'>" + tot + "</td></tr>";
     }).join("");
@@ -1291,7 +1319,7 @@
     const multi = ps.length > 1 || A.mode === "host" || A.mode === "guest";
     const mine = ps.find((x) => x.p.me) || ps[0];
     // récapitulatif du joueur : sur les manches qu'il a jouées (arrivé en cours de partie : pas sur toute la partie)
-    const cnt = multi ? Math.max(mine.played, 1) : n, maxMine = cnt * (NAME_MAX + LOC_MAX);
+    const cnt = multi ? Math.max(mine.played, 1) : n, maxMine = cnt * (NAME_MAX + LOC_MAX + (A.st.cfg.speed ? SPEED_MAX : 0));
     setHTML($("finSolo"), "<div class='bigscore'>" + fmt(mine.tot) + "</div><p class='mut' style='text-align:center;margin:8px 0 0'>sur " + fmt(maxMine) + " points possibles · " + mine.found + "/" + cnt + " jeu" + (cnt > 1 ? "x" : "") + " trouvé" + (mine.found > 1 ? "s" : "") + "</p>");
     renderPodium(ps);
     if (multi) {
@@ -1588,6 +1616,6 @@
   }
 
   // accès pour les tests automatisés
-  window.QJ = { A, players: (s) => players(s), randomPseudo, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t, exact) => submitGuess(t, exact), startSolo, hostStart, validatePin, get pano() { return pano; } };
+  window.QJ = { A, speedPoints, speedFactor, players: (s) => players(s), randomPseudo, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t, exact) => submitGuess(t, exact), startSolo, hostStart, validatePin, get pano() { return pano; } };
   wire();
 })();
