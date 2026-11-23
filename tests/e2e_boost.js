@@ -1,5 +1,5 @@
 // Boost de rapidité : jusqu'à +500, plein en moins de 15 s, nul à 90 s (ou à la fin de la manche si plus courte),
-// multiplié par la justesse du repère. Jauge « Boost » (éclair en SVG) sans chiffre pendant la manche ; « Boost +n » à la
+// multiplié par la justesse du repère. Gélule « Boost » (éclair en SVG) sans chiffre pendant la manche, jaune qui se retire par la droite ; « Boost +n » à la
 // validation ; « n » avec l’éclair à côté du score de la manche dans les résultats. Réglage « Non » : ni jauge ni boost.
 // Depuis la racine du dépôt : node tests/e2e_boost.js
 const { chromium } = require("playwright");
@@ -22,19 +22,23 @@ const near = (v, t, d) => Math.abs(v - t) <= (d || 8);
     await p.fill("#pseudo", "Test"); await p.click("#bSolo"); await wait(300);
     check(await p.evaluate("QJ.A.cfg.speed === 1"), "réglage « Boost de rapidité » : Oui par défaut");
     await p.click("#bStart"); await p.waitForFunction("QJ.A.R && QJ.A.R.phase === 'name'"); await wait(800);
-    const g1 = await p.evaluate(() => { const el = document.querySelector("#pName .boost"); return { vis: !!el.offsetParent, txt: el.innerText.trim(), lvl: el.dataset.lvl, w: el.querySelector(".bfill").style.width }; });
-    check(g1.vis && g1.lvl === "full" && g1.w === "100%", "jauge pleine au début de la manche (" + JSON.stringify(g1) + ")");
-    check(!/\d/.test(g1.txt), "aucun chiffre dans la jauge (« " + g1.txt + " »)");
+    const gel = () => p.evaluate(() => { const el = document.getElementById("hBoost"), r = el.getBoundingClientRect(); const pills = [...document.querySelectorAll(".hud .pill")].map((x) => getComputedStyle(x).borderRadius); return { vis: !el.classList.contains("hidden") && r.width > 0, txt: el.innerText.trim(), clip: el.querySelector(".bfill").style.clipPath, pill: el.classList.contains("pill"), rad: getComputedStyle(el).borderRadius === pills[0], full: el.classList.contains("full") }; });
+    const g1 = await gel();
+    check(g1.vis && g1.pill && g1.rad && g1.full && /inset\(0(px)? 0%? 0(px)? 0(px)?\)/.test(g1.clip), "gélule Boost pleine au début, même forme que les autres (" + JSON.stringify(g1) + ")");
+    check(!/\d/.test(g1.txt), "aucun chiffre dans la gélule (« " + g1.txt + " »)");
+    check(!(await p.$(".boost")), "plus de barre de progression dans les panneaux");
     check(!(await p.$("#hSpeed")), "plus de compteur chiffré");
     await p.evaluate("QJ.A.R.t0 = Date.now() - 52500"); await wait(400);
-    const g2 = await p.evaluate(() => { const el = document.querySelector("#pName .boost"); return { lvl: el.dataset.lvl, w: parseFloat(el.querySelector(".bfill").style.width) }; });
-    check(near(g2.w, 50, 2) && g2.lvl === "mid", "la jauge se vide (" + JSON.stringify(g2) + " après 52,5 s)");
+    const g2 = await gel(), right = parseFloat((g2.clip.match(/inset\(\S+ (\S+)/) || [])[1]);
+    check(near(right, 50, 2) && !g2.full, "le jaune se retire par la droite (" + g2.clip + " après 52,5 s)");
     await p.evaluate("QJ.submitGuess(QJ.A.R.game.t)"); await wait(300);
     const x0 = await p.evaluate("QJ.A.res[0]");
     check(x0[1] === 1000, "points du nom pleins, sans baisse (" + x0[1] + ")");
-    check(await p.evaluate("!!document.querySelector('#pMap .boost').offsetParent"), "jauge aussi sur la carte");
+    check((await gel()).vis, "gélule toujours là pendant la pose du repère");
     await p.evaluate("(()=>{const R=QJ.A.R; R.pin={x:R.info.x,y:R.info.y}; QJ.validatePin();})()");
-    const wb = await p.textContent("#waitBoost");
+    const wb = await p.textContent("#waitBoost"); const g3 = await gel();
+    const bf = await p.evaluate("QJ.A.R.boostF");
+    check(near(bf * 100, 49, 2) && (!g3.vis || near(parseFloat((g3.clip.match(/inset\(\S+ (\S+)/) || [])[1]), 100 - bf * 100, 2)), "gélule figée à la validation (niveau " + bf.toFixed(2) + ")");
     const x = await p.evaluate("QJ.A.res[0]");
     check(x[2] === 1000 && near(x[6], 250, 5), "boost stocké : position " + x[2] + ", boost " + x[6]);
     check(wb.replace(/\s+/g, " ").includes("Boost +" + x[6]), "écran d'attente : « " + wb.replace(/\s+/g, " ").trim() + " »");
@@ -51,7 +55,7 @@ const near = (v, t, d) => Math.abs(v - t) <= (d || 8);
     await q.goto(URL); await q.fill("#pseudo", "Test2"); await q.click("#bSolo"); await wait(300);
     await q.click("#settings .seg[data-k='speed'] button[data-v='0']"); await q.click("#bStart");
     await q.waitForFunction("QJ.A.R && QJ.A.R.phase === 'name'"); await wait(600);
-    check(!(await q.evaluate("!!document.querySelector('#pName .boost').offsetParent")), "réglage Non : pas de jauge");
+    check(await q.evaluate("document.getElementById('hBoost').classList.contains('hidden')"), "réglage Non : pas de gélule");
     await q.evaluate("QJ.submitGuess(QJ.A.R.game.t)"); await wait(150);
     await q.evaluate("(()=>{const R=QJ.A.R; R.pin={x:R.info.x,y:R.info.y}; QJ.validatePin();})()");
     check(!(await q.isVisible("#waitBoost")), "réglage Non : pas de boost à l'écran d'attente");

@@ -23,7 +23,8 @@
   // boost de rapidité (réglage « Boost de rapidité », activé par défaut) : jusqu'à +500, plein si le repère est
   // validé en moins de 15 s après le début de la manche, puis en baisse jusqu'à 0 à 90 s (ou à la fin de la manche
   // si elle est plus courte), multiplié par la justesse du repère (points de position / 1 000). Stocké en x[6].
-  // Pendant la manche, une jauge « ⚡ Boost » sans chiffre montre ce qu'il en reste (speedFactor).
+  // Pendant la manche, la gélule « Boost » du haut de l'écran, sans chiffre, montre ce qu'il en reste (speedFactor) :
+  // pleine de jaune au départ, le jaune se retire de la droite vers la gauche.
   const SPEED_MAX = 500, SPEED_FULL = 15;
   const speedEnd = (cfg) => Math.max(SPEED_FULL + 1, cfg && cfg.time ? Math.min(90, cfg.time) : 90);
   function speedFactor(sec, cfg) { const end = speedEnd(cfg); return sec <= SPEED_FULL ? 1 : sec >= end ? 0 : 1 - (sec - SPEED_FULL) / (end - SPEED_FULL); }
@@ -1045,7 +1046,7 @@
     const R = A.R, p = R.pin || { x: -1, y: -1 };
     const sec = R.t0 ? Math.max(0, Date.now() - R.t0) / 1000 : 0;
     const spd = A.st.cfg.speed && R.pin && R.t0 ? speedPoints(sec, locPts, A.st.cfg) : 0;
-    R.boostF = A.st.cfg.speed && R.t0 ? speedFactor(sec, A.st.cfg) : 0; // jauge figée à la validation
+    R.boostF = A.st.cfg.speed && R.t0 ? speedFactor(sec, A.st.cfg) : 0; // gélule figée à la validation
     A.res[R.i] = [2, R.namePts, locPts, R.errors, Math.round(p.x * 1e4) / 1e4, Math.round(p.y * 1e4) / 1e4, spd];
     R.phase = "done"; publish();
     showWait(locPts >= 900 ? "Dans le mille !" : locPts >= 500 ? "Bien joué !" : "Jeu trouvé !", "Nom : " + fmt(R.namePts) + " · Position : " + fmt(locPts), "+" + fmt(R.namePts + locPts + spd), A.st.cfg.speed ? spd : null);
@@ -1067,10 +1068,9 @@
   function showWait(title, txt, pts, boost) {
     hidePanels(); $("pWait").classList.remove("hidden");
     $("waitTitle").textContent = title; $("waitPts").textContent = pts ? pts + (/\d$/.test(pts) ? " pts" : "") : "";
-    // boost obtenu (seulement après une position validée, réglage activé) : jauge figée et « ⚡ Boost +350 »
-    const wb = $("waitBoost");
-    wb.classList.toggle("hidden", boost == null);
-    if (boost != null) { $("waitBoostV").textContent = "+" + fmt(boost); paintBoost(wb, A.R ? A.R.boostF || 0 : 0); }
+    // boost obtenu (seulement après une position validée, réglage activé) : « ⚡ Boost +350 »
+    $("waitBoost").classList.toggle("hidden", boost == null);
+    if (boost != null) $("waitBoostV").textContent = "+" + fmt(boost);
     $("waitTxt").innerHTML = esc(txt); $("waitTxt").dataset.base = txt;
     renderChips(); renderHud();
   }
@@ -1088,22 +1088,21 @@
     $("hScore").textContent = fmt(totalOf(A.res));
     tickTimer();
   }
-  // jauge de boost (sans chiffre) : pleine et dorée, puis elle se vide et passe à l'or terne, puis au gris
-  function paintBoost(el, f) {
+  // gélule de boost (sans chiffre) : la couche jaune (.bfill, texte foncé) est rognée par la droite ; dessous,
+  // la gélule ordinaire (.bbase). Figée à la validation du repère (R.boostF), vide après un raté.
+  function paintBoost(f) {
     f = Math.max(0, Math.min(1, f));
-    const fill = el.querySelector(".bfill");
-    const w = +(f * 100).toFixed(1) + "%"; // même forme que celle relue par le navigateur
-    if (fill.style.width !== w) fill.style.width = w;
-    const lvl = f >= 0.999 ? "full" : f > 0.4 ? "mid" : f > 0 ? "low" : "out";
-    if (el.dataset.lvl !== lvl) el.dataset.lvl = lvl;
+    const clip = "inset(0 " + +((1 - f) * 100).toFixed(1) + "% 0 0)";
+    const fill = $("hBoost").querySelector(".bfill");
+    if (fill.style.clipPath !== clip) { fill.style.clipPath = clip; fill.style.webkitClipPath = clip; }
+    $("hBoost").classList.toggle("full", f >= 0.999);
   }
   function tickSpeed() {
     const R = A.R;
-    const on = !!(A.st && A.st.cfg.speed && A.st.ph === "play" && A.screen === "game" && R && R.t0 && (R.phase === "name" || R.phase === "map"));
-    for (const el of document.querySelectorAll(".boost.live")) {
-      el.classList.toggle("hidden", !on);
-      if (on) paintBoost(el, speedFactor(Math.max(0, Date.now() - R.t0) / 1000, A.st.cfg));
-    }
+    const on = !!(A.st && A.st.cfg.speed && A.st.ph === "play" && A.screen === "game" && R && R.t0);
+    $("hBoost").classList.toggle("hidden", !on);
+    if (!on) return;
+    paintBoost(R.phase === "done" ? R.boostF || 0 : speedFactor(Math.max(0, Date.now() - R.t0) / 1000, A.st.cfg));
   }
   function tickTimer() {
     tickSpeed();
