@@ -424,6 +424,17 @@ tr.fin-pl.gone td { opacity: .75; }
 }
 
 /* bonus de rapidité : badge qui fond pendant la manche, en haut à gauche sous la barre (le classement est à droite) */
-.spdb { position: absolute; left: 12px; top: calc(max(10px, env(safe-area-inset-top)) + 46px); z-index: 1; background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--glass-line); border-radius: 99px; padding: 4px 11px; font-size: 12px; color: var(--mut); font-variant-numeric: tabular-nums; pointer-events: none; }
-.spdb b { font-family: var(--fd); font-size: 14px; color: var(--acc); }
-.spdb:not(.hidden) ~ .v360 { top: calc(max(10px, env(safe-area-inset-top)) + 80px); } /* repère 360° sous le compteur */
+/* jauge de boost (sans chiffre pendant la manche) */
+.boost { display: flex; align-items: center; gap: 8px; margin: -2px 0 8px; }
+.boost .blab { font-family: var(--fd); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--acc); white-space: nowrap; transition: color .4s; }
+.boost .blab b { color: var(--acc-hi); font-size: 13px; }
+.boost .btrack { flex: 1; height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.boost .bfill { display: block; height: 100%; width: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--acc), var(--acc-hi)); transition: width .25s linear, background .6s, opacity .6s; }
+.boost[data-lvl="full"] .bfill { box-shadow: 0 0 8px var(--acc-ring); }
+.boost[data-lvl="mid"] .bfill { background: linear-gradient(90deg, #c9973a, #e0b45a); }
+.boost[data-lvl="low"] .bfill { background: #8f7a52; opacity: .85; }
+.boost[data-lvl="low"] .blab { color: #a89270; }
+.boost[data-lvl="out"] .blab { color: var(--dim); }
+#pWait .boost { margin: 0 0 6px; }
+.panel.mini .boost { margin-bottom: 6px; }
+#rvTable .bst { display: block; font-size: 11px; font-weight: 600; color: var(--acc); white-space: nowrap; }

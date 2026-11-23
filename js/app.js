@@ -20,13 +20,15 @@
 
   // ------------------------------------------------------------------ points
   const NAME_MAX = 1000, NAME_STEP = 200, NAME_MIN = 200, LOC_MAX = 1000;
-  // points qui baissent avec le temps (réglage « Points qui baissent avec le temps », activé par défaut) : le
-  // coefficient passe de 100 % à 50 % en 90 s (ou en la durée de la manche si elle est plus courte). Le jeu baisse
-  // tant qu'il n'est pas trouvé ; la position, à partir de là et jusqu'à la validation du repère.
-  const DECAY_MIN = 0.5;
-  const decayEnd = (cfg) => (cfg && cfg.time ? Math.min(90, cfg.time) : 90);
-  const decay = (sec, cfg) => 1 - (1 - DECAY_MIN) * Math.min(1, Math.max(0, sec) / decayEnd(cfg));
-  const roundPts = (x) => (x ? (x[1] || 0) + (x[2] || 0) : 0);
+  // boost de rapidité (réglage « Boost de rapidité », activé par défaut) : jusqu'à +500, plein si le repère est
+  // validé en moins de 15 s après le début de la manche, puis en baisse jusqu'à 0 à 90 s (ou à la fin de la manche
+  // si elle est plus courte), multiplié par la justesse du repère (points de position / 1 000). Stocké en x[6].
+  // Pendant la manche, une jauge « ⚡ Boost » sans chiffre montre ce qu'il en reste (speedFactor).
+  const SPEED_MAX = 500, SPEED_FULL = 15;
+  const speedEnd = (cfg) => Math.max(SPEED_FULL + 1, cfg && cfg.time ? Math.min(90, cfg.time) : 90);
+  function speedFactor(sec, cfg) { const end = speedEnd(cfg); return sec <= SPEED_FULL ? 1 : sec >= end ? 0 : 1 - (sec - SPEED_FULL) / (end - SPEED_FULL); }
+  const speedPoints = (sec, locPts, cfg) => Math.round(SPEED_MAX * speedFactor(sec, cfg) * Math.max(0, Math.min(1, locPts / LOC_MAX)));
+  const roundPts = (x) => (x ? (x[1] || 0) + (x[2] || 0) + (x[6] || 0) : 0);
   const namePoints = (errors) => Math.max(NAME_MIN, NAME_MAX - NAME_STEP * errors);
   function mapDist(a, b, w, h) {
     // distance normalisée par la diagonale de la carte (0 = parfait, 1 = coins opposés)
@@ -1025,8 +1027,8 @@
   }
   function nameFound(typo) {
     const R = A.R;
-    R.phase = "map"; R.t1 = Date.now(); // départ de la baisse des points de position
-    R.namePts = Math.round(namePoints(R.errors) * (A.st.cfg.speed && R.t0 ? decay((R.t1 - R.t0) / 1000, A.st.cfg) : 1));
+    R.phase = "map";
+    R.namePts = namePoints(R.errors);
     A.res[R.i] = [1, R.namePts, 0, R.errors, -1, -1]; publish();
     hidePanels(); $("pMap").classList.remove("hidden");
     $("foundTxt").innerHTML = "✓ <b>" + esc(R.game.t) + "</b>" + (typo ? " <span class='mut'>(faute de frappe acceptée)</span>" : "") + " · +" + fmt(R.namePts) + " — où a été prise cette vue ?";
@@ -1039,11 +1041,12 @@
   }
   function finishLoc(locPts) {
     const R = A.R, p = R.pin || { x: -1, y: -1 };
-    const raw = locPts;
-    if (A.st.cfg.speed && R.t1) locPts = Math.round(locPts * decay((Date.now() - R.t1) / 1000, A.st.cfg));
-    A.res[R.i] = [2, R.namePts, locPts, R.errors, Math.round(p.x * 1e4) / 1e4, Math.round(p.y * 1e4) / 1e4];
+    const sec = R.t0 ? Math.max(0, Date.now() - R.t0) / 1000 : 0;
+    const spd = A.st.cfg.speed && R.pin && R.t0 ? speedPoints(sec, locPts, A.st.cfg) : 0;
+    R.boostF = A.st.cfg.speed && R.t0 ? speedFactor(sec, A.st.cfg) : 0; // jauge figée à la validation
+    A.res[R.i] = [2, R.namePts, locPts, R.errors, Math.round(p.x * 1e4) / 1e4, Math.round(p.y * 1e4) / 1e4, spd];
     R.phase = "done"; publish();
-    showWait(raw >= 900 ? "Dans le mille !" : raw >= 500 ? "Bien joué !" : "Jeu trouvé !", "Nom : " + fmt(R.namePts) + " · Position : " + fmt(locPts), "+" + fmt(R.namePts + locPts));
+    showWait(locPts >= 900 ? "Dans le mille !" : locPts >= 500 ? "Bien joué !" : "Jeu trouvé !", "Nom : " + fmt(R.namePts) + " · Position : " + fmt(locPts), "+" + fmt(R.namePts + locPts + spd), A.st.cfg.speed ? spd : null);
     hostCheck();
   }
   function validatePin() {
@@ -1059,9 +1062,13 @@
     showWait(title || "Manche passée", "La réponse sera révélée à la fin de la manche.", "0");
     hostCheck();
   }
-  function showWait(title, txt, pts) {
+  function showWait(title, txt, pts, boost) {
     hidePanels(); $("pWait").classList.remove("hidden");
     $("waitTitle").textContent = title; $("waitPts").textContent = pts ? pts + (/\d$/.test(pts) ? " pts" : "") : "";
+    // boost obtenu (seulement après une position validée, réglage activé) : jauge figée et « ⚡ Boost +350 »
+    const wb = $("waitBoost");
+    wb.classList.toggle("hidden", boost == null);
+    if (boost != null) { $("waitBoostV").textContent = "+" + fmt(boost); paintBoost(wb, A.R ? A.R.boostF || 0 : 0); }
     $("waitTxt").innerHTML = esc(txt); $("waitTxt").dataset.base = txt;
     renderChips(); renderHud();
   }
@@ -1079,17 +1086,22 @@
     $("hScore").textContent = fmt(totalOf(A.res));
     tickTimer();
   }
-  // compteur en direct : points encore possibles pour l'étape en cours (jeu, puis position), qui baissent
+  // jauge de boost (sans chiffre) : pleine et dorée, puis elle se vide et passe à l'or terne, puis au gris
+  function paintBoost(el, f) {
+    f = Math.max(0, Math.min(1, f));
+    const fill = el.querySelector(".bfill");
+    const w = +(f * 100).toFixed(1) + "%"; // même forme que celle relue par le navigateur
+    if (fill.style.width !== w) fill.style.width = w;
+    const lvl = f >= 0.999 ? "full" : f > 0.4 ? "mid" : f > 0 ? "low" : "out";
+    if (el.dataset.lvl !== lvl) el.dataset.lvl = lvl;
+  }
   function tickSpeed() {
-    const el = $("hSpeed"), R = A.R;
+    const R = A.R;
     const on = !!(A.st && A.st.cfg.speed && A.st.ph === "play" && A.screen === "game" && R && R.t0 && (R.phase === "name" || R.phase === "map"));
-    el.classList.toggle("hidden", !on);
-    if (!on) return;
-    const map = R.phase === "map", now = Date.now();
-    const v = map ? Math.round(LOC_MAX * decay((now - (R.t1 || now)) / 1000, A.st.cfg)) : Math.round(namePoints(R.errors) * decay(Math.max(0, now - R.t0) / 1000, A.st.cfg));
-    const lbl = map ? "Position" : "Jeu", txt = fmt(v);
-    if ($("hSpeedL").textContent !== lbl) $("hSpeedL").textContent = lbl;
-    if ($("hSpeedV").textContent !== txt) $("hSpeedV").textContent = txt;
+    for (const el of document.querySelectorAll(".boost.live")) {
+      el.classList.toggle("hidden", !on);
+      if (on) paintBoost(el, speedFactor(Math.max(0, Date.now() - R.t0) / 1000, A.st.cfg));
+    }
   }
   function tickTimer() {
     tickSpeed();
@@ -1188,7 +1200,7 @@
       // nom du jeu : seulement les points obtenus (0 en rouge si le jeu n'a pas été trouvé), sans le détail des erreurs
       const nm = !x ? "—" : x[0] === 3 ? "<span class='ko'>0</span>" : fmt(x[1]);
       const loc = !x || x[0] !== 2 ? "—" : fmt(x[2]);
-      return "<tr><td class='who'>" + whoCell(p) + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(roundPts(x)) + "</b></td><td class='n mut'>" + fmt(tot) + "</td></tr>";
+      return "<tr><td class='who'>" + whoCell(p) + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(roundPts(x)) + "</b>" + (x && x[6] ? "<span class='bst' title='Boost de rapidité'>⚡" + fmt(x[6]) + "</span>" : "") + "</td><td class='n mut'>" + fmt(tot) + "</td></tr>";
     }).join("");
     setHTML($("rvTable"), "<tr><th>Joueur</th><th class='n' title='Points pour le nom du jeu'>Jeu</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
     if (A.screen === "reveal") renderRevealPins();
@@ -1256,7 +1268,7 @@
       else {
         nm = fmt(x[1]) + (x[3] > 0 ? "<br><span class='mut small'>" + x[3] + " erreur" + (x[3] > 1 ? "s" : "") + "</span>" : "");
         loc = x[0] === 2 ? fmt(x[2]) : "<span class='mut'>—</span>";
-        tot = "<b>" + fmt(roundPts(x[0] === 2 ? x : [x[0], x[1], 0])) + "</b>";
+        tot = "<b>" + fmt(roundPts(x[0] === 2 ? x : [x[0], x[1], 0])) + "</b>" + (x[0] === 2 && x[6] ? "<br><span class='mut small'>+" + fmt(x[6]) + " boost</span>" : "");
       }
       return "<tr><td class='mut'>" + (k + 1) + "</td><td>" + game + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'>" + tot + "</td></tr>";
     }).join("");
@@ -1315,7 +1327,7 @@
     const multi = ps.length > 1 || A.mode === "host" || A.mode === "guest";
     const mine = ps.find((x) => x.p.me) || ps[0];
     // récapitulatif du joueur : sur les manches qu'il a jouées (arrivé en cours de partie : pas sur toute la partie)
-    const cnt = multi ? Math.max(mine.played, 1) : n, maxMine = cnt * (NAME_MAX + LOC_MAX);
+    const cnt = multi ? Math.max(mine.played, 1) : n, maxMine = cnt * (NAME_MAX + LOC_MAX + (A.st.cfg.speed ? SPEED_MAX : 0));
     setHTML($("finSolo"), "<div class='bigscore'>" + fmt(mine.tot) + "</div><p class='mut' style='text-align:center;margin:8px 0 0'>sur " + fmt(maxMine) + " points possibles · " + mine.found + "/" + cnt + " jeu" + (cnt > 1 ? "x" : "") + " trouvé" + (mine.found > 1 ? "s" : "") + "</p>");
     renderPodium(ps);
     if (multi) {
@@ -1612,6 +1624,6 @@
   }
 
   // accès pour les tests automatisés
-  window.QJ = { A, decay, players: (s) => players(s), randomPseudo, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t, exact) => submitGuess(t, exact), startSolo, hostStart, validatePin, get pano() { return pano; } };
+  window.QJ = { A, speedFactor, speedPoints, players: (s) => players(s), randomPseudo, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t, exact) => submitGuess(t, exact), startSolo, hostStart, validatePin, get pano() { return pano; } };
   wire();
 })();

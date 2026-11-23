@@ -31,7 +31,7 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
     const rv = await G.evaluate(() => { const t = document.getElementById("rvTable"), c = t.parentElement; const me = t.querySelector(".wn.me"); return { tw: t.scrollWidth, cw: c.clientWidth, doc: document.documentElement.scrollWidth, vw: innerWidth, meW: me ? me.getBoundingClientRect().width : 0, cut: me ? me.scrollWidth > me.clientWidth + 1 : true }; });
     check(rv.tw <= rv.cw && rv.doc <= rv.vw, "résultats : le tableau tient dans sa carte (" + rv.tw + " ≤ " + rv.cw + " px), pas de défilement de côté");
     check(!rv.cut && rv.meW > 100, "résultats : son propre nom en entier, sans « … » (" + Math.round(rv.meW) + " px)");
-    const cells = await G.evaluate(() => [...document.querySelectorAll("#rvTable td.n")].map((td) => td.textContent.trim()));
+    const cells = await G.evaluate(() => [...document.querySelectorAll("#rvTable td.n")].map((td) => { const c = td.cloneNode(true); c.querySelectorAll(".bst").forEach((e) => e.remove()); return c.textContent.trim(); }));
     check(cells.length > 0 && cells.every((c) => /^(\d[\d\s\u202f]*|—)$/.test(c)), "colonne Nom : seulement les points, sans détail des erreurs (" + cells.slice(0, 4).join(" | ") + ")");
     // titres et scores en face, même sur un écran étroit (320 px : le titre « POSITION » décalait sa colonne)
     for (const w of [320, 360, 430]) {

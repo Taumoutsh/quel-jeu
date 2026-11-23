@@ -12,7 +12,7 @@ Seul ou à plusieurs avec un **code de partie**.
 |---|---|
 | Nom du jeu trouvé | 1 000, −200 par erreur (minimum 200) |
 | Position sur la carte | jusqu'à 1 000 : plein score à moins de 4 % de la diagonale de la carte, puis décroissance exponentielle douce (≈ 787 à 10 %, ≈ 527 à 20 %, ≈ 353 à 30 %, ≈ 159 à 50 %) |
-| Temps (réglage, activé par défaut) | les points baissent de 100 % à 50 % en 90 s (ou sur la durée de la manche si elle est plus courte) : ceux du nom tant que le jeu n'est pas trouvé, ceux de la position jusqu'à la validation du repère |
+| Boost de rapidité (réglage, activé par défaut) | jusqu'à +500, plein si le repère est validé en moins de 15 s, nul à 90 s (ou à la fin de la manche si elle est plus courte), proportionnel à la justesse du repère ; une jauge ⚡ sans chiffre montre ce qu'il en reste |
 | Nom raté / manche passée | 0 |
 
 **Demande de précision.** Une réponse incomplète n'est **pas** comptée comme une erreur : on demande de préciser.
@@ -24,7 +24,7 @@ Un **autre jeu précis** (« GTA 4 » au lieu de GTA V) compte comme une erreur.
 Les chiffres romains et arabes sont équivalents (GTA V = GTA 5), les accents, la ponctuation et les petites fautes de frappe sont tolérés.
 Avec les suggestions activées, une liste de choix s'affiche quand il faut préciser. Un titre choisi dans cette liste, ou dans les suggestions, compte tel quel : juste, ou raté si c'est un autre jeu.
 
-**Réglages** : nombre de manches (1 à 15), temps par manche (1, 2, 3 ou 5 min, ou illimité), nombre d'essais pour le nom (1, 3, 5 ou illimité), suggestions oui/non, points qui baissent avec le temps oui/non, images (pack démo, ma bibliothèque, mélange).
+**Réglages** : nombre de manches (1 à 15), temps par manche (1, 2, 3 ou 5 min, ou illimité), nombre d'essais pour le nom (1, 3, 5 ou illimité), suggestions oui/non, boost de rapidité oui/non, images (pack démo, ma bibliothèque, mélange).
 
 ## Multijoueur
 

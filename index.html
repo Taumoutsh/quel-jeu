@@ -65,7 +65,7 @@
         <li>Observe la vue : glisse pour regarder, molette ou pincement pour zoomer.</li>
         <li><b>Devine le jeu.</b> Trop vague (« Zelda », « GTA ») ? On te demande de préciser, sans pénalité.</li>
         <li><b>Place ton repère</b> sur la carte du jeu.</li>
-        <li>Jusqu'à <b>1 000</b> points pour le nom (−200 par erreur) et <b>1 000</b> pour la position, qui baissent avec le temps (jusqu'à −50 %).</li>
+        <li>Jusqu'à <b>1 000</b> points pour le nom (−200 par erreur) et <b>1 000</b> pour la position, plus un boost jusqu'à <b>+500</b> si tu réponds vite (jauge ⚡).</li>
       </ol>
     </div>
 
@@ -115,8 +115,8 @@
           <div class="seg" data-k="hints"><button data-v="1">Oui</button><button data-v="0">Non (difficile)</button></div>
         </div>
         <div>
-          <div class="lab"><span>Points qui baissent avec le temps</span></div>
-          <div class="seg" data-k="speed"><button data-v="1">Oui (jusqu'à −50 %)</button><button data-v="0">Non</button></div>
+          <div class="lab"><span>Boost de rapidité</span></div>
+          <div class="seg" data-k="speed"><button data-v="1">Oui (jusqu'à +500)</button><button data-v="0">Non</button></div>
         </div>
         <div id="packSetting">
           <div class="lab"><span>Images</span></div>
@@ -144,12 +144,12 @@
     <div class="pill timer" id="hTimer"><small>Temps</small><span id="hTime">2:00</span></div>
     <div class="pill"><small>Score</small><span id="hScore">0</span></div>
   </div>
-  <div class="spdb hidden" id="hSpeed" title="Points encore possibles pour l'étape en cours : ils baissent avec le temps (jusqu'à −50 %)"><span aria-hidden="true">⏳</span> <span id="hSpeedL">Jeu</span> <b id="hSpeedV">1 000</b></div>
   <div class="v360 hidden" id="h360" title="Vue à 360° : fais glisser pour regarder tout autour" role="img" aria-label="Vue à 360°"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="9" ry="4"/><path d="M15.5 6.2 18 8.2l-2.9.9"/></svg>360°</div>
   <div class="board hidden" id="hChips"></div>
   <div class="dock">
     <!-- étape 1 : le nom -->
     <div class="panel" id="pName">
+      <div class="boost live hidden" title="Boost de rapidité : réponds vite pour le garder (jusqu'à +500, selon la justesse du repère)"><span class="blab" aria-hidden="true">⚡ Boost</span><div class="btrack"><i class="bfill"></i></div></div>
       <div class="qtitle"><span>Quel est ce jeu ?</span><span class="tries" id="tries"></span></div>
       <form class="guess" id="fGuess" autocomplete="off">
         <div class="sugg hidden" id="sugg"></div>
@@ -162,6 +162,7 @@
     </div>
     <!-- étape 2 : la carte -->
     <div class="panel hidden" id="pMap">
+      <div class="boost live hidden" title="Boost de rapidité : réponds vite pour le garder (jusqu'à +500, selon la justesse du repère)"><span class="blab" aria-hidden="true">⚡ Boost</span><div class="btrack"><i class="bfill"></i></div></div>
       <div class="found" id="foundTxt"></div>
       <div class="mapwrap"><div id="mapPick" class="mapview"></div></div>
       <div class="mapbar">
@@ -174,6 +175,7 @@
     <!-- étape 3 : attente -->
     <div class="panel hidden" id="pWait">
       <div class="qtitle"><span id="waitTitle">Manche terminée</span><span id="waitPts" style="color:var(--acc)"></span></div>
+      <div class="boost hidden" id="waitBoost"><span class="blab">⚡ Boost <b id="waitBoostV">+0</b></span><div class="btrack"><i class="bfill"></i></div></div>
       <div class="mut small" id="waitTxt"></div>
       <div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn sm hidden" id="bForce">Terminer la manche maintenant</button></div>
     </div>
