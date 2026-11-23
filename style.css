@@ -424,14 +424,15 @@ tr.fin-pl.gone td { opacity: .75; }
 }
 
 /* bonus de rapidité : badge qui fond pendant la manche, en haut à gauche sous la barre (le classement est à droite) */
-/* gélule de boost (sans chiffre) : jaune au départ, le jaune se retire de la droite vers la gauche */
-.boostp { position: absolute; left: 12px; top: calc(max(10px, env(safe-area-inset-top)) + 52px); z-index: 1; padding: 0; overflow: hidden; }
-.boostp .bbase, .boostp .bfill { display: flex; gap: 5px; align-items: center; padding: 7px 12px; }
-.boostp .bbase { color: var(--txt); }
-.boostp .bfill { position: absolute; inset: 0; background: linear-gradient(90deg, var(--acc), var(--acc-hi)); color: var(--acc-ink); transition: clip-path .25s linear, -webkit-clip-path .25s linear; }
-.boostp .bfill small { color: var(--acc-ink); }
-.boostp.full { box-shadow: 0 0 14px var(--acc-ring); }
-.boostp svg.bolt { width: 16px; height: 16px; }
+/* gélule de boost (sans chiffre) : contour doré et lumineux qui se retire peu à peu, de la droite vers la gauche */
+.boostp { position: absolute; left: 12px; top: calc(max(10px, env(safe-area-inset-top)) + 52px); z-index: 1; gap: 5px; }
+.boostp svg.bolt { width: 16px; height: 16px; color: var(--acc); transition: color .6s; }
+.boostp.out svg.bolt { color: var(--txt); }
+.boostp .bring { position: absolute; left: -1px; top: -1px; width: calc(100% + 2px); height: calc(100% + 2px); overflow: visible; pointer-events: none; }
+.boostp .bring path { fill: none; stroke: var(--acc-hi); stroke-width: 2; stroke-linecap: butt; filter: drop-shadow(0 0 3px var(--acc)) drop-shadow(0 0 6px var(--acc-ring)); transition: stroke-dasharray .25s linear; }
+.boostp.out .bring { display: none; }
+@media (prefers-reduced-motion: no-preference) { .boostp.full .bring path { animation: boostGlow 1.6s ease-in-out infinite; } }
+@keyframes boostGlow { 50% { filter: drop-shadow(0 0 5px var(--acc-hi)) drop-shadow(0 0 10px var(--acc)); } }
 .boostp:not(.hidden) ~ .v360 { top: calc(max(10px, env(safe-area-inset-top)) + 96px); } /* repère 360° sous la gélule */
 .wboost { display: flex; align-items: center; gap: 4px; margin: 0 0 6px; font-family: var(--fd); font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--acc); }
 .wboost b { color: var(--acc-hi); font-size: 14px; }

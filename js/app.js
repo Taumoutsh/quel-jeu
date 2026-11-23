@@ -1088,14 +1088,28 @@
     $("hScore").textContent = fmt(totalOf(A.res));
     tickTimer();
   }
-  // gélule de boost (sans chiffre) : la couche jaune (.bfill, texte foncé) est rognée par la droite ; dessous,
-  // la gélule ordinaire (.bbase). Figée à la validation du repère (R.boostF), vide après un raté.
+  // gélule de boost (sans chiffre) : son contour doré et lumineux se retire peu à peu, en haut et en bas en même
+  // temps, de la droite vers la gauche. Deux tracés (moitié haute, moitié basse) partent du milieu du bord gauche ;
+  // leur longueur visible vaut f (pathLength = 1). Figée à la validation du repère (R.boostF), vide après un raté.
+  function boostRing(el) {
+    const w = el.offsetWidth, h = el.offsetHeight, key = w + "x" + h;
+    if (!w || el.dataset.ring === key) return;
+    el.dataset.ring = key;
+    const a = 1, b = 1, c = w - 1, d = h - 1, r = Math.min(11, (h - 2) / 2), m = h / 2;
+    const top = "M" + a + " " + m + "V" + (b + r) + "A" + r + " " + r + " 0 0 1 " + (a + r) + " " + b + "H" + (c - r) + "A" + r + " " + r + " 0 0 1 " + c + " " + (b + r) + "V" + m;
+    const bot = "M" + a + " " + m + "V" + (d - r) + "A" + r + " " + r + " 0 0 0 " + (a + r) + " " + d + "H" + (c - r) + "A" + r + " " + r + " 0 0 0 " + c + " " + (d - r) + "V" + m;
+    const svg = el.querySelector(".bring");
+    svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+    for (const [cl, dd] of [["bt", top], ["bb", bot]]) { const p = svg.querySelector("." + cl); p.setAttribute("d", dd); p.setAttribute("pathLength", "1"); }
+  }
   function paintBoost(f) {
+    const el = $("hBoost");
     f = Math.max(0, Math.min(1, f));
-    const clip = "inset(0 " + +((1 - f) * 100).toFixed(1) + "% 0 0)";
-    const fill = $("hBoost").querySelector(".bfill");
-    if (fill.style.clipPath !== clip) { fill.style.clipPath = clip; fill.style.webkitClipPath = clip; }
-    $("hBoost").classList.toggle("full", f >= 0.999);
+    boostRing(el);
+    const dash = +f.toFixed(4) + " 2";
+    for (const p of el.querySelectorAll(".bring path")) if (p.getAttribute("stroke-dasharray") !== dash) p.setAttribute("stroke-dasharray", dash);
+    el.classList.toggle("full", f >= 0.999);
+    el.classList.toggle("out", f <= 0);
   }
   function tickSpeed() {
     const R = A.R;
