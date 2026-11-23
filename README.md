@@ -12,7 +12,7 @@ Seul ou à plusieurs avec un **code de partie**.
 |---|---|
 | Nom du jeu trouvé | 1 000, −200 par erreur (minimum 200) |
 | Position sur la carte | jusqu'à 1 000 : plein score à moins de 4 % de la diagonale de la carte, puis décroissance exponentielle douce (≈ 787 à 10 %, ≈ 527 à 20 %, ≈ 353 à 30 %, ≈ 159 à 50 %) |
-| Boost de rapidité (réglage, activé par défaut) | jusqu'à +500, plein si le repère est validé en moins de 15 s, nul à 90 s (ou à la fin de la manche si elle est plus courte), proportionnel à la justesse du repère ; une jauge ⚡ sans chiffre montre ce qu'il en reste |
+| Boost de rapidité (réglage, activé par défaut) | jusqu'à +500, en baisse dès le début de la manche, nul à 90 s (ou à la fin de la manche si elle est plus courte), proportionnel à la justesse du repère ; une jauge ⚡ sans chiffre montre ce qu'il en reste |
 | Nom raté / manche passée | 0 |
 
 **Demande de précision.** Une réponse incomplète n'est **pas** comptée comme une erreur : on demande de préciser.

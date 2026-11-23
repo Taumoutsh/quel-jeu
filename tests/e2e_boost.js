@@ -1,4 +1,4 @@
-// Boost de rapidité : jusqu'à +500, plein en moins de 15 s, nul à 90 s (ou à la fin de la manche si plus courte),
+// Boost de rapidité : jusqu'à +500, en baisse dès le début de la manche, nul à 90 s (ou à la fin de la manche si plus courte),
 // multiplié par la justesse du repère. Gélule « Boost » (éclair en SVG) sans chiffre pendant la manche, contour doré qui se retire par la droite ; « Boost +n » à la
 // validation ; « n » avec l’éclair à côté du score de la manche dans les résultats. Réglage « Non » : ni jauge ni boost.
 // Depuis la racine du dépôt : node tests/e2e_boost.js
@@ -16,21 +16,21 @@ const near = (v, t, d) => Math.abs(v - t) <= (d || 8);
   try {
     const p = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage(); p.on("pageerror", (e) => errs.push(String(e)));
     await p.goto(URL);
-    const calc = await p.evaluate(() => [[10, 1000, 120], [15, 1000, 120], [52.5, 1000, 120], [90, 1000, 120], [10, 500, 120], [37.5, 1000, 60], [52.5, 1000, 0]].map(([s, l, t]) => QJ.speedPoints(s, l, { time: t })));
-    check(JSON.stringify(calc) === "[500,500,250,0,250,250,250]", "calcul : 10 s → 500, 15 s → 500, 52,5 s → 250, 90 s → 0, repère à moitié juste → 250, chrono 1 min (fin à 60 s), illimité (fin à 90 s) " + JSON.stringify(calc));
+    const calc = await p.evaluate(() => [[0, 1000, 120], [9, 1000, 120], [45, 1000, 120], [90, 1000, 120], [45, 500, 120], [30, 1000, 60], [45, 1000, 0]].map(([s, l, t]) => QJ.speedPoints(s, l, { time: t })));
+    check(JSON.stringify(calc) === "[500,450,250,0,125,250,250]", "calcul (baisse dès le début) : 0 s → 500, 9 s → 450, 45 s → 250, 90 s → 0, repère à moitié juste à 45 s → 125, chrono 1 min (fin à 60 s), illimité (fin à 90 s) " + JSON.stringify(calc));
     check((await p.textContent("#home")).includes("boost jusqu'à +500"), "règle affichée dans « Comment jouer »");
     await p.fill("#pseudo", "Test"); await p.click("#bSolo"); await wait(300);
     check(await p.evaluate("QJ.A.cfg.speed === 1"), "réglage « Boost de rapidité » : Oui par défaut");
     await p.click("#bStart"); await p.waitForFunction("QJ.A.R && QJ.A.R.phase === 'name'"); await wait(800);
     const gel = () => p.evaluate(() => { const el = document.getElementById("hBoost"), r = el.getBoundingClientRect(); const pills = [...document.querySelectorAll(".hud .pill")].map((x) => getComputedStyle(x).borderRadius); return { vis: !el.classList.contains("hidden") && r.width > 0, txt: el.innerText.trim(), clip: [...el.querySelectorAll(".bring path")].map((x) => x.getAttribute("stroke-dasharray")).join(","), d: !!el.querySelector(".bring path").getAttribute("d"), fill: getComputedStyle(el).backgroundColor === getComputedStyle(document.querySelector(".hud .pill")).backgroundColor, pill: el.classList.contains("pill"), rad: getComputedStyle(el).borderRadius === pills[0], full: el.classList.contains("full") }; });
     const g1 = await gel();
-    check(g1.vis && g1.pill && g1.rad && g1.fill && g1.d && g1.full && g1.clip === "1 2,1 2", "gélule Boost au contour doré complet au début, même forme et même fond que les autres (" + JSON.stringify(g1) + ")");
+    check(g1.vis && g1.pill && g1.rad && g1.fill && g1.d && g1.full && parseFloat(g1.clip) > 0.97 && parseFloat(g1.clip) < 1, "gélule Boost au contour doré presque complet au début, qui baisse déjà, même forme et même fond que les autres (" + JSON.stringify(g1) + ")");
     check(!/\d/.test(g1.txt), "aucun chiffre dans la gélule (« " + g1.txt + " »)");
     check(!(await p.$(".boost")), "plus de barre de progression dans les panneaux");
     check(!(await p.$("#hSpeed")), "plus de compteur chiffré");
-    await p.evaluate("QJ.A.R.t0 = Date.now() - 52500"); await wait(400);
+    await p.evaluate("QJ.A.R.t0 = Date.now() - 45000"); await wait(400);
     const g2 = await gel(), len = parseFloat(g2.clip);
-    check(near(len * 100, 50, 2) && !g2.full, "le contour se retire peu à peu (" + g2.clip + " après 52,5 s)");
+    check(near(len * 100, 50, 2) && !g2.full, "le contour se retire peu à peu (" + g2.clip + " après 45 s)");
     await p.evaluate("QJ.submitGuess(QJ.A.R.game.t)"); await wait(300);
     const x0 = await p.evaluate("QJ.A.res[0]");
     check(x0[1] === 1000, "points du nom pleins, sans baisse (" + x0[1] + ")");

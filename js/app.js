@@ -20,12 +20,12 @@
 
   // ------------------------------------------------------------------ points
   const NAME_MAX = 1000, NAME_STEP = 200, NAME_MIN = 200, LOC_MAX = 1000;
-  // boost de rapidité (réglage « Boost de rapidité », activé par défaut) : jusqu'à +500, plein si le repère est
-  // validé en moins de 15 s après le début de la manche, puis en baisse jusqu'à 0 à 90 s (ou à la fin de la manche
-  // si elle est plus courte), multiplié par la justesse du repère (points de position / 1 000). Stocké en x[6].
+  // boost de rapidité (réglage « Boost de rapidité », activé par défaut) : jusqu'à +500, en baisse dès le début de la
+  // manche (R.t0, après le décompte 3, 2, 1) jusqu'à 0 à 90 s (ou à la fin de la manche si elle est plus courte),
+  // multiplié par la justesse du repère (points de position / 1 000). Stocké en x[6].
   // Pendant la manche, la gélule « Boost » du haut de l'écran, sans chiffre, montre ce qu'il en reste (speedFactor) :
-  // pleine de jaune au départ, le jaune se retire de la droite vers la gauche.
-  const SPEED_MAX = 500, SPEED_FULL = 15;
+  // son contour doré se retire de la droite vers la gauche.
+  const SPEED_MAX = 500, SPEED_FULL = 0; // SPEED_FULL : secondes à plein avant la baisse (15 en v1.6.0)
   const speedEnd = (cfg) => Math.max(SPEED_FULL + 1, cfg && cfg.time ? Math.min(90, cfg.time) : 90);
   function speedFactor(sec, cfg) { const end = speedEnd(cfg); return sec <= SPEED_FULL ? 1 : sec >= end ? 0 : 1 - (sec - SPEED_FULL) / (end - SPEED_FULL); }
   const speedPoints = (sec, locPts, cfg) => Math.round(SPEED_MAX * speedFactor(sec, cfg) * Math.max(0, Math.min(1, locPts / LOC_MAX)));
@@ -1108,7 +1108,7 @@
     boostRing(el);
     const dash = +f.toFixed(4) + " 2";
     for (const p of el.querySelectorAll(".bring path")) if (p.getAttribute("stroke-dasharray") !== dash) p.setAttribute("stroke-dasharray", dash);
-    el.classList.toggle("full", f >= 0.999);
+    el.classList.toggle("full", f >= 0.9); // halo qui pulse au départ
     el.classList.toggle("out", f <= 0);
   }
   function tickSpeed() {
