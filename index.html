@@ -65,7 +65,7 @@
         <li>Observe la vue : glisse pour regarder, molette ou pincement pour zoomer.</li>
         <li><b>Devine le jeu.</b> Trop vague (« Zelda », « GTA ») ? On te demande de préciser, sans pénalité.</li>
         <li><b>Place ton repère</b> sur la carte du jeu.</li>
-        <li>Jusqu'à <b>1 000</b> points pour le nom (−200 par erreur) et <b>1 000</b> pour la position, plus un boost jusqu'à <b>+500</b> si tu réponds vite (jauge ⚡).</li>
+        <li>Jusqu'à <b>1 000</b> points pour le nom (−200 par erreur) et <b>1 000</b> pour la position, plus un boost jusqu'à <b>+500</b> si tu réponds vite (jauge <svg class="bolt inl" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.2 2.5 4.8 13.4h6l-1.4 8.1 8.8-11.3h-6.1z"/></svg>).</li>
       </ol>
     </div>
 
@@ -149,7 +149,7 @@
   <div class="dock">
     <!-- étape 1 : le nom -->
     <div class="panel" id="pName">
-      <div class="boost live hidden" title="Boost de rapidité : réponds vite pour le garder (jusqu'à +500, selon la justesse du repère)"><span class="blab" aria-hidden="true">⚡ Boost</span><div class="btrack"><i class="bfill"></i></div></div>
+      <div class="boost live hidden" title="Boost de rapidité : réponds vite pour le garder (jusqu'à +500, selon la justesse du repère)"><span class="blab" aria-hidden="true"><svg class="bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.2 2.5 4.8 13.4h6l-1.4 8.1 8.8-11.3h-6.1z"/></svg>Boost</span><div class="btrack"><i class="bfill"></i></div></div>
       <div class="qtitle"><span>Quel est ce jeu ?</span><span class="tries" id="tries"></span></div>
       <form class="guess" id="fGuess" autocomplete="off">
         <div class="sugg hidden" id="sugg"></div>
@@ -162,7 +162,7 @@
     </div>
     <!-- étape 2 : la carte -->
     <div class="panel hidden" id="pMap">
-      <div class="boost live hidden" title="Boost de rapidité : réponds vite pour le garder (jusqu'à +500, selon la justesse du repère)"><span class="blab" aria-hidden="true">⚡ Boost</span><div class="btrack"><i class="bfill"></i></div></div>
+      <div class="boost live hidden" title="Boost de rapidité : réponds vite pour le garder (jusqu'à +500, selon la justesse du repère)"><span class="blab" aria-hidden="true"><svg class="bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.2 2.5 4.8 13.4h6l-1.4 8.1 8.8-11.3h-6.1z"/></svg>Boost</span><div class="btrack"><i class="bfill"></i></div></div>
       <div class="found" id="foundTxt"></div>
       <div class="mapwrap"><div id="mapPick" class="mapview"></div></div>
       <div class="mapbar">
@@ -175,7 +175,7 @@
     <!-- étape 3 : attente -->
     <div class="panel hidden" id="pWait">
       <div class="qtitle"><span id="waitTitle">Manche terminée</span><span id="waitPts" style="color:var(--acc)"></span></div>
-      <div class="boost hidden" id="waitBoost"><span class="blab">⚡ Boost <b id="waitBoostV">+0</b></span><div class="btrack"><i class="bfill"></i></div></div>
+      <div class="boost hidden" id="waitBoost"><span class="blab"><svg class="bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.2 2.5 4.8 13.4h6l-1.4 8.1 8.8-11.3h-6.1z"/></svg>Boost <b id="waitBoostV">+0</b></span><div class="btrack"><i class="bfill"></i></div></div>
       <div class="mut small" id="waitTxt"></div>
       <div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn sm hidden" id="bForce">Terminer la manche maintenant</button></div>
     </div>

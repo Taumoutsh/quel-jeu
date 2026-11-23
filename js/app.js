@@ -28,6 +28,8 @@
   const speedEnd = (cfg) => Math.max(SPEED_FULL + 1, cfg && cfg.time ? Math.min(90, cfg.time) : 90);
   function speedFactor(sec, cfg) { const end = speedEnd(cfg); return sec <= SPEED_FULL ? 1 : sec >= end ? 0 : 1 - (sec - SPEED_FULL) / (end - SPEED_FULL); }
   const speedPoints = (sec, locPts, cfg) => Math.round(SPEED_MAX * speedFactor(sec, cfg) * Math.max(0, Math.min(1, locPts / LOC_MAX)));
+  // éclair du boost en SVG (même tracé que dans index.html), couleur du texte
+  const BOLT = '<svg class="bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.2 2.5 4.8 13.4h6l-1.4 8.1 8.8-11.3h-6.1z"/></svg>';
   const roundPts = (x) => (x ? (x[1] || 0) + (x[2] || 0) + (x[6] || 0) : 0);
   const namePoints = (errors) => Math.max(NAME_MIN, NAME_MAX - NAME_STEP * errors);
   function mapDist(a, b, w, h) {
@@ -1200,7 +1202,7 @@
       // nom du jeu : seulement les points obtenus (0 en rouge si le jeu n'a pas été trouvé), sans le détail des erreurs
       const nm = !x ? "—" : x[0] === 3 ? "<span class='ko'>0</span>" : fmt(x[1]);
       const loc = !x || x[0] !== 2 ? "—" : fmt(x[2]);
-      return "<tr><td class='who'>" + whoCell(p) + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(roundPts(x)) + "</b>" + (x && x[6] ? "<span class='bst' title='Boost de rapidité'>⚡" + fmt(x[6]) + "</span>" : "") + "</td><td class='n mut'>" + fmt(tot) + "</td></tr>";
+      return "<tr><td class='who'>" + whoCell(p) + "</td><td class='n'>" + nm + "</td><td class='n'>" + loc + "</td><td class='n'><b>" + fmt(roundPts(x)) + "</b>" + (x && x[6] ? "<span class='bst' title='Boost de rapidité'>" + BOLT + fmt(x[6]) + "</span>" : "") + "</td><td class='n mut'>" + fmt(tot) + "</td></tr>";
     }).join("");
     setHTML($("rvTable"), "<tr><th>Joueur</th><th class='n' title='Points pour le nom du jeu'>Jeu</th><th class='n'>Position</th><th class='n'>Manche</th><th class='n'>Total</th></tr>" + rows);
     if (A.screen === "reveal") renderRevealPins();

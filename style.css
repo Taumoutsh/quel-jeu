@@ -436,5 +436,9 @@ tr.fin-pl.gone td { opacity: .75; }
 .boost[data-lvl="low"] .blab { color: #a89270; }
 .boost[data-lvl="out"] .blab { color: var(--dim); }
 #pWait .boost { margin: 0 0 6px; }
+.boost .blab { display: inline-flex; align-items: center; gap: 3px; }
+svg.bolt { width: 1.15em; height: 1.15em; flex: none; fill: currentColor; stroke: currentColor; stroke-width: 1.2; stroke-linejoin: round; }
+svg.bolt.inl { width: 1em; height: 1em; vertical-align: -.15em; color: var(--acc); }
+#rvTable .bst svg.bolt { width: 11px; height: 11px; vertical-align: -1px; margin-right: 1px; }
 .panel.mini .boost { margin-bottom: 6px; }
 #rvTable .bst { display: block; font-size: 11px; font-weight: 600; color: var(--acc); white-space: nowrap; }

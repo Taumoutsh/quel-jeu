@@ -1,6 +1,6 @@
 // Boost de rapidité : jusqu'à +500, plein en moins de 15 s, nul à 90 s (ou à la fin de la manche si plus courte),
-// multiplié par la justesse du repère. Jauge « ⚡ Boost » sans chiffre pendant la manche ; « ⚡ Boost +n » à la
-// validation ; « ⚡n » à côté du score de la manche dans les résultats. Réglage « Non » : ni jauge ni boost.
+// multiplié par la justesse du repère. Jauge « Boost » (éclair en SVG) sans chiffre pendant la manche ; « Boost +n » à la
+// validation ; « n » avec l’éclair à côté du score de la manche dans les résultats. Réglage « Non » : ni jauge ni boost.
 // Depuis la racine du dépôt : node tests/e2e_boost.js
 const { chromium } = require("playwright");
 const { spawn } = require("child_process");
@@ -40,7 +40,9 @@ const near = (v, t, d) => Math.abs(v - t) <= (d || 8);
     check(wb.replace(/\s+/g, " ").includes("Boost +" + x[6]), "écran d'attente : « " + wb.replace(/\s+/g, " ").trim() + " »");
     await p.waitForFunction("QJ.A.screen === 'reveal'"); await wait(400);
     const row = await p.evaluate(() => { const tr = document.querySelectorAll("#rvTable tr")[1]; return [...tr.querySelectorAll("td")].map((t) => t.innerText.replace(/\s+/g, " ").trim()); });
-    check(row[3].includes("⚡" + x[6]) && row[3].replace(/\D/g, "").startsWith(String(2000 + x[6])), "résultats : score de la manche avec le boost (" + row[3] + ")");
+    const bolt = await p.evaluate(() => !!document.querySelector("#rvTable .bst svg.bolt") && !document.body.innerText.includes("\u26a1"));
+    check(bolt, "éclair en SVG, plus d'emoji");
+    check(row[3].includes(String(x[6])) && row[3].replace(/\D/g, "").startsWith(String(2000 + x[6])), "résultats : score de la manche avec le boost (" + row[3] + ")");
     const head = await p.evaluate(() => document.querySelectorAll("#rvTable th").length);
     check(head === 5, "pas de colonne en plus (" + head + " colonnes)");
     check((await p.textContent("#hScore")).replace(/\D/g, "") === String(2000 + x[6]), "score total avec le boost");
