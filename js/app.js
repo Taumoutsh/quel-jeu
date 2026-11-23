@@ -1286,7 +1286,7 @@
       if (!x) { nm = loc = tot = "<span class='mut'>—</span>"; }
       else if (x[0] === 3) { nm = "<span class='ko'>✗</span>"; loc = "<span class='mut'>—</span>"; tot = "0"; }
       else {
-        nm = fmt(x[1]) + (x[3] > 0 ? "<br><span class='mut small'>" + x[3] + " erreur" + (x[3] > 1 ? "s" : "") + "</span>" : "");
+        nm = fmt(x[1]); // points seulement, sans le nombre d'erreurs (demande du propriétaire)
         loc = x[0] === 2 ? fmt(x[2]) : "<span class='mut'>—</span>";
         tot = "<b>" + fmt(roundPts(x[0] === 2 ? x : [x[0], x[1], 0])) + "</b>" + (x[0] === 2 ? bstTag(x[6]) : "");
       }

@@ -54,12 +54,13 @@ const near = (v, t, d) => Math.abs(v - t) <= (d || 8);
     const f = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage(); f.on("pageerror", (e) => errs.push(String(e)));
     await f.goto(URL); await f.fill("#pseudo", "Test3"); await f.click("#bSolo"); await wait(300);
     await f.evaluate("QJ.A.cfg.rounds = 1"); await f.click("#bStart"); await f.waitForFunction("QJ.A.R && QJ.A.R.phase === 'name'"); await wait(300);
-    await f.evaluate("QJ.A.R.t0 = Date.now() - 45000"); await f.evaluate("QJ.submitGuess(QJ.A.R.game.t)"); await wait(150);
+    await f.evaluate("QJ.A.R.t0 = Date.now() - 45000; QJ.A.R.errors = 1"); await f.evaluate("QJ.submitGuess(QJ.A.R.game.t)"); await wait(150);
     await f.evaluate("(()=>{const R=QJ.A.R; R.pin={x:R.info.x,y:R.info.y}; QJ.validatePin();})()");
     await f.waitForFunction("QJ.A.screen === 'reveal'"); await wait(300); await f.click("#bNext");
     await f.waitForFunction("QJ.A.screen === 'final'"); await wait(400);
     const fx = await f.evaluate("QJ.A.res[0][6]"), fin = await f.evaluate(() => ({ sum: document.getElementById("finSolo").innerText.replace(/\s+/g, " "), tab: document.getElementById("finTable").innerText.replace(/\s+/g, " "), bolt: !!document.querySelector("#finTable .bst svg.bolt") }));
     check(fx > 0 && fin.bolt && fin.tab.includes(String(fx)) && fin.sum.includes("dont " + fx + " de boost"), "classement final solo : boost affiché (" + fin.sum + " | " + fin.tab + ")");
+    check(!/erreur/i.test(fin.tab) && fin.tab.includes("800"), "bilan sans le nombre d'erreurs (nom à 800 après 1 erreur)");
     // réglage « Non »
     const q = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage(); q.on("pageerror", (e) => errs.push(String(e)));
     await q.goto(URL); await q.fill("#pseudo", "Test2"); await q.click("#bSolo"); await wait(300);
