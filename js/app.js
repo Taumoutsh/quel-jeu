@@ -1490,8 +1490,12 @@
   }
 
   function attachSuggest(input, box, onPick, filter) {
-    let sel = -1, items = [], drawn = null, start = null;
+    let sel = -1, items = [], drawn = null, start = null, touch = null, pending = false;
     const render = () => {
+      // pendant un toucher sur la liste, ni reconstruction ni fermeture (perte du focus quand le téléphone replie
+      // le clavier, saisie de l'autocorrection) : le doigt levé doit retrouver la suggestion touchée
+      if (touch) { pending = true; return; }
+      pending = false;
       if (!items.length) { box.classList.add("hidden"); return; }
       // liste reconstruite seulement si elle change : un clavier de téléphone qui valide le mot en cours
       // (autocorrection) au moment du toucher redéclenche une saisie ; reconstruire la liste sous le doigt
@@ -1503,24 +1507,50 @@
     const itemAt = (e) => { const b = e.target.closest && e.target.closest("button[data-k]"); return b && box.contains(b) ? b.textContent : null; };
     let lastPick = 0;
     const pick = (t) => { lastPick = Date.now(); onPick(t); items = []; render(); };
-    // gestes suivis sur la liste entière (pas bouton par bouton) : souris = choix tout de suite (pointerdown, le
-    // champ garde le focus) ; doigt = choix au doigt levé sans glissement (glisser pour replier le clavier ou
-    // faire défiler ne choisit rien), même si la liste a été redessinée entre-temps
+    const endTouch = () => { touch = null; if (pending) render(); };
+    // doigt : événements tactiles, qui restent attachés à la suggestion touchée même si la page bouge ou si la liste
+    // se ferme entre-temps. Choix au doigt levé sans glissement de plus de 10 px, mesuré en coordonnées d'écran :
+    // sur iPhone, le clavier qui se replie pendant le toucher décale la page, les coordonnées dans la page changent
+    // alors que le doigt n'a pas bougé (le tap passait pour un glissement, puis le clic tombait à côté).
+    // Le doigt levé est consommé (preventDefault) : pas de clic ni de changement de focus derrière.
+    const hasTouch = "ontouchstart" in window;
+    box.addEventListener("touchstart", (e) => {
+      const t = e.touches.length === 1 ? itemAt(e) : null;
+      if (!t) { touch = null; return; }
+      const q = e.changedTouches[0];
+      touch = { id: q.identifier, x: q.screenX, y: q.screenY, t };
+    }, { passive: true });
+    box.addEventListener("touchmove", (e) => {
+      if (!touch) return;
+      for (const q of e.changedTouches) if (q.identifier === touch.id && Math.hypot(q.screenX - touch.x, q.screenY - touch.y) > 10) endTouch();
+    }, { passive: true });
+    box.addEventListener("touchend", (e) => {
+      const st = touch; if (!st) return;
+      const q = [...e.changedTouches].find((c) => c.identifier === st.id);
+      if (!q) return;
+      endTouch();
+      if (Math.hypot(q.screenX - st.x, q.screenY - st.y) > 10) return;
+      if (e.cancelable) e.preventDefault();
+      pick(st.t); // la suggestion touchée, même si le clavier a changé la liste entre-temps
+    }, { passive: false });
+    box.addEventListener("touchcancel", endTouch);
+    // souris : choix tout de suite (pointerdown, le champ garde le focus) ; stylet, et doigt sur un navigateur sans
+    // événements tactiles : choix au relâchement sans glissement
     box.addEventListener("pointerdown", (e) => {
       const t = itemAt(e); if (!t) return;
       if (e.pointerType === "mouse") { e.preventDefault(); pick(t); return; }
-      start = { id: e.pointerId, x: e.clientX, y: e.clientY, t };
+      if (e.pointerType === "touch" && hasTouch) return;
+      start = { id: e.pointerId, x: e.screenX, y: e.screenY, t };
     });
-    box.addEventListener("pointermove", (e) => { if (start && e.pointerId === start.id && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) start = null; });
+    box.addEventListener("pointermove", (e) => { if (start && e.pointerId === start.id && Math.hypot(e.screenX - start.x, e.screenY - start.y) > 10) start = null; });
     box.addEventListener("pointercancel", () => { start = null; });
     box.addEventListener("pointerup", (e) => {
       const st = start; start = null;
-      if (!st || e.pointerId !== st.id || Math.hypot(e.clientX - st.x, e.clientY - st.y) > 10) return;
-      e.preventDefault(); pick(st.t); // la suggestion touchée, même si le clavier a changé la liste entre-temps
+      if (!st || e.pointerId !== st.id || Math.hypot(e.screenX - st.x, e.screenY - st.y) > 10) return;
+      e.preventDefault(); pick(st.t);
     });
-    // rattrapage : un téléphone peut interrompre le geste (pointercancel, page qui bouge avec le clavier) tout en
-    // envoyant le clic d'un vrai tap ; on choisit alors la suggestion cliquée, sauf si le choix vient d'être fait
-    // (souris : déjà choisie au pointerdown). Un glissement n'envoie pas de clic.
+    // rattrapage : clic sur une suggestion qui n'a pas été choisie autrement (clavier, lecteur d'écran, geste
+    // interrompu par le téléphone suivi du clic d'un vrai tap), sauf si le choix vient d'être fait
     box.addEventListener("click", (e) => {
       const t = itemAt(e); if (!t || Date.now() - lastPick < 800) return;
       e.preventDefault(); pick(t);
