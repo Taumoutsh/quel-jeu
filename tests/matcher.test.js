@@ -81,6 +81,17 @@ for (const [ans, input] of [["Euro Truck Simulator 2", "Euro Truck Simulator 3"]
   if (!ok) fail++;
   console.log(ok ? "ok  " : "FAIL", JSON.stringify(input).padEnd(36), "→", r.k, r.game ? "« " + r.game.t + " »" : "(aucun titre cité)");
 }
+// titre choisi dans une liste (suggestion ou proposition) : compté tel quel, sans redemander de préciser
+// (« Grand Theft Auto: Vice City » choisi quand la réponse est Vice City Stories ne faisait rien)
+for (const [ans, input, exp] of [["Grand Theft Auto: Vice City Stories", "Grand Theft Auto: Vice City", "wrong"], ["Red Dead Redemption 2", "Red Dead Redemption", "wrong"],
+  ["Grand Theft Auto: Vice City", "Grand Theft Auto: Vice City", "ok"], ["Grand Theft Auto: Vice City Stories", "Grand Theft Auto: Vice City Stories", "ok"], ["Assassin's Creed", "Assassin's Creed", "ok"], ["Assassin's Creed Unity", "Assassin's Creed", "wrong"]]) {
+  const r = M.evaluate(input, slug(ans), { exact: true });
+  const ok = r.k === exp;
+  if (!ok) fail++;
+  console.log(ok ? "ok  " : "FAIL", ("choix « " + input + " »").padEnd(36), "→", r.k, "(réponse : " + ans + ")");
+}
+// au clavier, le même texte demande toujours de préciser
+{ const r = M.evaluate("Grand Theft Auto: Vice City", slug("Grand Theft Auto: Vice City Stories")); const ok = r.k === "precision"; if (!ok) fail++; console.log(ok ? "ok  " : "FAIL", "tapé « Grand Theft Auto: Vice City »".padEnd(36), "→", r.k); }
 console.log("suggest('zel'):", M.suggest("zel"));
 console.log("suggest('gta s'):", M.suggest("gta s"));
 console.log("jeux:", M.games.length, "séries:", M.series.length);

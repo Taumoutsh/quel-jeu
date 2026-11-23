@@ -106,12 +106,20 @@
       return { k: "precision", candidates: c.length <= MAX_CANDS ? c.map((g) => g.t) : null, series: seriesOf(ans) ? seriesOf(ans).t : null };
     }
 
-    function evaluate(input, answerId) {
+    // opts.exact : titre choisi dans une liste (suggestion ou proposition d'une licence), donc réponse complète :
+    // un titre exact d'un autre jeu compte comme un raté, sans redemander de préciser. Sinon, choisir
+    // « Grand Theft Auto: Vice City » quand la réponse était Vice City Stories redemandait une précision et
+    // réaffichait les mêmes propositions : rien ne semblait se passer.
+    function evaluate(input, answerId, opts) {
       const q = norm(input);
       if (!q) return { k: "empty" };
       const ans = byId[answerId];
       if (!ans) return { k: "wrong" };
       if (ans.n.includes(q)) return { k: "ok", game: ans };
+      if (opts && opts.exact) {
+        const picked = games.find((g) => norm(g.t) === q);
+        if (picked) return picked === ans ? { k: "ok", game: ans } : { k: "wrong", game: picked };
+      }
       const qt = q.split(" ");
       const meaningful = qt.filter((w) => !STOP.has(w));
       if (!meaningful.length) return { k: "vague" };

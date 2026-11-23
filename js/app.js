@@ -983,11 +983,12 @@
   }
   function setFb(kind, html) { const f = $("fb"); f.className = "fb" + (kind ? " show " + kind : ""); f.innerHTML = html || ""; }
 
-  function submitGuess(text) {
+  // exact : titre choisi dans une liste (suggestion, proposition) : compté tel quel, juste ou raté
+  function submitGuess(text, exact) {
     const R = A.R;
     if (!R || R.phase !== "name") return;
     $("sugg").classList.add("hidden");
-    const ev = A.matcher.evaluate(text, R.game.id);
+    const ev = A.matcher.evaluate(text, R.game.id, { exact: !!exact });
     $("cands").innerHTML = "";
     if (ev.k === "empty") return;
     if (ev.k === "vague") { setFb("warn", "Trop vague : tape le titre d'un jeu."); return; }
@@ -995,7 +996,7 @@
       setFb("warn", "<b>Précise !</b> " + (ev.series ? "Il existe plusieurs jeux <i>" + esc(ev.series) + "</i>." : "« " + esc(text.trim()) + " » ne suffit pas.") + " Donne le titre complet.");
       if (A.st.cfg.hints && ev.candidates) {
         $("cands").innerHTML = ev.candidates.map((c) => "<button type='button'>" + esc(c) + "</button>").join("");
-        for (const b of $("cands").children) onTap(b, () => submitGuess(b.textContent));
+        for (const b of $("cands").children) onTap(b, () => submitGuess(b.textContent, true));
       }
       $("gInput").focus();
       return;
@@ -1537,7 +1538,7 @@
     });
 
     $("fGuess").addEventListener("submit", (e) => { e.preventDefault(); submitGuess($("gInput").value); });
-    attachSuggest($("gInput"), $("sugg"), (t) => { $("gInput").value = t; submitGuess(t); }, () => (A.st && A.st.cfg.hints ? (t) => true : null));
+    attachSuggest($("gInput"), $("sugg"), (t) => { $("gInput").value = t; submitGuess(t, true); }, () => (A.st && A.st.cfg.hints ? (t) => true : null));
     $("bSkip").onclick = async () => { if (await confirmBox("Passer cette manche ?", "Passer")) failName("Manche passée"); };
     $("bPin").onclick = validatePin;
     $("bMini").onclick = () => setMapMini(!$("pMap").classList.contains("mini"));
@@ -1587,6 +1588,6 @@
   }
 
   // accès pour les tests automatisés
-  window.QJ = { A, players: (s) => players(s), randomPseudo, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t) => submitGuess(t), startSolo, hostStart, validatePin, get pano() { return pano; } };
+  window.QJ = { A, players: (s) => players(s), randomPseudo, namePoints, locPoints, mapDist, buildSeq, submitGuess: (t, exact) => submitGuess(t, exact), startSolo, hostStart, validatePin, get pano() { return pano; } };
   wire();
 })();
