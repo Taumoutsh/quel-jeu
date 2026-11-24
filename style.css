@@ -486,3 +486,10 @@ svg.lock.big { width: 21px; height: 21px; color: var(--sea); }
 .dupcode { font-family: var(--fd); letter-spacing: 2px; color: var(--acc); }
 .dupbox .row { gap: 8px; }
 .dupbox .row .btn { flex: 1 1 0; min-width: 0; padding-left: 8px; padding-right: 8px; }
+/* bouton « Rejoindre » des salons publics : texte sur grand écran, picto seul sur téléphone (texte pour les lecteurs d'écran) */
+.pjoin .pji { display: none; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 520px) {
+  .pubroom .pjoin { width: 46px; height: 46px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+  .pjoin .pji { display: block; }
+  .pjoin .pjl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}

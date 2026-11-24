@@ -770,6 +770,8 @@
   const LOCK_OPEN = '<svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 7.7-1.6"/></svg>';
   const LOCK_SHUT = '<svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const pubOn = () => !!(SERVER && A.caps.room);
+  // « Rejoindre » : sur téléphone, seulement ce picto (flèche qui entre), le mot reste lu par les lecteurs d'écran
+  const ICON_ENTER = '<svg class="pji" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h3.5A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5H14"/><path d="M9.5 16.5 14 12l-4.5-4.5"/><path d="M14 12H4"/></svg>';
   let plT = null, pubBusy = false;
   function pubPoll() {
     clearTimeout(plT);
@@ -790,7 +792,7 @@
         : "<span class='pbadge live'>En cours · manche " + Math.min(r.i, r.rounds) + "/" + r.rounds + "</span>";
       return "<div class='pubroom" + (r.mine ? " mine" : "") + "'>" + ava(who, 38) + "<div class='pinfo'><b>" + (r.mine ? "Ton salon" : esc(r.n)) + "</b><span class='mut'>"
         + plural(r.rounds, "manche") + " · " + (r.time ? r.time / 60 + " min" : "∞") + "</span><span class='pstate'>" + badge + "<span class='mut'>" + plural(r.players, "joueur") + "</span></span></div>"
-        + "<button type='button' class='btn sm sea fill' data-code='" + esc(r.code) + "'>" + (r.mine ? "Y retourner" : "Rejoindre") + "</button></div>";
+        + "<button type='button' class='btn sm sea fill pjoin' data-code='" + esc(r.code) + "' title='" + (r.mine ? "Y retourner" : "Rejoindre") + "'>" + ICON_ENTER + "<span class='pjl'>" + (r.mine ? "Y retourner" : "Rejoindre") + "</span></button></div>";
     }).join(""));
   }
   // rejoindre un salon de la liste (ou son propre salon) : comme avec un code

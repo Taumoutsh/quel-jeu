@@ -36,6 +36,12 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
     await V.waitForFunction(() => document.getElementById("pubList").innerText.includes("Hôtesse"), null, { timeout: 8000 });
     const row = await txt(V, "#pubList");
     check(/5 manches · 2 min/.test(row) && /1 joueur/.test(row) && /En attente/i.test(row) && /Rejoindre/i.test(row), "liste de l'accueil à jour toute seule : « " + row.replace(/\s+/g, " ").trim() + " »");
+    const bj = await V.evaluate(() => { const b = document.querySelector("#pubList .pjoin"); return { ico: !!b.querySelector("svg.pji") && getComputedStyle(b.querySelector("svg.pji")).display !== "none", w: Math.round(b.getBoundingClientRect().width), label: b.textContent.trim(), emoji: /\p{Extended_Pictographic}/u.test(b.textContent) }; });
+    check(bj.ico && bj.w <= 50 && bj.label === "Rejoindre" && !bj.emoji, "téléphone : bouton « Rejoindre » réduit au picto SVG, mot gardé pour les lecteurs d'écran (" + JSON.stringify(bj) + ")");
+    const D = await (await b.newContext({ viewport: { width: 1280, height: 800 } })).newPage(); await D.goto(URL); await wait(4000);
+    const bd = await D.evaluate(() => { const b = document.querySelector("#pubList .pjoin"); return b ? { ico: getComputedStyle(b.querySelector("svg.pji")).display, txt: b.innerText.trim() } : null; });
+    check(bd && bd.ico === "none" && /rejoindre/i.test(bd.txt), "PC : bouton avec le mot « Rejoindre » (" + JSON.stringify(bd) + ")");
+    await D.context().close();
     check(/1 ouvert/.test(await txt(V, "#pubCount")), "compteur : « " + (await txt(V, "#pubCount")).trim() + " »");
 
     await V.click("#pubList button[data-code='" + code + "']");
