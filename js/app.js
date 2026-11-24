@@ -1111,6 +1111,19 @@
     el.classList.toggle("full", f >= 0.9); // halo qui pulse au départ
     el.classList.toggle("out", f <= 0);
   }
+  // sur PC (grand écran, souris), la gélule du boost se met sur la ligne du haut, juste après le temps ;
+  // sur téléphone et tablette, elle reste sous le bouton ✕ (rien ne change)
+  function placeBoost() {
+    const mq = window.matchMedia && matchMedia("(min-width: 700px) and (hover: hover) and (pointer: fine)");
+    const put = () => {
+      const el = $("hBoost"), inRow = !!(mq && mq.matches);
+      if (inRow) { if (el.previousElementSibling !== $("hTimer")) $("hTimer").after(el); }
+      else if (el.parentElement !== $("h360").parentElement) $("h360").before(el);
+      el.classList.toggle("inrow", inRow);
+    };
+    put();
+    if (mq) mq.addEventListener ? mq.addEventListener("change", put) : mq.addListener(put);
+  }
   function tickSpeed() {
     const R = A.R;
     const on = !!(A.st && A.st.cfg.speed && A.st.ph === "play" && A.screen === "game" && R && R.t0);
@@ -1594,6 +1607,7 @@
 
   function wire() {
     noDoubleTapZoom();
+    placeBoost();
     renderHome();
     $("pseudo").addEventListener("change", ensureName);
     $("bSolo").onclick = startSolo;

@@ -61,6 +61,14 @@ const near = (v, t, d) => Math.abs(v - t) <= (d || 8);
     const fx = await f.evaluate("QJ.A.res[0][6]"), fin = await f.evaluate(() => ({ sum: document.getElementById("finSolo").innerText.replace(/\s+/g, " "), tab: document.getElementById("finTable").innerText.replace(/\s+/g, " "), bolt: !!document.querySelector("#finTable .bst svg.bolt") }));
     check(fx > 0 && fin.bolt && fin.tab.includes(String(fx)) && fin.sum.includes("dont " + fx + " de boost"), "classement final solo : boost affiché (" + fin.sum + " | " + fin.tab + ")");
     check(!/erreur/i.test(fin.tab) && fin.tab.includes("800"), "bilan sans le nombre d'erreurs (nom à 800 après 1 erreur)");
+    // place de la gélule : sur PC, sur la ligne du haut juste après le temps et à la même hauteur ; sur téléphone, sous le ✕
+    for (const [nm, opt, row] of [["PC", { viewport: { width: 1280, height: 800 } }, true], ["téléphone", { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }, false]]) {
+      const w = await (await b.newContext(opt)).newPage(); w.on("pageerror", (e) => errs.push(String(e)));
+      await w.goto(URL); await w.fill("#pseudo", "Test4"); await w.click("#bSolo"); await wait(300); await w.click("#bStart");
+      await w.waitForFunction("QJ.A.R && QJ.A.R.phase === 'name'"); await wait(600);
+      const pl = await w.evaluate(() => { const bo = document.getElementById("hBoost"), t = document.getElementById("hTimer"), a = bo.getBoundingClientRect(), c = t.getBoundingClientRect(); return { inHud: bo.parentElement.classList.contains("hud"), after: bo.previousElementSibling === t, sameTop: Math.abs(a.top - c.top) < 1, sameH: Math.abs(a.height - c.height) < 1, below: a.top > c.bottom }; });
+      check(row ? pl.inHud && pl.after && pl.sameTop && pl.sameH : !pl.inHud && pl.below, nm + " : gélule " + (row ? "sur la ligne du temps, juste après lui" : "sous le ✕") + " (" + JSON.stringify(pl) + ")");
+    }
     // réglage « Non »
     const q = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage(); q.on("pageerror", (e) => errs.push(String(e)));
     await q.goto(URL); await q.fill("#pseudo", "Test2"); await q.click("#bSolo"); await wait(300);

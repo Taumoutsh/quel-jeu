@@ -426,6 +426,8 @@ tr.fin-pl.gone td { opacity: .75; }
 /* bonus de rapidité : badge qui fond pendant la manche, en haut à gauche sous la barre (le classement est à droite) */
 /* gélule de boost (sans chiffre) : contour doré et lumineux qui se retire peu à peu, de la droite vers la gauche */
 .boostp { position: absolute; left: 12px; top: calc(max(10px, env(safe-area-inset-top)) + 52px); z-index: 1; gap: 5px; }
+.boostp.inrow { position: relative; left: auto; top: auto; z-index: auto; } /* PC : sur la ligne du haut, après le temps */
+.boostp.inrow::after { content: "\200b"; font-family: var(--fd); font-size: 15px; margin-left: -5px; } /* même hauteur que les autres gélules */
 .boostp svg.bolt { width: 16px; height: 16px; color: var(--acc); transition: color .6s; }
 .boostp.out svg.bolt { color: var(--txt); }
 .boostp .bring { position: absolute; left: -1px; top: -1px; width: calc(100% + 2px); height: calc(100% + 2px); overflow: visible; pointer-events: none; }
