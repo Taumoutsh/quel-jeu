@@ -43,6 +43,7 @@ const PRIVATE = /^\/(server|tools|tests|data|\.git)(\/|$)|^\/(Dockerfile|docker-
 // mot de passe QJ_ADMIN_PASSWORD du .env) corrige la vue ou la supprime. Tout est gardé dans DATA :
 //   reports.json   : [{ id, at, sid, kind, comment, pin, status }]
 //   overrides.json : { scenes: { idVue: { x, y, game, place } | { deleted: true } } }
+//   games.json     : historique des parties terminées [{ at, mode, code, pub, rounds, players: [{ n, s }] }]
 // Les corrections sont appliquées à packs/vrais-jeux.js au moment de le servir ; le dépôt n'est pas modifié.
 const DATA = path.resolve(process.env.QJ_DATA || path.join(ROOT, "data"));
 const ADMIN_PASSWORD = process.env.QJ_ADMIN_PASSWORD || "";
@@ -58,6 +59,58 @@ function saveJSON(name, obj) {
 let reports = loadJSON("reports.json", []);
 let overrides = loadJSON("overrides.json", { scenes: {} });
 if (!overrides || typeof overrides.scenes !== "object") overrides = { scenes: {} };
+
+// ---- historique des parties (page /admin) : une entrée par partie terminée, 5 000 au plus (les plus anciennes
+// s'en vont). À plusieurs : relevée par le serveur quand l'hôte annonce la fin (st.ph = "end"), avec les scores
+// publiés par chaque joueur ; en solo : envoyée par la page à l'écran final (POST /api/games).
+const GAMES_MAX = 5000;
+let games = loadJSON("games.json", []);
+if (!Array.isArray(games)) games = [];
+const gamesSeen = new Set(games.map((g) => g.gen).filter(Boolean));
+const gamesByIP = new Map();
+// points d'une manche (même calcul que la page : nom + position + boost)
+const roundPts = (x) => (Array.isArray(x) ? (Number(x[1]) || 0) + (Number(x[2]) || 0) + (Number(x[6]) || 0) : 0);
+const scoreOf = (r) => (Array.isArray(r) ? r.reduce((t, x) => t + roundPts(x), 0) : 0);
+function recordGame(g) {
+  if (!g.gen || gamesSeen.has(g.gen)) return false;
+  gamesSeen.add(g.gen);
+  games.push(Object.assign({ at: new Date().toISOString() }, g));
+  if (games.length > GAMES_MAX) games = games.slice(-GAMES_MAX);
+  saveJSON("games.json", games);
+  return true;
+}
+// partie à plusieurs terminée : joueurs de cette génération (un par navigateur), plus les joueurs partis en route
+function recordRoomGame(name, st) {
+  const room = rooms.get(name);
+  if (!room || !st || typeof st.gen !== "string") return;
+  const byKey = new Map();
+  const add = (key, n, r) => {
+    if (!n) return;
+    const s = scoreOf(r), prev = byKey.get(key);
+    if (!prev || s > prev.s) byKey.set(key, { n: String(n).slice(0, 16), s });
+  };
+  for (const [pid, p] of room) {
+    const pr = p.presence || {};
+    if (pr.g === st.gen && pr.n) add(UID_RE.test(pr.u || "") ? pr.u : pid, pr.n, pr.r);
+  }
+  for (const g of Array.isArray(st.gone) ? st.gone : []) if (g && g.name) add(UID_RE.test(g.u || "") ? g.u : "g-" + g.peer, g.name, g.r);
+  const players = [...byKey.values()].sort((a, b) => b.s - a.s);
+  if (!players.length) return;
+  recordGame({ gen: st.gen.slice(0, 24), mode: "groupe", code: name.slice(3).toUpperCase(), pub: !!(st.cfg && st.cfg.pub === 1),
+    rounds: Array.isArray(st.seq) ? st.seq.length : 0, players });
+}
+async function gamesApi(req, res) {
+  if (req.method !== "POST") return json(res, 405, { error: "méthode non permise" });
+  const ip = clientIP(req);
+  if (limited(gamesByIP, ip, 60, 3600 * 1000)) return json(res, 429, { error: "trop de parties, réessaie plus tard" });
+  let b; try { b = await readJSON(req, 2000); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
+  const rounds = b && Number(b.rounds), score = b && Number(b.score);
+  if (!b || typeof b.gen !== "string" || !/^[a-z0-9]{4,24}$/.test(b.gen) || typeof b.name !== "string" || !b.name.trim()
+    || !Number.isInteger(rounds) || rounds < 1 || rounds > 15 || !Number.isInteger(score) || score < 0 || score > rounds * 2500) return json(res, 400, { error: "partie invalide" });
+  gamesByIP.get(ip).push(Date.now());
+  recordGame({ gen: b.gen, mode: "solo", rounds, players: [{ n: b.name.trim().slice(0, 16), s: score }] });
+  return json(res, 200, { ok: true });
+}
 let overridesVersion = crypto.createHash("sha1").update(JSON.stringify(overrides)).digest("hex").slice(0, 8);
 function setOverrides(o) { overrides = o; saveJSON("overrides.json", o); overridesVersion = crypto.createHash("sha1").update(JSON.stringify(o)).digest("hex").slice(0, 8); packCache = null; }
 
@@ -249,7 +302,7 @@ async function adminApi(req, res, url) {
     return json(res, 200, { token: t });
   }
   if (!isAdmin(req)) return json(res, 401, { error: "connexion requise" });
-  if (route === "data" && req.method === "GET") return json(res, 200, { reports, overrides });
+  if (route === "data" && req.method === "GET") return json(res, 200, { reports, overrides, games });
   if (route === "pack" && req.method === "GET") return json(res, 200, readPack().pack);
   if (route === "scene" && req.method === "POST") {
     let b; try { b = await readJSON(req, 4000); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
@@ -362,6 +415,7 @@ async function api(req, res, url) {
   if (url.pathname === "/api/ping") return json(res, 200, { ok: true });
   if (url.pathname === "/api/public" && req.method === "GET") return json(res, 200, { rooms: publicRooms(url.searchParams.get("u") || "") });
   if (url.pathname === "/api/reports") return reportApi(req, res);
+  if (url.pathname === "/api/games") return gamesApi(req, res);
   if (url.pathname.startsWith("/api/admin/")) return adminApi(req, res, url);
   if (!m) return json(res, 404, { error: "introuvable" });
   const name = m[1], action = m[2], peer = url.searchParams.get("peer") || "";
@@ -410,6 +464,8 @@ async function api(req, res, url) {
     }
     p.presence = Object.assign({}, p.presence, body);
     broadcast(name);
+    // fin de partie annoncée par l'hôte : la partie entre dans l'historique (une seule fois par génération)
+    if (body.h === 1 && body.st && body.st.ph === "end") recordRoomGame(name, body.st);
     return json(res, 200, { ok: true });
   }
   // secours si le flux en direct est retenu par un proxy : l'état de la salle à la demande

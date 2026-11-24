@@ -33,6 +33,16 @@
       <div class="mut small" id="loginMsg"></div>
     </form>
 
+    <div class="seg adm-secs hidden" id="secs"><button type="button" data-s="views" class="on">Vues et signalements</button><button type="button" data-s="games">Parties jouées <span id="nGames"></span></button></div>
+
+    <!-- historique des parties terminées (data/games.json) -->
+    <div class="card col hidden" id="gamesCard">
+      <div class="row adm-gh"><h2 class="grow">Parties jouées</h2><span class="mut small" id="gStats"></span></div>
+      <div class="row"><input type="text" id="gSearch" placeholder="Filtrer par pseudo ou code…" autocomplete="off"></div>
+      <div class="adm-games" id="gList"></div>
+      <button class="btn sm hidden" id="gMore" type="button">Afficher plus</button>
+    </div>
+
     <div class="adm-main hidden" id="main">
       <div class="card adm-list">
         <div class="seg" id="tabs"><button type="button" data-t="reports" class="on">Signalements <span id="nOpen"></span></button><button type="button" data-t="all">Toutes les vues</button></div>

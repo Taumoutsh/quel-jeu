@@ -2,6 +2,7 @@
  * Connexion par le mot de passe QJ_ADMIN_PASSWORD du .env (le serveur rend un jeton gardé pour l'onglet).
  * Une correction (position, jeu, nom du lieu) ou une suppression est gardée par le serveur dans data/overrides.json
  * et appliquée au pack servi aux joueurs ; « Exporter » télécharge ces corrections pour les reporter dans le dépôt.
+ * « Parties jouées » : historique des parties terminées (data/games.json), les plus récentes en premier.
  */
 (function () {
   "use strict";
@@ -10,7 +11,7 @@
   const KIND = { position: "Position fausse", jeu: "Mauvais jeu", image: "Image inadaptée", autre: "Autre" };
   const STATUS = { open: "En attente", resolved: "Résolu", ignored: "Ignoré" };
   const DISPO = window.REAL_PACK_DISPO || { maps: {}, scenes: {} };
-  const S = { token: null, pack: null, games: {}, reports: [], overrides: { scenes: {} }, tab: "reports", sel: null, draft: null, map: null };
+  const S = { token: null, pack: null, games: {}, reports: [], overrides: { scenes: {} }, tab: "reports", sel: null, draft: null, map: null, played: [], sec: "views", gShown: 50 };
   let toastT = null;
   function toast(msg, ms) { const t = $("toast"); t.textContent = msg; t.classList.remove("hidden"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add("hidden"), ms || 2600); }
   try { S.token = sessionStorage.getItem("qj.admin"); } catch (e) { /* stockage indisponible */ }
@@ -30,6 +31,7 @@
   // ------------------------------------------------------------------ connexion
   function showLogin(msg) {
     $("login").classList.remove("hidden"); $("main").classList.add("hidden");
+    $("secs").classList.add("hidden"); $("gamesCard").classList.add("hidden");
     $("bExport").classList.add("hidden"); $("bLogout").classList.add("hidden");
     $("loginMsg").textContent = msg || ""; $("pwd").focus();
   }
@@ -51,17 +53,17 @@
     try {
       const [pack, data] = await Promise.all([call("pack"), call("data")]);
       S.pack = pack; S.games = {}; for (const g of pack.games) S.games[g.key] = g;
-      S.reports = data.reports; S.overrides = data.overrides;
+      S.reports = data.reports; S.overrides = data.overrides; S.played = data.games || [];
     } catch (e) { return showLogin(e.message); }
-    $("login").classList.add("hidden"); $("main").classList.remove("hidden");
+    $("login").classList.add("hidden"); $("secs").classList.remove("hidden"); showSec(S.sec);
     $("bExport").classList.remove("hidden"); $("bLogout").classList.remove("hidden");
-    renderList();
+    renderList(); renderGames();
     if (S.sel) renderEdit();
   }
   async function refresh() {
     const data = await call("data");
-    S.reports = data.reports; S.overrides = data.overrides;
-    renderList(); renderEdit();
+    S.reports = data.reports; S.overrides = data.overrides; S.played = data.games || [];
+    renderList(); renderEdit(); renderGames();
   }
 
   // ------------------------------------------------------------------ liste
@@ -195,6 +197,40 @@
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "gamespotter-corrections.json"; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   };
+
+  // ------------------------------------------------------------------ parties jouées
+  function showSec(sec) {
+    S.sec = sec;
+    for (const b of $("secs").children) b.classList.toggle("on", b.dataset.s === sec);
+    $("main").classList.toggle("hidden", sec !== "views");
+    $("gamesCard").classList.toggle("hidden", sec !== "games");
+    if (sec === "games") renderGames();
+  }
+  for (const b of $("secs").children) b.onclick = async () => {
+    showSec(b.dataset.s);
+    if (b.dataset.s === "games") { try { const d = await call("data"); S.played = d.games || []; renderGames(); } catch (e) { toast(e.message); } }
+  };
+  const fmtN = (n) => Number(n || 0).toLocaleString("fr-FR");
+  function renderGames() {
+    const all = S.played.slice().reverse(); // les plus récentes d'abord
+    $("nGames").textContent = all.length ? "(" + all.length + ")" : "";
+    const nSolo = all.filter((g) => g.mode === "solo").length;
+    $("gStats").textContent = all.length ? all.length + " partie" + (all.length > 1 ? "s" : "") + " · " + (all.length - nSolo) + " en groupe · " + nSolo + " en solo" : "";
+    if (S.sec !== "games") return;
+    const q = $("gSearch").value.trim().toLowerCase();
+    const list = q ? all.filter((g) => ((g.code || "") + " " + (g.players || []).map((p) => p.n).join(" ")).toLowerCase().includes(q)) : all;
+    const shown = list.slice(0, S.gShown);
+    $("gList").innerHTML = shown.length ? shown.map((g) => {
+      const d = new Date(g.at), ps = g.players || [];
+      const date = isNaN(d) ? "?" : d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" }) + " · " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      const mode = g.mode === "solo" ? "<span class='tag'>Solo</span>" : "<span class='tag acc'>Groupe</span>" + (g.code ? " <span class='mut'>" + esc(g.code) + "</span>" : "") + (g.pub ? " <span class='tag good'>public</span>" : "");
+      return "<div class='adm-game'><div class='gh'><b>" + esc(date) + "</b>" + mode + "<span class='grow'></span><span class='mut'>" + ps.length + " joueur" + (ps.length > 1 ? "s" : "") + " · " + (g.rounds | 0) + " manche" + ((g.rounds | 0) > 1 ? "s" : "") + "</span></div>"
+        + "<ol class='gp'>" + ps.map((p, k) => "<li><span class='gr'>" + (k + 1) + ".</span><span class='gn'>" + esc(p.n) + "</span><b>" + fmtN(p.s) + "</b></li>").join("") + "</ol></div>";
+    }).join("") : "<p class='mut small'>" + (all.length ? "Aucune partie pour ce filtre." : "Aucune partie terminée pour l'instant.") + "</p>";
+    $("gMore").classList.toggle("hidden", list.length <= S.gShown);
+  }
+  $("gSearch").oninput = () => { S.gShown = 50; renderGames(); };
+  $("gMore").onclick = () => { S.gShown += 50; renderGames(); };
 
   if (S.token) start(); else showLogin();
 })();

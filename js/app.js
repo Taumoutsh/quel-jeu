@@ -1362,7 +1362,15 @@
     }).join("");
     return "<tr><th>#</th><th>Jeu</th><th class='n'>Nom</th><th class='n'>Pos.</th><th class='n'>Total</th></tr>" + rows;
   }
-  function showFinal() { A.shownFinal = true; show("final"); renderFinal(); }
+  function showFinal() { A.shownFinal = true; show("final"); renderFinal(); sendSoloGame(); }
+  // historique des parties (page /admin du site Docker) : une partie solo terminée est envoyée une fois ; les
+  // parties à plusieurs sont relevées par le serveur lui-même quand l'hôte annonce la fin
+  function sendSoloGame() {
+    if (!SERVER || A.mode !== "solo" || !A.st || !A.gen || A.sentGen === A.gen) return;
+    A.sentGen = A.gen;
+    const body = { gen: A.gen, name: A.name, rounds: A.st.seq.length, score: totalOf(A.res) };
+    fetch("api/games", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => {});
+  }
   // podium de fin de partie : les marches montent (3e, 2e puis 1re), les joueurs s'y posent, les scores
   // défilent, puis confettis pour le gagnant. Animé une seule fois par partie ; ensuite simple mise à jour.
   function renderPodium(ps) {

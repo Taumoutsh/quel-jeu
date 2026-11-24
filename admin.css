@@ -53,3 +53,17 @@ body { overflow: visible; }
 .adm-com { background: var(--well); border-radius: 8px; padding: 7px 9px; font-size: 14px; white-space: pre-wrap; }
 input[type=password] { background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; width: 100%; outline: none; font-size: 16px; color: var(--txt); }
 @media (max-width: 860px) { .adm-map { height: 320px; } }
+/* sections (vues / parties) et historique des parties */
+.adm-secs { margin: 12px 0 14px; max-width: 460px; }
+.adm-gh h2 { margin: 0; }
+.adm-gh { margin-bottom: 4px; flex-wrap: wrap; }
+.adm-games { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.adm-game { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--well); display: flex; flex-direction: column; gap: 6px; }
+.adm-game .gh { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.adm-game .gh .grow { flex: 1; }
+.adm-game .gp .gr { color: var(--mut); min-width: 20px; }
+.adm-game .gp { margin: 0; padding-left: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 2px 18px; font-size: 14px; }
+.adm-game .gp li { display: flex; gap: 8px; min-width: 0; }
+.adm-game .gp .gn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-game .gp b { font-family: var(--fd); color: var(--acc); }
+#gMore { align-self: center; margin-top: 6px; }
