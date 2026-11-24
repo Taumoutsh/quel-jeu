@@ -16,6 +16,13 @@ const MAX_BODY = 512 * 1024;        // présence maximale (l'hôte y met l'état
 const MAX_PEERS = 16;
 // parties ouvertes en même temps (salles) : au-delà, la création d'une partie est refusée (QJ_MAX_PARTIES, 20 par défaut)
 const MAX_ROOMS = Math.max(1, parseInt(process.env.QJ_MAX_PARTIES, 10) || 20);
+// signal de vie : chaque page envoie sa présence toutes les 2 s. Une connexion silencieuse depuis LIVE_MS ne compte
+// plus (liste des salons publics, « un seul salon à la fois ») ; silencieuse depuis REAP_MS, elle est retirée.
+// Utile quand le navigateur ne prévient pas (onglet fermé depuis le sélecteur du téléphone, page gelée, Cloudflare
+// qui garde la connexion en direct ouverte). REAP_MS laisse passer un onglet caché que Chrome ralentit à un
+// signal par minute ; s'il revient, la page se reconnecte d'elle-même.
+const LIVE_MS = parseInt(process.env.QJ_LIVE_MS, 10) || 20000;
+const REAP_MS = parseInt(process.env.QJ_REAP_MS, 10) || 75000;
 const GRACE_MS = 15000;             // délai avant de retirer un joueur dont la connexion a coupé
 const ROOM_RE = /^qj-[a-z0-9]{1,12}$/, PEER_RE = /^[a-z0-9]{6,24}$/;
 
@@ -191,12 +198,17 @@ function getPeer(name, peer, newRoom) {
   let p = room.get(peer);
   if (!p) {
     if (room.size >= MAX_PEERS) return { err: 503 };
-    p = { presence: {}, clients: new Set(), timer: null, since: Date.now() }; room.set(peer, p);
+    p = { presence: {}, clients: new Set(), timer: null, since: Date.now(), seen: Date.now() }; room.set(peer, p);
     // pas encore de flux ouvert (arrivée par un envoi de présence) : retiré s'il ne se connecte jamais
     p.timer = setTimeout(() => removePeer(name, peer), GRACE_MS);
   }
   return p;
 }
+// connexions silencieuses depuis REAP_MS : retirées (fin de leur flux, salle supprimée si elle se vide)
+setInterval(() => {
+  const now = Date.now();
+  for (const [name, room] of [...rooms]) for (const [pid, p] of [...room]) if (now - (p.seen || 0) > REAP_MS) removePeer(name, pid);
+}, Math.min(5000, REAP_MS / 3)).unref();
 function removePeer(name, peer) {
   const room = rooms.get(name);
   if (!room || !room.has(peer)) return;
@@ -290,21 +302,27 @@ async function reportApi(req, res) {
 // de l'accueil (GET /api/public) en est tirée, sans rien garder d'autre en mémoire.
 const UID_RE = /^[a-z0-9]{12}$/;
 // présence de l'hôte d'une salle : celle qui porte l'état de la partie, au mandat le plus récent (relève d'hôte)
+const fresh = (p) => Date.now() - (p.seen || 0) < LIVE_MS;
 function hostOf(room) {
   let best = null;
   for (const p of room.values()) {
     const pr = p.presence || {};
-    if (pr.h !== 1 || !pr.st || typeof pr.st !== "object") continue;
+    if (pr.h !== 1 || !pr.st || typeof pr.st !== "object" || !fresh(p)) continue;
     if (!best || ((pr.st.term || 0) > (best.st.term || 0))) best = pr;
   }
   return best;
 }
-// salle dont ce joueur (identifiant de navigateur) est l'hôte, sauf `except` : un seul salon à la fois
+// salle dont ce joueur (identifiant de navigateur) est l'hôte, sauf `except` : un seul salon à la fois. Ses
+// connexions d'hôte silencieuses (page fermée sans prévenir) sont retirées au passage : ce salon-là est mort.
 function roomHostedBy(u, except) {
   if (!UID_RE.test(u || "")) return null;
-  for (const [name, room] of rooms) {
+  for (const [name, room] of [...rooms]) {
     if (name === except) continue;
-    for (const p of room.values()) if (p.presence && p.presence.u === u && p.presence.h === 1) return name;
+    for (const [pid, p] of [...room]) {
+      if (!p.presence || p.presence.u !== u || p.presence.h !== 1) continue;
+      if (fresh(p)) return name;
+      kicked.set(pid, Date.now()); removePeer(name, pid);
+    }
   }
   return null;
 }
@@ -316,7 +334,7 @@ function publicRooms(u) {
     const h = hostOf(room);
     if (!h || !h.st.cfg || h.st.cfg.pub !== 1) continue;
     const ids = new Set();
-    for (const p of room.values()) { const pr = p.presence || {}; if (pr.n) ids.add(UID_RE.test(pr.u || "") ? pr.u : p); }
+    for (const p of room.values()) { const pr = p.presence || {}; if (pr.n && fresh(p)) ids.add(UID_RE.test(pr.u || "") ? pr.u : p); }
     const st = h.st, n = Array.isArray(st.seq) ? st.seq.length : 0;
     out.push({
       code: codeOfRoom(name), n: String(h.n || "?").slice(0, 16), a: typeof h.a === "string" ? h.a.slice(0, 40) : null,
@@ -353,7 +371,7 @@ async function api(req, res, url) {
   if (action === "events" && req.method === "GET") {
     const p = getPeer(name, peer, newRoom);
     if (p.err) return refuse(res, p.err);
-    clearTimeout(p.timer); p.timer = null;
+    clearTimeout(p.timer); p.timer = null; p.seen = Date.now();
     // flux en direct : ni mise en tampon (Nginx : X-Accel-Buffering), ni compression ou transformation par un CDN
     // comme Cloudflare (no-transform, identity), qui retiendrait les messages ; un commentaire de 2 Ko force le départ.
     res.writeHead(200, { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache, no-store, no-transform", "Content-Encoding": "identity", "Connection": "keep-alive", "X-Accel-Buffering": "no" });
@@ -383,6 +401,7 @@ async function api(req, res, url) {
     }
     const p = getPeer(name, peer, newRoom);
     if (p.err) return refuse(res, p.err);
+    p.seen = Date.now();
     // numéro d'ordre : deux envois rapprochés peuvent arriver dans le désordre ; le plus ancien est ignoré
     const seq = Number(url.searchParams.get("s"));
     if (Number.isFinite(seq) && seq > 0) {
