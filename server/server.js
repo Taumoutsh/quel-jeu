@@ -174,7 +174,14 @@ function broadcast(name) {
 // joueur d'une salle ; newRoom : la salle peut être ouverte si elle n'existe pas (création d'une partie par
 // l'hôte, ?create=1). Rejoindre avec un code n'ouvre jamais de salle : un code inconnu ne prend pas de place.
 // Refus : { err: 404 } salle inconnue, { err: "full" } trop de parties ouvertes, { err: 503 } salle pleine.
+// connexions retirées à distance par leur joueur (« Le fermer et recréer ») : refusées 10 min, même si la salle a
+// disparu entre-temps (l'ancien onglet, encore ouvert, ne revient ni dans le salon ni ne le recrée)
+const kicked = new Map();
+const KICK_MS = 10 * 60 * 1000;
 function getPeer(name, peer, newRoom) {
+  const k = kicked.get(peer);
+  if (k && Date.now() - k < KICK_MS) return { err: 410 };
+  if (k) kicked.delete(peer);
   let room = rooms.get(name);
   if (!room) {
     if (!newRoom) return { err: 404 };
@@ -279,15 +286,63 @@ async function reportApi(req, res) {
   return json(res, 200, { ok: true });
 }
 
+// ---- salons publics : l'hôte choisit « Public » dans les réglages (st.cfg.pub = 1, dans sa présence) ; la liste
+// de l'accueil (GET /api/public) en est tirée, sans rien garder d'autre en mémoire.
+const UID_RE = /^[a-z0-9]{12}$/;
+// présence de l'hôte d'une salle : celle qui porte l'état de la partie, au mandat le plus récent (relève d'hôte)
+function hostOf(room) {
+  let best = null;
+  for (const p of room.values()) {
+    const pr = p.presence || {};
+    if (pr.h !== 1 || !pr.st || typeof pr.st !== "object") continue;
+    if (!best || ((pr.st.term || 0) > (best.st.term || 0))) best = pr;
+  }
+  return best;
+}
+// salle dont ce joueur (identifiant de navigateur) est l'hôte, sauf `except` : un seul salon à la fois
+function roomHostedBy(u, except) {
+  if (!UID_RE.test(u || "")) return null;
+  for (const [name, room] of rooms) {
+    if (name === except) continue;
+    for (const p of room.values()) if (p.presence && p.presence.u === u && p.presence.h === 1) return name;
+  }
+  return null;
+}
+const codeOfRoom = (name) => name.slice(3).toUpperCase();
+function publicRooms(u) {
+  const out = [];
+  for (const [name, room] of rooms) {
+    if (!/^qj-[a-z0-9]{5}$/.test(name)) continue;
+    const h = hostOf(room);
+    if (!h || !h.st.cfg || h.st.cfg.pub !== 1) continue;
+    const ids = new Set();
+    for (const p of room.values()) { const pr = p.presence || {}; if (pr.n) ids.add(UID_RE.test(pr.u || "") ? pr.u : p); }
+    const st = h.st, n = Array.isArray(st.seq) ? st.seq.length : 0;
+    out.push({
+      code: codeOfRoom(name), n: String(h.n || "?").slice(0, 16), a: typeof h.a === "string" ? h.a.slice(0, 40) : null,
+      c: /^#[0-9a-f]{6}$/i.test(h.c || "") ? h.c : null, players: ids.size,
+      rounds: st.ph === "lobby" ? (st.cfg.rounds | 0) : n, time: st.cfg.time | 0,
+      ph: ["lobby", "play", "rev", "end"].includes(st.ph) ? st.ph : "lobby", i: (st.i | 0) + 1,
+      mine: !!(u && h.u === u), since: Math.min(...[...room.values()].map((p) => p.since || Date.now())),
+    });
+  }
+  // salons en attente d'abord, puis parties en cours, puis terminées ; à égalité, le plus ancien d'abord
+  const rank = { lobby: 0, end: 1, play: 2, rev: 2 };
+  out.sort((a, b) => (rank[a.ph] - rank[b.ph]) || (a.since - b.since));
+  return out.map(({ since, ...r }) => r);
+}
+
 function refuse(res, err) {
   if (err === "full") return json(res, 503, { error: "trop de parties en cours", code: "full", max: MAX_ROOMS });
   if (err === 404) return json(res, 404, { error: "partie introuvable", code: "absent" });
+  if (err === 410) return json(res, 410, { error: "tu as quitté ce salon", code: "parti" });
   return json(res, 503, { error: "salle pleine", code: "salle" });
 }
 
 async function api(req, res, url) {
-  const m = url.pathname.match(/^\/api\/rooms\/([^/]+)\/(events|presence|leave|state)$/);
+  const m = url.pathname.match(/^\/api\/rooms\/([^/]+)\/(events|presence|leave|state|close)$/);
   if (url.pathname === "/api/ping") return json(res, 200, { ok: true });
+  if (url.pathname === "/api/public" && req.method === "GET") return json(res, 200, { rooms: publicRooms(url.searchParams.get("u") || "") });
   if (url.pathname === "/api/reports") return reportApi(req, res);
   if (url.pathname.startsWith("/api/admin/")) return adminApi(req, res, url);
   if (!m) return json(res, 404, { error: "introuvable" });
@@ -320,6 +375,12 @@ async function api(req, res, url) {
     let body;
     try { body = JSON.parse(await readBody(req)); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
     if (!body || typeof body !== "object" || Array.isArray(body)) return json(res, 400, { error: "objet attendu" });
+    // un seul salon à la fois : créer une partie quand on est déjà l'hôte d'une autre salle est refusé (la page
+    // propose d'y retourner, ou de la quitter puis de recréer)
+    if (newRoom && !rooms.has(name)) {
+      const other = roomHostedBy(body.u, name);
+      if (other) return json(res, 409, { error: "tu as déjà un salon ouvert", code: "already", room: codeOfRoom(other) });
+    }
     const p = getPeer(name, peer, newRoom);
     if (p.err) return refuse(res, p.err);
     // numéro d'ordre : deux envois rapprochés peuvent arriver dans le désordre ; le plus ancien est ignoré
@@ -338,6 +399,17 @@ async function api(req, res, url) {
     if (!room) return json(res, 200, { peers: {}, meta: {}, v: 0, rid: "vide" });
     res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store, no-transform" });
     return res.end(snapshot(room));
+  }
+  // quitter à distance son ancien salon (« Le fermer et recréer ») : toutes les connexions de ce joueur
+  // (identifiant de navigateur, ?peer=) en sont retirées ; s'il reste d'autres joueurs, l'un d'eux devient hôte
+  if (action === "close" && req.method === "POST") {
+    const room = rooms.get(name);
+    if (room && UID_RE.test(peer)) for (const [pid, p] of [...room]) if (p.presence && p.presence.u === peer) {
+      kicked.set(pid, Date.now());
+      if (kicked.size > 5000) for (const [id, t] of kicked) if (Date.now() - t >= KICK_MS) kicked.delete(id);
+      removePeer(name, pid);
+    }
+    return json(res, 200, { ok: true });
   }
   if (action === "leave" && req.method === "POST") {
     removePeer(name, peer);

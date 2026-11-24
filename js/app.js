@@ -47,7 +47,7 @@
   const A = {
     name: LS.get("name", ""),
     color: LS.get("color", COLORS[(Math.random() * COLORS.length) | 0]),
-    cfg: Object.assign({ rounds: 5, time: 120, tries: 3, hints: 1, speed: 1, pack: "real" }, LS.get("cfg", {})),
+    cfg: Object.assign({ rounds: 5, time: 120, tries: 3, hints: 1, speed: 1, pack: "real", pub: 0 }, LS.get("cfg", {})),
     caps: { db: null, room: null, assets: null, user: null },
     lib: { scenes: {}, maps: {}, games: {} }, libReady: false,
     matcher: null,
@@ -288,6 +288,8 @@
     }
     $("noRoom").classList.toggle("hidden", !!A.caps.room);
     $("bHost").disabled = !A.caps.room; $("bJoin").disabled = !A.caps.room;
+    $("pubCard").classList.toggle("hidden", !pubOn());
+    pubPoll();
     subLib();
     renderLibInfo();
     // lien de partie : on entre directement dans le salon ; une partie retenue par l'onglet (rechargement)
@@ -376,7 +378,7 @@
   async function joinRoom(code, create) {
     const room = A.caps.room;
     if (!room) throw new Error("Multijoueur indisponible");
-    const nr = await room.join("qj-" + code.toLowerCase(), create ? { create: true } : undefined);
+    const nr = await room.join("qj-" + code.toLowerCase(), create ? { create: true, u: A.uid } : undefined);
     A.nroom = nr; A.code = code; A.peers = nr.peers();
     A.unPeers = nr.onPeers((ch) => { A.peers = ch.peers; onPeers(); }, (e) => toast("Connexion à la partie perdue (" + e.code + ")", 5000));
   }
@@ -733,13 +735,16 @@
   async function startHost() {
     ensureName(); await leaveRoom();
     const code = genCode();
-    hostError(""); joinError("");
+    hostError(""); joinError(""); hostDup(null);
     try { await joinRoom(code, true); } catch (e) {
+      // site auto-hébergé : un seul salon à la fois par joueur (il est déjà l'hôte d'un autre salon ouvert)
+      if (e.code === "already" && e.room) { await leaveRoom(); hostDup(e.room); return; }
       // site auto-hébergé : nombre de parties simultanées limité (QJ_MAX_PARTIES)
       hostError(e.code === "full" ? "Trop de parties en cours sur le serveur (" + (e.max || 20) + " au maximum). Réessaie dans quelques minutes."
         : "Impossible de créer la partie : " + (e.code || e.message));
       return;
     }
+    A.cfg.pub = 0; // un nouveau salon est privé ; l'hôte le rend public dans les réglages
     A.mode = "host"; A.gen = rid(8); A.res = []; A.ready = false;
     A.st = { gen: A.gen, ph: "lobby", cfg: Object.assign({}, A.cfg), seq: [], i: -1, dl: 0 };
     setLink(code);
@@ -748,6 +753,48 @@
   // rejoindre : on se connecte à la salle sans s'y montrer, on vérifie qu'un hôte y tient une partie, et
   // seulement alors on y entre ; sinon on repart et on le dit. Le bouton montre le chargement entre-temps.
   function hostError(msg) { $("hostErr").textContent = msg || ""; $("hostErr").classList.toggle("hidden", !msg); }
+  // un seul salon à la fois (site Docker) : y retourner, ou le quitter à distance puis en créer un nouveau
+  function hostDup(code) {
+    $("hostDup").classList.toggle("hidden", !code);
+    if (!code) return;
+    $("dupCode").textContent = code;
+    $("bDupBack").onclick = () => { hostDup(null); joinPublic(code); };
+    $("bDupClose").onclick = async () => {
+      $("bDupClose").disabled = true;
+      try { await fetch("api/rooms/qj-" + code.toLowerCase() + "/close?peer=" + A.uid, { method: "POST" }); } catch (e) { /* hors ligne */ }
+      $("bDupClose").disabled = false;
+      hostDup(null); startHost();
+    };
+  }
+  // ---- salons publics (site Docker) : liste de l'accueil, relue toutes les 3 s tant que l'accueil est affiché
+  const LOCK_OPEN = '<svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 7.7-1.6"/></svg>';
+  const LOCK_SHUT = '<svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  const pubOn = () => !!(SERVER && A.caps.room);
+  let plT = null, pubBusy = false;
+  function pubPoll() {
+    clearTimeout(plT);
+    plT = setTimeout(pubPoll, 3000);
+    if (!pubOn() || A.screen !== "home" || document.visibilityState === "hidden" || pubBusy) return;
+    pubBusy = true;
+    fetch("api/public?u=" + A.uid, { cache: "no-store" }).then((r) => r.json()).then((d) => renderPublic(d.rooms || [])).catch(() => {}).finally(() => { pubBusy = false; });
+  }
+  function renderPublic(list) {
+    $("pubCard").classList.toggle("hidden", !pubOn());
+    const n = list.length;
+    setHTML($("pubCount"), n ? "<i></i>" + n + " ouvert" + (n > 1 ? "s" : "") : "");
+    const plural = (k, w) => k + " " + w + (k > 1 ? "s" : "");
+    setHTML($("pubList"), !list.length ? "<p class='mut small pubempty'>Aucun salon public pour l'instant.</p>" : list.map((r) => {
+      const who = { name: r.n, color: r.c || "#8b9fb1", avatar: avaOK(r.a) ? r.a : null };
+      const badge = r.ph === "lobby" ? "<span class='pbadge'>En attente</span>"
+        : r.ph === "end" ? "<span class='pbadge end'>Partie terminée</span>"
+        : "<span class='pbadge live'>En cours · manche " + Math.min(r.i, r.rounds) + "/" + r.rounds + "</span>";
+      return "<div class='pubroom" + (r.mine ? " mine" : "") + "'>" + ava(who, 38) + "<div class='pinfo'><b>" + (r.mine ? "Ton salon" : esc(r.n)) + "</b><span class='mut'>"
+        + plural(r.rounds, "manche") + " · " + (r.time ? r.time / 60 + " min" : "∞") + "</span><span class='pstate'>" + badge + "<span class='mut'>" + plural(r.players, "joueur") + "</span></span></div>"
+        + "<button type='button' class='btn sm sea fill' data-code='" + esc(r.code) + "'>" + (r.mine ? "Y retourner" : "Rejoindre") + "</button></div>";
+    }).join(""));
+  }
+  // rejoindre un salon de la liste (ou son propre salon) : comme avec un code
+  function joinPublic(code) { $("joinCode").value = code; startJoin(); }
   function joinError(msg) { $("joinErr").textContent = msg || ""; $("joinErr").classList.toggle("hidden", !msg); }
   function joinBusy(on) {
     $("bJoin").disabled = $("joinCode").disabled = $("bHost").disabled = on;
@@ -807,7 +854,7 @@
     await leaveRoom();
     A.mode = null; A.st = null; A.R = null; A._stjs = null;
     setLink(null);
-    renderHome(); show("home");
+    renderHome(); show("home"); pubPoll(); // liste des salons publics relue tout de suite
   }
 
   // ------------------------------------------------------------------ salon / réglages
@@ -847,6 +894,12 @@
     avail.mix = avail.lib || avail.real;
     if (A.mode !== "guest" && !avail[cfg.pack]) { cfg.pack = "demo"; }
     $("packSetting").classList.toggle("hidden", !!SERVER);
+    // visibilité du salon : seulement à plusieurs, sur le site Docker (la liste des salons publics vient du serveur)
+    const multi = A.mode === "host" || A.mode === "guest", pub = cfg.pub === 1;
+    $("pubSetting").classList.toggle("hidden", !(SERVER && multi));
+    $("pubBadge").classList.toggle("hidden", !(SERVER && multi));
+    $("pubBadge").classList.toggle("on", pub);
+    setHTML($("pubBadge"), (pub ? LOCK_OPEN + "Public" : LOCK_SHUT + "Privé"));
     const max = Math.max(1, Math.min(15, pool(cfg.pack).length));
     if (A.mode !== "guest" && cfg.rounds > max) cfg.rounds = max;
     $("sRounds").textContent = cfg.rounds;
@@ -1613,6 +1666,7 @@
     $("bSolo").onclick = startSolo;
     $("bHost").onclick = startHost;
     $("bJoin").onclick = startJoin;
+    $("pubList").addEventListener("click", (e) => { const b = e.target.closest("button[data-code]"); if (b && !joining) joinPublic(b.dataset.code); });
     $("joinCode").addEventListener("keydown", (e) => { if (e.key === "Enter") startJoin(); });
     $("joinCode").addEventListener("input", (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); joinError(""); });
     $("bLib").onclick = openLibrary;

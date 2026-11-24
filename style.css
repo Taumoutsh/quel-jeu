@@ -454,3 +454,35 @@ svg.bolt.inl { width: 1em; height: 1em; vertical-align: -.15em; color: var(--acc
 .bst svg.bolt, .bstin svg.bolt { width: 11px; height: 11px; vertical-align: -1px; margin-right: 1px; }
 .bst { display: block; font-size: 11px; font-weight: 600; color: var(--acc); white-space: nowrap; }
 .bstin { color: var(--acc); font-weight: 600; white-space: nowrap; }
+
+/* ---- salons publics (site Docker) : cadenas ouvert = public, fermé = privé ---- */
+svg.lock { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+svg.lock.big { width: 21px; height: 21px; color: var(--sea); }
+.seg-ico button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.sethint { margin: 7px 2px 0; line-height: 1.45; }
+.codehead { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.codehead h3 { margin: 0; flex: 1; }
+.pubbadge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px; color: var(--mut); background: rgba(150, 190, 220, .1); }
+.pubbadge.on { color: var(--sea); background: var(--sea-soft); }
+.pubbadge svg.lock { width: 14px; height: 14px; }
+.pubhead { display: flex; align-items: center; gap: 8px; }
+.pubhead h2 { margin: 0; }
+.pubcount { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.pubcount i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); }
+.publist { display: flex; flex-direction: column; gap: 8px; }
+.pubempty { text-align: center; padding: 10px 0 4px; margin: 0; }
+.pubroom { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--well); border: 1px solid var(--line-soft); }
+.pubroom.mine { border-color: var(--acc-ring); background: rgba(244, 183, 64, .06); }
+.pubroom .pinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.pubroom .pinfo b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pubroom .pinfo .mut { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pubroom .pstate { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.pbadge { flex: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; padding: 2px 7px; border-radius: 999px; background: var(--sea-soft); color: var(--sea); }
+.pbadge.live { background: var(--acc-soft); color: var(--acc); }
+.pbadge.end { background: rgba(150, 190, 220, .1); color: var(--mut); }
+.pubroom .btn { flex: none; padding-left: 12px; padding-right: 12px; }
+.dupbox { border: 1px solid var(--acc-ring); background: rgba(244, 183, 64, .1); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.dupbox p { margin: 0; font-size: 14px; line-height: 1.45; }
+.dupcode { font-family: var(--fd); letter-spacing: 2px; color: var(--acc); }
+.dupbox .row { gap: 8px; }
+.dupbox .row .btn { flex: 1 1 0; min-width: 0; padding-left: 8px; padding-right: 8px; }

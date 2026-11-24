@@ -24,7 +24,7 @@ Un **autre jeu précis** (« GTA 4 » au lieu de GTA V) compte comme une erreur.
 Les chiffres romains et arabes sont équivalents (GTA V = GTA 5), les accents, la ponctuation et les petites fautes de frappe sont tolérés.
 Avec les suggestions activées, une liste de choix s'affiche quand il faut préciser. Un titre choisi dans cette liste, ou dans les suggestions, compte tel quel : juste, ou raté si c'est un autre jeu.
 
-**Réglages** : nombre de manches (1 à 15), temps par manche (1, 2, 3 ou 5 min, ou illimité), nombre d'essais pour le nom (1, 3, 5 ou illimité), suggestions oui/non, boost de rapidité oui/non, images (pack démo, ma bibliothèque, mélange).
+**Réglages** : nombre de manches (1 à 15), temps par manche (1, 2, 3 ou 5 min, ou illimité), nombre d'essais pour le nom (1, 3, 5 ou illimité), suggestions oui/non, boost de rapidité oui/non, visibilité du salon public/privé (à plusieurs, site auto-hébergé), images (pack démo, ma bibliothèque, mélange).
 
 ## Multijoueur
 
@@ -32,6 +32,7 @@ Avec les suggestions activées, une liste de choix s'affiche quand il faut préc
 - Les amis ouvrent la même page, tapent le code et « Rejoindre ».
 - L'hôte règle la partie et la lance. Tout le monde joue la même vue en même temps. La manche se termine quand tout le monde a fini ou quand le temps est écoulé. L'hôte peut aussi la terminer à la main.
 - Si l'hôte part, un autre joueur peut reprendre le rôle.
+- **Salons publics** (site auto-hébergé) : dans les réglages, l'hôte choisit « Public » (cadenas ouvert) ou « Privé » (cadenas fermé, par défaut). Un salon public apparaît sur l'accueil, dans « Salons publics », où l'on entre d'un appui, sans code ; la liste se met à jour toute seule (salons en attente d'abord, puis parties en cours). Un joueur ne tient qu'un salon à la fois : s'il en a déjà un ouvert, il peut y retourner ou le fermer pour en créer un autre.
 
 Le multijoueur utilise la capacité « room » des artefacts Claude, ou les salles du serveur Docker (`server/server.js`) quand le site est auto-hébergé : chaque joueur publie son état (sa présence) dans une salle nommée `qj-<code>`. L'hôte publie l'état de la partie, les autres le suivent. Rien n'est stocké durablement côté serveur.
 Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact (partagé depuis claude.ai) ou ton site Docker.

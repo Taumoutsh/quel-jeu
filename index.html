@@ -50,6 +50,11 @@
         <button class="tile group" id="bHost" type="button"><svg class="tile-fig" viewBox="0 0 64 64" aria-hidden="true"><g class="f2" transform="translate(15 37) scale(0.82)"><circle cx="0" cy="-14.5" r="9.5"/><path d="M-15 15 C-15 3 -8 -1 0 -1 C8 -1 15 3 15 15 Q15 19 11 19 L-11 19 Q-15 19 -15 15 Z"/></g><g class="f2" transform="translate(49 37) scale(0.82)"><circle cx="0" cy="-14.5" r="9.5"/><path d="M-15 15 C-15 3 -8 -1 0 -1 C8 -1 15 3 15 15 Q15 19 11 19 L-11 19 Q-15 19 -15 15 Z"/></g><g class="f1" transform="translate(32 34) scale(1.05)"><circle cx="0" cy="-14.5" r="9.5"/><path d="M-15 15 C-15 3 -8 -1 0 -1 C8 -1 15 3 15 15 Q15 19 11 19 L-11 19 Q-15 19 -15 15 Z"/></g></svg><b>En groupe</b><small>Créer une partie</small></button>
       </div>
       <div class="notice small bad hidden" id="hostErr" role="alert"></div>
+      <!-- un seul salon à la fois : le joueur est déjà l'hôte d'un salon ouvert (site Docker) -->
+      <div class="dupbox hidden" id="hostDup" role="alert">
+        <p>Tu as déjà un salon ouvert, <b class="dupcode" id="dupCode">-----</b>. Un seul salon à la fois : retournes-y, ou ferme-le pour en créer un nouveau.</p>
+        <div class="row"><button class="btn sm" id="bDupClose" type="button">Le fermer et recréer</button><button class="btn sm sea fill" id="bDupBack" type="button">Y retourner</button></div>
+      </div>
       <div class="sep"><span>ou rejoindre avec un code</span></div>
       <div class="join">
         <input type="text" class="code" id="joinCode" maxlength="5" placeholder="CODE" autocomplete="off" aria-label="Code de la partie">
@@ -57,6 +62,13 @@
       </div>
       <div class="notice small bad hidden" id="joinErr" role="alert"></div>
       <div class="notice small hidden" id="noRoom">Le multijoueur n'est pas disponible ici : il faut ouvrir l'artefact sur claude.ai (connecté) ou le site déployé avec Docker.</div>
+    </div>
+
+    <!-- salons publics (site Docker seulement) : liste tenue à jour toute seule, on y entre sans code -->
+    <div class="card col hidden" id="pubCard">
+      <div class="pubhead"><svg class="lock big" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 7.7-1.6"/></svg><h2 class="grow">Salons publics</h2><span class="mut small pubcount" id="pubCount"></span></div>
+      <p class="mut small" style="margin:-4px 0 0">Rejoins une partie ouverte à tous, sans code.</p>
+      <div class="publist" id="pubList"></div>
     </div>
 
     <div class="card howto">
@@ -85,7 +97,7 @@
     <div class="row"><button class="btn ghost sm" id="bLobbyBack">← Retour</button><div class="grow"></div></div>
 
     <div class="card hidden" id="codeCard">
-      <h3>Code de la partie</h3>
+      <div class="codehead"><h3>Code de la partie</h3><span class="pubbadge hidden" id="pubBadge"></span></div>
       <div class="codebox" id="codeBox">-----</div>
       <div class="row copyrow"><button class="btn sm" id="bCopy">Copier le code</button><button class="btn sm" id="bCopyLink">Copier le lien</button></div>
     </div>
@@ -98,6 +110,11 @@
     <div class="card">
       <h2>Réglages de la partie</h2>
       <div class="settings" id="settings">
+        <div id="pubSetting" class="hidden">
+          <div class="lab"><span>Visibilité du salon</span></div>
+          <div class="seg seg-ico" data-k="pub"><button data-v="1"><svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 7.7-1.6"/></svg>Public</button><button data-v="0"><svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Privé</button></div>
+          <p class="mut small sethint">Public : ton salon apparaît sur l'accueil, tout le monde peut entrer sans code. Privé : seulement avec le code ou le lien.</p>
+        </div>
         <div>
           <div class="lab"><span>Nombre de manches</span></div>
           <div class="stepper"><button class="btn sm" data-step="-1">−</button><b id="sRounds">5</b><button class="btn sm" data-step="1">+</button><span class="mut small" id="poolInfo"></span></div>

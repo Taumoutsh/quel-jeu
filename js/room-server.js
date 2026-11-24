@@ -10,7 +10,8 @@
   const rid = () => { let s = ""; const a = "abcdefghijklmnopqrstuvwxyz0123456789"; for (let i = 0; i < 16; i++) s += a[(Math.random() * a.length) | 0]; return s; };
 
   const room = {
-    // opts.create : ouvre la salle si elle n'existe pas (création d'une partie) ; sinon, on ne fait qu'y entrer
+    // opts.create : ouvre la salle si elle n'existe pas (création d'une partie) ; sinon, on ne fait qu'y entrer.
+    // opts.u : identifiant du joueur, envoyé à la création (un seul salon à la fois : refus « already »)
     async join(name, opts) {
       const me = rid();
       const base = "api/rooms/" + encodeURIComponent(name) + "/";
@@ -27,10 +28,10 @@
       const post = (what, body) => fetch(base + what + "?peer=" + me + (what === "presence" ? "&s=" + (++seq) + cr() : ""), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}), keepalive: what === "leave" });
       // création d'une partie : la salle est réservée tout de suite, ou refusée (trop de parties ouvertes)
       if (create) {
-        const r = await post("presence", {});
+        const r = await post("presence", opts.u ? { u: opts.u } : {});
         if (!r.ok) {
           const d = await r.json().catch(() => ({}));
-          throw Object.assign(new Error(d.error || "refusé"), { code: d.code || String(r.status), max: d.max });
+          throw Object.assign(new Error(d.error || "refusé"), { code: d.code || String(r.status), max: d.max, room: d.room });
         }
       }
 
