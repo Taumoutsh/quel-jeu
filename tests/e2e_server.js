@@ -1,6 +1,6 @@
 // Partie à deux joueurs contre le vrai serveur (server/server.js), dans deux navigateurs séparés.
 // Depuis la racine du dépôt : node tests/e2e_server.js /tmp/qj
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");

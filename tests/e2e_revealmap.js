@@ -1,6 +1,6 @@
 // Carte des résultats : un zoom ou un déplacement à la souris n'est plus annulé par les mises à jour des joueurs.
 // Depuis la racine du dépôt : node tests/e2e_revealmap.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8817, URL = "http://localhost:" + PORT + "/";

@@ -2,7 +2,7 @@
 // entrée sans code, étiquette Public / Privé sur la carte du code, un seul salon à la fois par joueur
 // (« Y retourner », « Le fermer et recréer » : l'ancienne connexion ne revient pas).
 // Depuis la racine du dépôt : node tests/e2e_public.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8876, URL = "http://localhost:" + PORT + "/";

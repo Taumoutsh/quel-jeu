@@ -4,7 +4,7 @@
 // Aussi : doigt levé après un petit roulement du pouce (< 10 px) avec geste annulé par le navigateur
 // (pointercancel, page qui défile avec le clavier) ; un vrai glissement ne choisit toujours rien.
 // Depuis la racine du dépôt : node tests/e2e_tapblur.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8871, URL = "http://localhost:" + PORT + "/";

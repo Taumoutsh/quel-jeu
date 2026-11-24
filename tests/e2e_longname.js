@@ -1,7 +1,7 @@
 // Pseudos longs (16 lettres larges) : le tableau des résultats tient dans sa carte (un nom long poussait les
 // colonnes hors de l'écran), et dans le salon le nom s'arrête avant le crayon et les étiquettes.
 // Depuis la racine du dépôt : node tests/e2e_longname.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8845, URL = "http://localhost:" + PORT + "/";

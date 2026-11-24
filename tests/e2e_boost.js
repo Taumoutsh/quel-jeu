@@ -2,7 +2,7 @@
 // multiplié par la justesse du repère. Gélule « Boost » (éclair en SVG) sans chiffre pendant la manche, contour doré qui se retire par la droite ; « Boost +n » à la
 // validation ; « n » avec l’éclair à côté du score de la manche dans les résultats. Réglage « Non » : ni jauge ni boost.
 // Depuis la racine du dépôt : node tests/e2e_boost.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8866, URL = "http://localhost:" + PORT + "/";

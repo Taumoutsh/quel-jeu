@@ -2,7 +2,7 @@
 // l'écran des résultats ; il part par le bouton : relève ; joueur parti avant d'avoir répondu, une seule joueuse
 // restante : classement complet ; hôte parti par le bouton : relève en pleine manche.
 // Depuis la racine du dépôt : node tests/e2e_host2.js /tmp/qj
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");

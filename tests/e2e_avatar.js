@@ -1,6 +1,6 @@
 // Éditeur d'avatar : rangées à flèches et pastilles, ancien avatar accepté, Annuler / Terminé, avatar complet vu des autres.
 // Depuis la racine du dépôt : node tests/e2e_avatar.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8825, URL = "http://localhost:" + PORT + "/";

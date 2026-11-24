@@ -2,7 +2,7 @@
 // « Manche suivante » ; leur appui fait passer la page de l'hôte (toujours en marche) à la manche suivante,
 // sans changer d'hôte. Tant que l'hôte est sur la page, les invités attendent.
 // Depuis la racine du dépôt : node tests/e2e_awaynext.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8859, URL = "http://localhost:" + PORT + "/";

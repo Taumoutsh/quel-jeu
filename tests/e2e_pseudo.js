@@ -1,6 +1,6 @@
 // Pseudo laissé vide : un pseudo aléatoire (« Renard Rusé »…) au lieu de « Joueur 42 », en solo comme à
 // plusieurs, gardé pour la suite. Depuis la racine du dépôt : node tests/e2e_pseudo.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8835, URL = "http://localhost:" + PORT + "/";

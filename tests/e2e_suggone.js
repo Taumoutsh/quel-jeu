@@ -2,7 +2,7 @@
 // clavier valide le mot en cours (autocorrection) pendant le toucher : la saisie qui en résulte reconstruisait
 // la liste sous le doigt et le tap était perdu.
 // Depuis la racine du dépôt : node tests/e2e_suggone.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8849, URL = "http://localhost:" + PORT + "/";

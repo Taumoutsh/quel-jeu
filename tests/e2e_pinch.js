@@ -1,6 +1,6 @@
 // Téléphone : pincement sur la capture et les cartes (zoom sous les doigts, glisser à deux doigts, relâche d'un doigt), carte réduite.
 // Depuis la racine du dépôt : node tests/e2e_pinch.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8820, URL = "http://localhost:" + PORT + "/";

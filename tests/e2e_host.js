@@ -1,6 +1,6 @@
 // Relève de l'hôte, départs et arrivées en cours de partie (serveur réel, 4 navigateurs).
 // Depuis la racine du dépôt : node tests/e2e_host.js /tmp/qj
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
@@ -80,7 +80,7 @@ async function until(fn, ms, step) { const t0 = Date.now(); while (Date.now() - 
     check(/ 3\/3 /.test(row("Alice")), "classement : Alice 3/3");
     check(!rows.some((r) => /parti|arrivé/.test(r)), "pas de mention parti / arrivé");
     const recap = (await L.p.innerText("#finSolo")).replace(/\s+/g, " ");
-    check(/sur 4\s?000 points possibles/.test(recap) && /2\/2 jeux trouvés/.test(recap), "récapitulatif de Léa (arrivée en cours) sur ses 2 manches : « " + recap + " »");
+    check(/sur 5\s?000 points possibles/.test(recap) && /2\/2 jeux trouvés/.test(recap), "récapitulatif de Léa (arrivée en cours) sur ses 2 manches : « " + recap + " »");
 
     // l'ancien hôte revient : il redevient simple joueur
     await H.ctx.setOffline(false);

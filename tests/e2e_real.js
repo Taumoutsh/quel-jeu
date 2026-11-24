@@ -1,6 +1,6 @@
 // Partie solo avec le pack « Vrais jeux » (images téléchargées par tools/fetch_packs.py).
 // Depuis la racine : python3 -m http.server 8765 & node tests/e2e_real.js /tmp/qj
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const fs = require("fs");
 const OUT = process.argv[2] || "/tmp/qj";
 fs.mkdirSync(OUT, { recursive: true });

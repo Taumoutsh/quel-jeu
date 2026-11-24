@@ -2,7 +2,7 @@
 // ouvrir le lien mène directement dans le salon (sans passer par l'accueil ni cliquer sur « Rejoindre ») ;
 // un lien vers une partie qui n'existe pas ramène à l'accueil avec un message.
 // Depuis la racine du dépôt : node tests/e2e_link.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const PORT = 8812, URL = "http://localhost:" + PORT + "/";
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));

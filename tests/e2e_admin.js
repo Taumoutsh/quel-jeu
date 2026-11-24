@@ -1,6 +1,6 @@
 // Signalement d'une erreur par un joueur, puis correction dans la page /admin (serveur réel).
 // Depuis la racine du dépôt : node tests/e2e_admin.js /tmp/qj
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const fs = require("fs");
 const os = require("os");
@@ -66,7 +66,7 @@ const crypto = require("crypto");
     const a = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
     a.on("pageerror", (e) => errs.push(String(e)));
     await a.goto(URL + "admin"); await wait(500);
-    await a.fill("#pwd", "faux"); await a.click("#login button[type=submit]"); await wait(300);
+    await a.fill("#pwd", "faux"); await a.click("#login button[type=submit]"); await wait(1600);
     check((await a.textContent("#loginMsg")).includes("incorrect"), "mauvais mot de passe refusé");
     await a.fill("#pwd", "motdepasse-test"); await a.click("#login button[type=submit]"); await wait(800);
     check(await a.isVisible("#main"), "connexion avec le mot de passe du .env");

@@ -1,6 +1,6 @@
 // Salon : « Copier le code » et « Copier le lien » côte à côte ; le lien copié ouvre la même partie.
 // Depuis la racine du dépôt : node tests/e2e_copylink.js [dossier_captures]
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8829, URL = "http://localhost:" + PORT + "/";

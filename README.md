@@ -52,6 +52,19 @@ Pour jouer ensemble, tes amis doivent pouvoir ouvrir la même page : l'artefact 
 - Les corrections sont gardées par le serveur (volume Docker `gamespotter-data`, fichiers `reports.json` et `overrides.json`) et appliquées au pack servi aux joueurs, sans toucher au dépôt. « Exporter les corrections » les télécharge en JSON pour les reporter dans `packs/vrais-jeux.js`.
 - **Parties jouées** (deuxième onglet de `/admin`) : historique des parties terminées, les plus récentes d'abord, avec la date et l'heure, Solo ou Groupe (et le code du salon), le nombre de joueurs et de manches, et le classement avec les pseudos et les scores ; filtre par pseudo ou code. Gardé dans `games.json` (5 000 parties au plus). Une partie abandonnée avant le classement final n'y figure pas.
 
+## Sécurité (site Docker)
+Ce que fait le serveur :
+- **Limites par adresse** (connexion admin : 8 échecs par quart d'heure, et 1 s d'attente après chaque échec ; signalements ; parties ; création de salons : 15 par adresse en 10 minutes). L'adresse vient de `CF-Connecting-IP` (posé par Cloudflare), sinon de la dernière entrée de `X-Forwarded-For` (posée par NPM), et ces en-têtes ne sont crus que si la connexion vient du réseau privé (NPM dans Docker). `QJ_TRUST_CF=0` dans `.env` ignore `CF-Connecting-IP` (site sans Cloudflare).
+- **En-têtes** : `Content-Security-Policy` (scripts et connexions limités au site, polices Google), `X-Frame-Options: DENY` et `frame-ancestors 'none'` (pas d'affichage dans un cadre, donc pas de clickjacking de `/admin`), `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS quand la page arrive en HTTPS.
+- **Présences validées** : seuls les champs publiés par la page passent, aux valeurs bornées (1 000 points pour le nom, 1 000 pour la position, 500 de boost par manche) ; un joueur ne peut pas se déclarer hôte tant que l'hôte est connecté et actif ; une partie n'entre dans l'historique que si le serveur l'a vue en cours et qu'elle a duré au moins 2 s par manche.
+- Déjà en place : fichiers privés (`.env`, `data/`, `server/`, `.git`) refusés, traversée de répertoire bloquée, mot de passe comparé en temps constant, tailles des envois bornées.
+
+À faire de ton côté (hors code) :
+- **Mot de passe admin long et aléatoire** dans `QJ_ADMIN_PASSWORD` (par exemple `openssl rand -base64 24`), puis `docker compose up -d`.
+- **N'ouvrir NPM qu'à Cloudflare** : sinon quelqu'un qui connaît l'adresse du serveur peut le joindre en direct et écrire lui-même `CF-Connecting-IP`. Pare-feu (ufw, iptables, ou celui de l'hébergeur) : ports 80/443 ouverts seulement aux plages publiées sur https://www.cloudflare.com/ips/.
+- Garder le port 6103 fermé à Internet (il ne sert qu'en local).
+- Limite connue : le jeu reste vérifié dans le navigateur ; un tricheur motivé peut lire les réponses ou envoyer des scores plausibles (bornés, mais pas vérifiés).
+
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.

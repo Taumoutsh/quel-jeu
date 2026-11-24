@@ -1,6 +1,6 @@
 // Nom raté : pas de message écrit, le champ rougit en tremblant puis redevient jaune ; « Raté » reste lu
 // par les lecteurs d'écran. Depuis la racine du dépôt : node tests/e2e_wrongflash.js [dossier_captures]
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8833, URL = "http://localhost:" + PORT + "/";

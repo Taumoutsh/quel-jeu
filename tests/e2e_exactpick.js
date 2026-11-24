@@ -2,7 +2,7 @@
 // « Grand Theft Auto: Vice City » quand la réponse est Vice City Stories redemandait de préciser et
 // réaffichait les mêmes propositions, rien ne semblait se passer. Maintenant : un raté.
 // Depuis la racine du dépôt : node tests/e2e_exactpick.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8863, URL = "http://localhost:" + PORT + "/";

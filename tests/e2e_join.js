@@ -1,6 +1,6 @@
 // Rejoindre un code inexistant (chargement puis refus), « Rejouer » côté invité (attente dans le salon, même code).
 // Depuis la racine du dépôt : node tests/e2e_join.js /tmp/qj
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const PORT = 8801, URL = "http://localhost:" + PORT + "/";
 const OUT = process.argv[2] || "/tmp/qj"; require("fs").mkdirSync(OUT, { recursive: true });

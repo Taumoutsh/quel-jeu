@@ -1,7 +1,7 @@
 // Historique des parties (page /admin, data/games.json) : une partie solo et une partie à deux, terminées,
 // apparaissent une seule fois chacune avec date, mode, nombre de joueurs, manches, pseudos et scores.
 // Depuis la racine du dépôt : node tests/e2e_games.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const fs = require("fs"), os = require("os"), path = require("path");
 const PORT = 8880, URL = "http://localhost:" + PORT + "/";

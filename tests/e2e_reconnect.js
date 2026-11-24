@@ -1,6 +1,6 @@
 // Téléphone : page mise de côté puis rouverte, coupure réseau prolongée ; la connexion doit revenir seule.
 // Depuis la racine du dépôt : node tests/e2e_reconnect.js /tmp/qj
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");

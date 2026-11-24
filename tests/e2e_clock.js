@@ -2,7 +2,7 @@
 // pas de chiffres à chasse fixe : « 1:11 » était bien plus étroit que « 0:08 », la gélule changeait de taille à
 // chaque seconde et faisait bouger Boost et Score). Sur PC et sur téléphone.
 // Depuis la racine du dépôt : node tests/e2e_clock.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8874, URL = "http://localhost:" + PORT + "/";

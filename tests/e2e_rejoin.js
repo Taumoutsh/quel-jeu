@@ -2,7 +2,7 @@
 // dans un nouvel onglet du même navigateur. Il ne doit apparaître qu'une fois (pas d'ancien « Absent » à côté),
 // retrouver ses réponses, et n'être qu'une fois dans le classement final.
 // Depuis la racine du dépôt : node tests/e2e_rejoin.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8858, URL = "http://localhost:" + PORT + "/";

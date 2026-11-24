@@ -1,6 +1,6 @@
 // Doigt fantôme : un « doigt levé » perdu (page qui change sous le doigt) ne doit pas transformer le geste suivant
 // à un seul doigt en pincement (zoom au lieu de glisser), ni empêcher de poser le repère sur la carte. Depuis la racine du dépôt : node tests/e2e_ghostfinger.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8836, URL = "http://localhost:" + PORT + "/";

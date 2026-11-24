@@ -2,7 +2,7 @@
 // même quand la carte change d'une manche à l'autre (les repères restaient au coin haut gauche ou calés sur
 // la carte précédente), et la carte est cadrée sur les repères.
 // Depuis la racine du dépôt : node tests/e2e_revealpins.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8839, URL = "http://localhost:" + PORT + "/";

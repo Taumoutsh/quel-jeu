@@ -1,6 +1,6 @@
 // Petit repère « 360° » : visible pendant une manche dont la vue fait le tour complet, caché sur une capture plate.
 // Depuis la racine du dépôt (images téléchargées dans packs/img) : node tests/e2e_360.js [dossier_captures]
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8828, URL = "http://localhost:" + PORT + "/";

@@ -1,7 +1,7 @@
 // « Agrandir » la carte : sur grand écran, elle s'élargit aussi (et pas seulement en hauteur) ; sur téléphone,
 // toute la largeur est déjà prise. Puis « Assassin's Creed » (série ET jeu) affiche la liste des propositions
 // de la série en mode aide. Depuis la racine du dépôt : node tests/e2e_bigmap.js [dossier_captures]
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8834, URL = "http://localhost:" + PORT + "/";

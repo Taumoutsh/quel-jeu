@@ -1,7 +1,7 @@
 // Parties simultanées limitées (QJ_MAX_PARTIES, ici 2) : la 3e création est refusée avec un message ;
 // tenter un code inconnu n'occupe pas de place ; une place libérée permet de créer à nouveau.
 // Depuis la racine du dépôt : node tests/e2e_maxparties.js [dossier_captures]
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8831, URL = "http://localhost:" + PORT + "/";

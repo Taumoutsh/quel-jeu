@@ -1,6 +1,6 @@
 // Pied de page : « GameSpotter · année · vVERSION » en bas de l'accueil et du salon, jamais pendant une manche.
 // Depuis la racine du dépôt : node tests/e2e_footer.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");

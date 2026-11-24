@@ -1,7 +1,7 @@
 // Téléphone : glisser sur la liste de suggestions (pour replier le clavier) ne valide rien, un tap valide ;
 // « Manche suivante » montre une roue et un double appui ne saute pas de manche.
 // Depuis la racine du dépôt : node tests/e2e_tapsugg.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8837, URL = "http://localhost:" + PORT + "/";

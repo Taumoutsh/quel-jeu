@@ -80,14 +80,21 @@ function recordGame(g) {
   return true;
 }
 // partie à plusieurs terminée : joueurs de cette génération (un par navigateur), plus les joueurs partis en route
-function recordRoomGame(name, st) {
+const groupGamesByIP = new Map();
+function recordRoomGame(name, st, ip) {
   const room = rooms.get(name);
-  if (!room || !st || typeof st.gen !== "string") return;
+  if (!room || !st || typeof st.gen !== "string" || gamesSeen.has(st.gen)) return;
+  // une partie qu'on n'a jamais vue en cours, ou finie trop vite pour avoir été jouée (2 s par manche au moins),
+  // n'entre pas dans l'historique ; 30 parties à plusieurs au plus par heure et par adresse d'hôte
+  const begun = room.plays && room.plays.get(st.gen), n = Array.isArray(st.seq) ? st.seq.length : 0;
+  if (!begun || !n || Date.now() - begun < n * 2000) return;
+  if (ip && limited(groupGamesByIP, ip, 30, 3600 * 1000)) return;
+  if (ip) groupGamesByIP.get(ip).push(Date.now());
   const byKey = new Map();
-  const add = (key, n, r) => {
-    if (!n) return;
-    const s = scoreOf(r), prev = byKey.get(key);
-    if (!prev || s > prev.s) byKey.set(key, { n: String(n).slice(0, 16), s });
+  const add = (key, nm, r) => {
+    if (!nm) return;
+    const s = scoreOf(cleanR(r).slice(0, n)), prev = byKey.get(key);
+    if (!prev || s > prev.s) byKey.set(key, { n: String(nm).slice(0, 16), s });
   };
   for (const [pid, p] of room) {
     const pr = p.presence || {};
@@ -102,7 +109,7 @@ function recordRoomGame(name, st) {
 async function gamesApi(req, res) {
   if (req.method !== "POST") return json(res, 405, { error: "méthode non permise" });
   const ip = clientIP(req);
-  if (limited(gamesByIP, ip, 60, 3600 * 1000)) return json(res, 429, { error: "trop de parties, réessaie plus tard" });
+  if (limited(gamesByIP, ip, 30, 3600 * 1000)) return json(res, 429, { error: "trop de parties, réessaie plus tard" });
   let b; try { b = await readJSON(req, 2000); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
   const rounds = b && Number(b.rounds), score = b && Number(b.score);
   if (!b || typeof b.gen !== "string" || !/^[a-z0-9]{4,24}$/.test(b.gen) || typeof b.name !== "string" || !b.name.trim()
@@ -199,7 +206,27 @@ function sameSecret(a, b) {
   const ha = crypto.createHash("sha256").update(String(a)).digest(), hb = crypto.createHash("sha256").update(String(b)).digest();
   return crypto.timingSafeEqual(ha, hb);
 }
-function clientIP(req) { return String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim(); }
+// IP réelle du client, pour les limites (connexion admin, signalements, parties, création de salons).
+// Derrière Cloudflare : CF-Connecting-IP, que Cloudflare pose lui-même (il écrase ce qu'envoie le client).
+// Sinon : la DERNIÈRE entrée de X-Forwarded-For, ajoutée par le dernier relais (NPM) ; jamais la première, que le
+// client écrit lui-même (avant la v1.8.1 : il suffisait d'en changer à chaque essai pour ne jamais être bloqué).
+// Ces en-têtes ne sont crus que si la connexion vient d'un relais sur le réseau privé (NPM dans Docker, la machine
+// elle-même) ; une connexion directe depuis Internet compte pour son adresse réelle, quoi qu'elle écrive.
+// Limite : NPM transmet tel quel un CF-Connecting-IP écrit par quelqu'un qui le joint sans passer par Cloudflare ;
+// n'ouvrir NPM qu'aux adresses de Cloudflare (pare-feu). QJ_TRUST_CF=0 ignore cet en-tête (site sans Cloudflare).
+const IP_RE = /^[0-9a-f.:]{2,45}$/i;
+const TRUST_CF = process.env.QJ_TRUST_CF !== "0";
+const PRIVATE_PEER = /^(::1|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|f[cd][0-9a-f]{2}:|fe80:)/i;
+function clientIP(req) {
+  const sock = String(req.socket.remoteAddress || "").replace(/^::ffff:/, "");
+  if (!PRIVATE_PEER.test(sock)) return sock;
+  const cf = String(req.headers["cf-connecting-ip"] || "").trim();
+  if (TRUST_CF && IP_RE.test(cf)) return cf;
+  const xff = String(req.headers["x-forwarded-for"] || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const last = xff[xff.length - 1];
+  if (last && IP_RE.test(last)) return last;
+  return sock;
+}
 function isAdmin(req) {
   const t = String(req.headers.authorization || "").replace(/^Bearer /, "");
   const exp = tokens.get(t);
@@ -238,7 +265,8 @@ function broadcast(name) {
 // disparu entre-temps (l'ancien onglet, encore ouvert, ne revient ni dans le salon ni ne le recrée)
 const kicked = new Map();
 const KICK_MS = 10 * 60 * 1000;
-function getPeer(name, peer, newRoom) {
+const createsByIP = new Map();
+function getPeer(name, peer, newRoom, ip) {
   const k = kicked.get(peer);
   if (k && Date.now() - k < KICK_MS) return { err: 410 };
   if (k) kicked.delete(peer);
@@ -246,6 +274,9 @@ function getPeer(name, peer, newRoom) {
   if (!room) {
     if (!newRoom) return { err: 404 };
     if (rooms.size >= MAX_ROOMS) return { err: "full" };
+    // 15 salons au plus par adresse en 10 minutes : personne ne peut occuper à lui seul toutes les places
+    if (ip && limited(createsByIP, ip, 15, 10 * 60 * 1000)) return { err: 429 };
+    if (ip) createsByIP.get(ip).push(Date.now());
     room = new Map(); room.rid = crypto.randomBytes(4).toString("hex"); rooms.set(name, room);
   }
   let p = room.get(peer);
@@ -296,7 +327,11 @@ async function adminApi(req, res, url) {
     const ip = clientIP(req);
     if (limited(fails, ip, 8, 15 * 60 * 1000)) return json(res, 429, { error: "trop d'essais, réessaie dans 15 minutes" });
     let body; try { body = await readJSON(req, 2000); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
-    if (!body || !sameSecret(body.password || "", ADMIN_PASSWORD)) { fails.get(ip).push(Date.now()); return json(res, 401, { error: "mot de passe incorrect" }); }
+    if (!body || !sameSecret(body.password || "", ADMIN_PASSWORD)) {
+      fails.get(ip).push(Date.now());
+      await new Promise((r) => setTimeout(r, 1000)); // chaque essai raté coûte 1 s : la force brute ralentit encore
+      return json(res, 401, { error: "mot de passe incorrect" });
+    }
     const t = crypto.randomBytes(24).toString("hex");
     tokens.set(t, Date.now() + TOKEN_MS);
     return json(res, 200, { token: t });
@@ -403,10 +438,84 @@ function publicRooms(u) {
   return out.map(({ since, ...r }) => r);
 }
 
+// ---- présences validées : le serveur ne relaie que les champs que la page publie, aux valeurs bornées (un client
+// trafiqué ne peut ni gonfler un score, ni envoyer n'importe quoi aux autres joueurs). Champs de la page (publish) :
+// v u n c a h g r hb j vh rd nx st ; st : gen ph cfg seq i dl t0 term gone ; cfg : rounds time tries hints speed pack pub.
+const num = (v, lo, hi, d) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+const int = (v, lo, hi, d) => Math.round(num(v, lo, hi, d));
+const txt = (v, max) => (typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, "").slice(0, max) : undefined);
+const HEX_RE = /^#[0-9a-f]{6}$/i, PHASES = ["lobby", "play", "rev", "end"];
+// réponses d'un joueur, une par manche : [état, points du nom, points de position, erreurs, x, y, boost]
+function cleanR(r) {
+  if (!Array.isArray(r)) return [];
+  return r.slice(0, 15).map((x) => {
+    if (!Array.isArray(x)) return null;
+    const y = [int(x[0], 0, 3, 0), num(x[1], 0, 1000, 0), num(x[2], 0, 1000, 0), int(x[3], 0, 99, 0), num(x[4], -1, 1, -1), num(x[5], -1, 1, -1)];
+    if (x.length > 6) y.push(num(x[6], 0, 500, 0));
+    return y;
+  });
+}
+function cleanCfg(c) {
+  if (!c || typeof c !== "object") return {};
+  const o = {};
+  if ("rounds" in c) o.rounds = int(c.rounds, 1, 15, 5);
+  if ("time" in c) o.time = int(c.time, 0, 3600, 120);
+  if ("tries" in c) o.tries = int(c.tries, 0, 99, 3);
+  if ("hints" in c) o.hints = int(c.hints, 0, 1, 1);
+  if ("speed" in c) o.speed = int(c.speed, 0, 1, 1);
+  if ("pub" in c) o.pub = int(c.pub, 0, 1, 0);
+  if ("pack" in c) o.pack = txt(c.pack, 8) || "real";
+  return o;
+}
+function cleanSt(st) {
+  if (!st || typeof st !== "object" || Array.isArray(st)) return null;
+  const o = { gen: txt(st.gen, 24) || "", ph: PHASES.includes(st.ph) ? st.ph : "lobby", cfg: cleanCfg(st.cfg) };
+  o.seq = Array.isArray(st.seq) ? st.seq.slice(0, 15).map((s) => txt(s, 64) || "") : [];
+  o.i = int(st.i, -1, 15, -1);
+  o.dl = num(st.dl, 0, 1e14, 0);
+  if ("t0" in st) o.t0 = num(st.t0, 0, 1e14, 0);
+  o.term = int(st.term, 0, 1e6, 0);
+  if (Array.isArray(st.gone)) o.gone = st.gone.slice(0, 32).filter((g) => g && typeof g === "object").map((g) => ({
+    peer: txt(g.peer, 24) || "", u: UID_RE.test(g.u || "") ? g.u : "", name: txt(g.name, 16) || "?", color: HEX_RE.test(g.color || "") ? g.color : "#8b9fb1",
+    avatar: txt(g.avatar, 60) || null, r: cleanR(g.r), j: int(g.j, 0, 15, 0), left: int(g.left, -1, 15, -1) }));
+  return o;
+}
+function cleanPresence(b) {
+  const o = {};
+  if ("v" in b) o.v = int(b.v, 0, 99, 1);
+  if (UID_RE.test(b.u || "")) o.u = b.u;
+  if ("n" in b) o.n = (txt(b.n, 16) || "").trim();
+  if (HEX_RE.test(b.c || "")) o.c = b.c;
+  if ("a" in b) o.a = txt(b.a, 60) || null;
+  if ("h" in b) o.h = b.h === 1 ? 1 : 0;
+  if ("g" in b) o.g = txt(b.g, 24) || null;
+  if ("r" in b) o.r = cleanR(b.r);
+  if ("hb" in b) o.hb = int(b.hb, 0, 1e6, 0);
+  if ("j" in b) o.j = int(b.j, 0, 15, 0);
+  if ("vh" in b) o.vh = b.vh === 1 ? 1 : 0;
+  if ("rd" in b) o.rd = typeof b.rd === "string" ? txt(b.rd, 24) : 0;
+  if ("nx" in b) o.nx = int(b.nx, -1, 15, -1);
+  if ("st" in b) o.st = cleanSt(b.st);
+  return o;
+}
+// rôle d'hôte : refusé tant qu'un AUTRE hôte de la salle (autre navigateur) est connecté et donne signe de vie
+// depuis moins de 6 s (le délai au bout duquel les pages elles-mêmes le croient parti et lancent la relève)
+const HOST_LIVE_MS = 6000;
+function hostTaken(room, peer, u) {
+  for (const [pid, q] of room) {
+    if (pid === peer) continue;
+    const pr = q.presence || {};
+    if (pr.h !== 1 || !pr.st || (u && pr.u === u)) continue;
+    if (q.clients.size && Date.now() - (q.seen || 0) < HOST_LIVE_MS) return true;
+  }
+  return false;
+}
+
 function refuse(res, err) {
   if (err === "full") return json(res, 503, { error: "trop de parties en cours", code: "full", max: MAX_ROOMS });
   if (err === 404) return json(res, 404, { error: "partie introuvable", code: "absent" });
   if (err === 410) return json(res, 410, { error: "tu as quitté ce salon", code: "parti" });
+  if (err === 429) return json(res, 429, { error: "trop de salons créés, réessaie dans quelques minutes", code: "trop" });
   return json(res, 503, { error: "salle pleine", code: "salle" });
 }
 
@@ -423,7 +532,7 @@ async function api(req, res, url) {
 
   const newRoom = url.searchParams.get("create") === "1";
   if (action === "events" && req.method === "GET") {
-    const p = getPeer(name, peer, newRoom);
+    const p = getPeer(name, peer, newRoom, clientIP(req));
     if (p.err) return refuse(res, p.err);
     clearTimeout(p.timer); p.timer = null; p.seen = Date.now();
     // flux en direct : ni mise en tampon (Nginx : X-Accel-Buffering), ni compression ou transformation par un CDN
@@ -447,13 +556,15 @@ async function api(req, res, url) {
     let body;
     try { body = JSON.parse(await readBody(req)); } catch (e) { return json(res, 400, { error: "JSON invalide" }); }
     if (!body || typeof body !== "object" || Array.isArray(body)) return json(res, 400, { error: "objet attendu" });
+    body = cleanPresence(body);
     // un seul salon à la fois : créer une partie quand on est déjà l'hôte d'une autre salle est refusé (la page
     // propose d'y retourner, ou de la quitter puis de recréer)
     if (newRoom && !rooms.has(name)) {
       const other = roomHostedBy(body.u, name);
       if (other) return json(res, 409, { error: "tu as déjà un salon ouvert", code: "already", room: codeOfRoom(other) });
     }
-    const p = getPeer(name, peer, newRoom);
+    const ip = clientIP(req);
+    const p = getPeer(name, peer, newRoom, ip);
     if (p.err) return refuse(res, p.err);
     p.seen = Date.now();
     // numéro d'ordre : deux envois rapprochés peuvent arriver dans le désordre ; le plus ancien est ignoré
@@ -462,11 +573,21 @@ async function api(req, res, url) {
       if (seq <= (p.seq || 0)) return json(res, 200, { ok: true, stale: true });
       p.seq = seq;
     }
+    const room = rooms.get(name);
+    // un joueur ne peut pas se déclarer hôte (ni imposer un état de partie) tant que le vrai hôte est là
+    let host = true;
+    if ((body.h === 1 || body.st) && hostTaken(room, peer, body.u || p.presence.u)) { body.h = 0; body.st = null; host = false; }
     p.presence = Object.assign({}, p.presence, body);
     broadcast(name);
+    // partie vue en cours par le serveur (preuve qu'elle a été jouée, pour l'historique)
+    const isHost = p.presence.h === 1 && !!body.st; // rôle tel qu'enregistré (h peut venir d'un envoi précédent)
+    if (isHost && body.st.ph === "play" && body.st.gen) {
+      room.plays = room.plays || new Map();
+      if (!room.plays.has(body.st.gen)) room.plays.set(body.st.gen, Date.now());
+    }
     // fin de partie annoncée par l'hôte : la partie entre dans l'historique (une seule fois par génération)
-    if (body.h === 1 && body.st && body.st.ph === "end") recordRoomGame(name, body.st);
-    return json(res, 200, { ok: true });
+    if (isHost && body.st.ph === "end") recordRoomGame(name, body.st, ip);
+    return json(res, 200, host ? { ok: true } : { ok: true, host: false });
   }
   // secours si le flux en direct est retenu par un proxy : l'état de la salle à la demande
   if (action === "state" && req.method === "GET") {
@@ -561,8 +682,25 @@ function serveFile(req, res, url) {
   });
 }
 
+// en-têtes de sécurité, sur toutes les réponses : pas d'affichage dans un cadre d'un autre site (clickjacking de
+// /admin), scripts et connexions limités à ce site (seules exceptions : les polices Google), type des fichiers
+// respecté, adresse de la page non transmise aux autres sites, HTTPS imposé au navigateur quand on y est passé.
+const CSP = ["default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com", "img-src 'self' data: blob:", "media-src 'self' blob:", "connect-src 'self'",
+  "worker-src 'self' blob:", "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'"].join("; ");
+function securityHeaders(req, res) {
+  res.setHeader("Content-Security-Policy", CSP);
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "same-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  const https = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim() === "https" || /"scheme":"https"/.test(String(req.headers["cf-visitor"] || ""));
+  if (https) res.setHeader("Strict-Transport-Security", "max-age=15552000");
+}
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
+  securityHeaders(req, res);
   if (url.pathname.startsWith("/api/")) {
     api(req, res, url).catch((e) => { if (!res.headersSent) json(res, 500, { error: String(e.message || e) }); });
   } else if (req.method === "GET" || req.method === "HEAD") serveFile(req, res, url);

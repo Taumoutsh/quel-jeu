@@ -1,6 +1,6 @@
 // Téléphone : un double tap ne déclenche pas le zoom de la page (second appui neutralisé), mais un bouton tapé
 // deux fois réagit bien deux fois, et la vue garde ses gestes. Depuis la racine du dépôt : node tests/e2e_doubletap.js
-const { chromium } = require("playwright");
+const { chromium } = require("./pw");
 const { spawn } = require("child_process");
 const path = require("path");
 const PORT = 8827, URL = "http://localhost:" + PORT + "/";
