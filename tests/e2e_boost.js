@@ -61,13 +61,16 @@ const near = (v, t, d) => Math.abs(v - t) <= (d || 8);
     const fx = await f.evaluate("QJ.A.res[0][6]"), fin = await f.evaluate(() => ({ sum: document.getElementById("finSolo").innerText.replace(/\s+/g, " "), tab: document.getElementById("finTable").innerText.replace(/\s+/g, " "), bolt: !!document.querySelector("#finTable .bst svg.bolt") }));
     check(fx > 0 && fin.bolt && fin.tab.includes(String(fx)) && fin.sum.includes("dont " + fx + " de boost"), "classement final solo : boost affiché (" + fin.sum + " | " + fin.tab + ")");
     check(!/erreur/i.test(fin.tab) && fin.tab.includes("800"), "bilan sans le nombre d'erreurs (nom à 800 après 1 erreur)");
-    // place de la gélule : sur PC, sur la ligne du haut juste après le temps et à la même hauteur ; sur téléphone, sous le ✕
-    for (const [nm, opt, row] of [["PC", { viewport: { width: 1280, height: 800 } }, true], ["téléphone", { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }, false]]) {
+    // place de la gélule : sur la ligne du haut, juste après le temps et à la même hauteur ; « Boost » écrit sur PC,
+    // éclair seul sur téléphone, et la ligne tient dans l'écran même avec « 15/15 » et « 12 500 » (320 à 414 px)
+    for (const [nm, opt, lab] of [["PC", { viewport: { width: 1280, height: 800 } }, true], ["téléphone 320", { viewport: { width: 320, height: 640 }, isMobile: true, hasTouch: true }, false], ["téléphone 360", { viewport: { width: 360, height: 760 }, isMobile: true, hasTouch: true }, false], ["téléphone 375", { viewport: { width: 375, height: 760 }, isMobile: true, hasTouch: true }, false], ["téléphone 390", { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }, false], ["téléphone 414", { viewport: { width: 414, height: 896 }, isMobile: true, hasTouch: true }, false]]) {
       const w = await (await b.newContext(opt)).newPage(); w.on("pageerror", (e) => errs.push(String(e)));
       await w.goto(URL); await w.fill("#pseudo", "Test4"); await w.click("#bSolo"); await wait(300); await w.click("#bStart");
       await w.waitForFunction("QJ.A.R && QJ.A.R.phase === 'name'"); await wait(600);
-      const pl = await w.evaluate(() => { const bo = document.getElementById("hBoost"), t = document.getElementById("hTimer"), a = bo.getBoundingClientRect(), c = t.getBoundingClientRect(); return { inHud: bo.parentElement.classList.contains("hud"), after: bo.previousElementSibling === t, sameTop: Math.abs(a.top - c.top) < 1, sameH: Math.abs(a.height - c.height) < 1, below: a.top > c.bottom }; });
-      check(row ? pl.inHud && pl.after && pl.sameTop && pl.sameH : !pl.inHud && pl.below, nm + " : gélule " + (row ? "sur la ligne du temps, juste après lui" : "sous le ✕") + " (" + JSON.stringify(pl) + ")");
+      await w.evaluate(() => { document.getElementById("hRound").textContent = "15/15"; document.getElementById("hScore").textContent = "12 500"; }); await wait(100);
+      const pl = await w.evaluate(() => { const bo = document.getElementById("hBoost"), t = document.getElementById("hTimer"), a = bo.getBoundingClientRect(), c = t.getBoundingClientRect(); const items = [...document.querySelector(".hud").children].filter((e) => e.getClientRects().length); return { inHud: bo.parentElement.classList.contains("hud"), after: bo.previousElementSibling === t, sameTop: Math.abs(a.top - c.top) < 1, sameH: Math.abs(a.height - c.height) < 1, label: !!bo.querySelector("small").offsetWidth, lines: new Set(items.map((e) => Math.round(e.getBoundingClientRect().top))).size, right: Math.round(Math.max(...items.map((e) => e.getBoundingClientRect().right))), vw: innerWidth }; });
+      check(pl.inHud && pl.after && pl.sameTop && pl.sameH && pl.label === lab && pl.lines === 1 && pl.right <= pl.vw - 8, nm + " : gélule après le temps, " + (lab ? "avec « Boost »" : "éclair seul") + ", une ligne qui tient dans l'écran (" + JSON.stringify(pl) + ")");
+      await w.context().close();
     }
     // réglage « Non »
     const q = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage(); q.on("pageerror", (e) => errs.push(String(e)));

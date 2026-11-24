@@ -427,7 +427,16 @@ tr.fin-pl.gone td { opacity: .75; }
 /* gélule de boost (sans chiffre) : contour doré et lumineux qui se retire peu à peu, de la droite vers la gauche */
 .boostp { position: absolute; left: 12px; top: calc(max(10px, env(safe-area-inset-top)) + 52px); z-index: 1; gap: 5px; }
 .boostp.inrow { position: relative; left: auto; top: auto; z-index: auto; } /* PC : sur la ligne du haut, après le temps */
-.boostp.inrow::after { content: "\200b"; font-family: var(--fd); font-size: 15px; margin-left: -5px; } /* même hauteur que les autres gélules */
+.boostp.nolab small { display: none; } /* téléphone : l'éclair seul */
+.boostp.nolab { padding-left: 10px; padding-right: 10px; }
+/* téléphone : gélules un peu plus serrées pour que ✕, Manche, Temps, Boost et Score tiennent sur une ligne */
+.hud.tight { gap: 5px; padding-left: 10px; padding-right: 10px; }
+.hud.tight .quit { flex: none; width: 36px; height: 36px; }
+.hud.tight .pill { padding-left: 8px; padding-right: 8px; gap: 4px; font-size: 14px; }
+.hud.tight .pill small { font-size: 10px; letter-spacing: .1px; }
+@media (max-width: 389px) { .hud.tight #hTimer small { display: none; } } /* « 2:00 » se lit seul */
+@media (max-width: 349px) { .hud.tight .pill:first-of-type small { display: none; } } /* « 3/5 » aussi */
+.boostp.inrow::after { content: "\200b"; margin-left: -5px; } /* même hauteur que les autres gélules */
 .boostp svg.bolt { width: 16px; height: 16px; color: var(--acc); transition: color .6s; }
 .boostp.out svg.bolt { color: var(--txt); }
 .boostp .bring { position: absolute; left: -1px; top: -1px; width: calc(100% + 2px); height: calc(100% + 2px); overflow: visible; pointer-events: none; }
@@ -435,7 +444,6 @@ tr.fin-pl.gone td { opacity: .75; }
 .boostp.out .bring { display: none; }
 @media (prefers-reduced-motion: no-preference) { .boostp.full .bring path { animation: boostGlow 1.6s ease-in-out infinite; } }
 @keyframes boostGlow { 50% { filter: drop-shadow(0 0 5px var(--acc-hi)) drop-shadow(0 0 10px var(--acc)); } }
-.boostp:not(.hidden) ~ .v360 { top: calc(max(10px, env(safe-area-inset-top)) + 96px); } /* repère 360° sous la gélule */
 .wboost { display: flex; align-items: center; gap: 4px; margin: 0 0 6px; font-family: var(--fd); font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--acc); }
 .wboost b { color: var(--acc-hi); font-size: 14px; }
 svg.bolt { width: 1.15em; height: 1.15em; flex: none; fill: currentColor; stroke: currentColor; stroke-width: 1.2; stroke-linejoin: round; }

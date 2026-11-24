@@ -1111,16 +1111,14 @@
     el.classList.toggle("full", f >= 0.9); // halo qui pulse au départ
     el.classList.toggle("out", f <= 0);
   }
-  // sur PC (grand écran, souris), la gélule du boost se met sur la ligne du haut, juste après le temps ;
-  // sur téléphone et tablette, elle reste sous le bouton ✕ (rien ne change)
+  // la gélule du boost se met sur la ligne du haut, juste après le temps ; sur PC (grand écran, souris) avec le mot
+  // « Boost », ailleurs (téléphone, tablette) avec l'éclair seul et des gélules un peu plus serrées (.hud.tight),
+  // pour que tout tienne sur une ligne (demande du propriétaire)
   function placeBoost() {
     const mq = window.matchMedia && matchMedia("(min-width: 700px) and (hover: hover) and (pointer: fine)");
-    const put = () => {
-      const el = $("hBoost"), inRow = !!(mq && mq.matches);
-      if (inRow) { if (el.previousElementSibling !== $("hTimer")) $("hTimer").after(el); }
-      else if (el.parentElement !== $("h360").parentElement) $("h360").before(el);
-      el.classList.toggle("inrow", inRow);
-    };
+    const el = $("hBoost");
+    $("hTimer").after(el); el.classList.add("inrow");
+    const put = () => { const pc = !!(mq && mq.matches); el.classList.toggle("nolab", !pc); $("hTimer").parentElement.classList.toggle("tight", !pc); };
     put();
     if (mq) mq.addEventListener ? mq.addEventListener("change", put) : mq.addListener(put);
   }
