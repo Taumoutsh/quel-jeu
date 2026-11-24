@@ -57,7 +57,7 @@ async function until(fn, ms) { const t0 = Date.now(); while (Date.now() - t0 < m
   check(await H.evaluate("QJ.A.cdGen === QJ.A.gen && QJ.A.st.t0 > 0"), "décompte lancé chez l'hôte aussi");
   await wait(400); await C.screenshot({ path: OUT + "/countdown.png" });
   check((await until(() => C.evaluate("document.getElementById('cd').classList.contains('hidden')"), 4500)) >= 0, "décompte terminé, la manche commence");
-  check(/^(2:00|1:5\d)$/.test((await H.innerText("#hTime")).trim()), "chrono plein au début de la manche, décompte non compté (" + (await H.innerText("#hTime")).trim() + ")");
+  check(/^(2:00|1:5\d)$/.test((await H.textContent("#hTime")).trim()), "chrono plein au début de la manche, décompte non compté (" + (await H.textContent("#hTime")).trim() + ")");
   await answer(H); await wait(800);
   check(!(await H.isVisible("#bForce")) && (await H.evaluate("QJ.A.st.cfg.time")) > 0, "temps limité : pas de « Terminer la manche maintenant » pour l'hôte");
   await H.evaluate("QJ.A.st && document.getElementById('bForce').click()"); await wait(500);

@@ -209,6 +209,9 @@ td.who .wn.me { color: var(--acc); font-weight: 700; } /* sa propre ligne, repé
 @keyframes vig { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
 .pill { background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--glass-line); border-radius: 12px; padding: 7px 12px; font-family: var(--fd); font-size: 15px; display: flex; gap: 6px; align-items: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pill small { color: var(--mut); font-family: var(--fb); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+/* temps restant : largeur fixe, celle de « 0:00 », la plus large (la police n'a pas de chiffres à chasse fixe : la gélule
+   changeait de taille à chaque seconde et faisait bouger les suivantes) */
+#hTime { min-width: 2.16em; text-align: left; }
 .pill.timer.low { color: var(--bad); animation: pulse 1s infinite; }
 @keyframes pulse { 50% { opacity: .55; } }
 /* tableau des scores (multijoueur) : colonne en haut à droite, alignée sur le bandeau (sous le bandeau sur téléphone) */
