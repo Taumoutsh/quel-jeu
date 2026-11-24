@@ -459,7 +459,6 @@ svg.bolt.inl { width: 1em; height: 1em; vertical-align: -.15em; color: var(--acc
 svg.lock { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 svg.lock.big { width: 21px; height: 21px; color: var(--sea); }
 .seg-ico button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.sethint { margin: 7px 2px 0; line-height: 1.45; }
 .codehead { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .codehead h3 { margin: 0; flex: 1; }
 .pubbadge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px; color: var(--mut); background: rgba(150, 190, 220, .1); }
