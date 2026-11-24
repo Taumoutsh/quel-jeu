@@ -42,6 +42,8 @@ const check = (ok, msg) => { console.log((ok ? "OK   " : "ÉCHEC") + " " + msg);
     const bd = await D.evaluate(() => { const b = document.querySelector("#pubList .pjoin"); return b ? { ico: getComputedStyle(b.querySelector("svg.pji")).display, txt: b.innerText.trim() } : null; });
     check(bd && bd.ico === "none" && /rejoindre/i.test(bd.txt), "PC : bouton avec le mot « Rejoindre » (" + JSON.stringify(bd) + ")");
     await D.context().close();
+    const dot = await V.evaluate(() => ({ anim: getComputedStyle(document.querySelector("#pubCount i")).animationName, label: /Rejoins une partie/.test(document.getElementById("pubCard").innerText) }));
+    check(dot.anim === "liveDot" && !dot.label, "diode verte animée, sans la phrase « Rejoins une partie… » (" + JSON.stringify(dot) + ")");
     check(/1 ouvert/.test(await txt(V, "#pubCount")), "compteur : « " + (await txt(V, "#pubCount")).trim() + " »");
 
     await V.click("#pubList button[data-code='" + code + "']");

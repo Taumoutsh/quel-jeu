@@ -467,8 +467,11 @@ svg.lock.big { width: 21px; height: 21px; color: var(--sea); }
 .pubbadge svg.lock { width: 14px; height: 14px; }
 .pubhead { display: flex; align-items: center; gap: 8px; }
 .pubhead h2 { margin: 0; }
-.pubcount { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.pubcount { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
 .pubcount i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); }
+/* diode des salons ouverts : un halo vert qui s'élargit et s'efface, en boucle (rien si « réduire les animations ») */
+@media (prefers-reduced-motion: no-preference) { .pubcount i { animation: liveDot 1.8s ease-out infinite; } }
+@keyframes liveDot { 0% { box-shadow: 0 0 0 0 rgba(111, 214, 155, .7); } 70% { box-shadow: 0 0 0 6px rgba(111, 214, 155, 0); } 100% { box-shadow: 0 0 0 0 rgba(111, 214, 155, 0); } }
 .publist { display: flex; flex-direction: column; gap: 8px; }
 .pubempty { text-align: center; padding: 10px 0 4px; margin: 0; }
 .pubroom { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--well); border: 1px solid var(--line-soft); }
