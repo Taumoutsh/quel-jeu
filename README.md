@@ -68,7 +68,7 @@ Ce que fait le serveur :
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 1632 vues de 155 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 1660 vues de 155 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
@@ -136,7 +136,7 @@ Ce que fait le serveur :
     | Final Fantasy XII | Cité impériale d'Archadès, Jahara, terre des Garifs, Mont Bur-Omisace, Plaine d'Ozmone, Bois de Feywood, Forteresse de Nalbina, Côte de Phon, Hauts plateaux de Tchita, Cité céleste de Bhujerba, Nécropole de Nabudis |
     | Dragon's Dogma | Cathédrale de Gran Soren, Tour de Lune-Bleue, Le Campement, Butte de Hillfigure, Bois de la Sorcière, Cassardis, Les Catacombes, Le Grand Mur (campement) |
     | Dark Souls II | Majula, Tour de flamme de Heide, Bastille perdue, Donjon de fer, Forêt des géants déchus, Château de Drangleic, Donjon d'Aldia, Ravin noir, Quai de Personne, Sanctuaire de l'hiver |
-    | Shadow of the Colossus | Temple de l'Adoration, Clairière ombragée (nord-ouest), Chutes brumeuses, Gorge de l'arche de pierre, Falaise de l'est, Forteresse du désert, Forêt d'automne, Sceau brisé, Cap de l'ouest, Repaire sur la mesa |
+    | Shadow of the Colossus | Temple de l'Adoration, Clairière ombragée (nord-ouest), Chutes brumeuses, Gorge de l'arche de pierre, Falaise de l'est, Forteresse du désert, Forêt d'automne, Sceau brisé, Cap de l'ouest, Repaire sur la mesa, Marais asséché, Pont du nord, Terres dévastées |
     | The Legend of Zelda: Echoes of Wisdom | Bourg d'Hyrule, Village Cocorico, Village Goron, Village Gerudo, Lac Hylia, Ranch d'Hyrule, Village de Suthorn, Lac Cœur, Village Zora de la rivière, Sanctuaire du Nord |
     | Fable II | Bowerstone (marché), Bloodstone, Wraithmarsh, Brightwood, Fairfax Gardens, Bowerstone (vieille ville), Bowerstone (cimetière) |
     | Dragon Age: The Veilguard | Minrathous (Tevinter), Forêt d'Arlathan, Weisshaupt (Anderfels), Côte de Rivain, Nécropole (Nevarra) |
@@ -144,7 +144,7 @@ Ce que fait le serveur :
     | Mount & Blade II: Bannerlord | Ville de Vlandie, Ville aserai (sud), Village de Battanie, Seonon, Sargot |
     | ARK: Survival Evolved | Herbivore Island, The Dead Island, Cratère du volcan |
     | Conan Exiles | Sepermeru, New Asagarth, Black Galleon, Mounds of the Dead, The Summoning Place, The Temple of Frost, The Great Dam, Hullshatter Cove, The Eye that Never Closes, Westwatch Keep |
-    | Dishonored 2 | Conservatoire royal (Cyria Gardens), District minier de Batista, Institut Addermire, Quartier d'Aventa, Manoir mécanique, Palais royal (Grand Palace), Manoir Stilton, Carrière nord de Shindaerey, Pêcheries de Santiago |
+    | Dishonored 2 | Conservatoire royal (Cyria Gardens), District minier de Batista, Institut Addermire, Quartier d'Aventa, Manoir mécanique, Palais royal (Grand Palace), Manoir Stilton, Carrière nord de Shindaerey, Pêcheries de Santiago, Place de la Haute Cyria |
     | New World | Windsward, Brightwood (colonie), Mourningdale (colonie), Ebonscale Reach |
     | Dying Light 2 Stay Human | Old Villedor, Central Loop, Tour VNC, L'Observatoire, Cathédrale Saint-Paul, Gare Main Terminal, Château d'eau de Horseshoe |
     | Palworld | Astral Mountains, Feybreak Island, Windswept Hills |
@@ -159,15 +159,15 @@ Ce que fait le serveur :
     | Dying Light | Garnison de Rais, Port des ferries, Sunny Apartments, Parking souterrain, Entrepôt chimique, Bazar du Serpent noir, École publique de Harran, Village des pêcheurs, Tunnel de Bright Mountain, Stuffed Turtle |
     | Metal Gear Solid V: The Phantom Pain | Forteresse de Spugmay (Afghanistan), Caserne de Wakh Sind (Afghanistan), Da Ghwandai Khar (Afghanistan), Centrale électrique de Serak (Afghanistan), Camp de base central (Afghanistan), Avant-poste de Yakho Oboo, Da Shago Kallai, Da Wialo Kallai, Poste de communication est, Ruines d'Aabe Shifap |
     | Escape from Tarkov | Customs : sortie Crossroads, Customs : sortie des dortoirs (V-Ex), Customs : passage vers Factory, Customs : passage vers Reserve, Customs : passage vers Shoreline, Customs : Trailer Park, Customs : vieille station-service, Customs : bunker ZB-1011, Customs : voie ferrée vers le port, Customs : bateau du contrebandier |
-    | Valorant | Ascent : site A, Ascent : site B, Ascent : Market, Ascent : Mid Bottom, Ascent : spawn des défenseurs, Ascent : Catwalk, Ascent : spawn des attaquants, Ascent : Wine |
+    | Valorant | Ascent : site A, Ascent : site B, Ascent : Market, Ascent : Mid Bottom, Ascent : spawn des défenseurs, Ascent : Catwalk, Ascent : spawn des attaquants, Ascent : Wine, Ascent : B Lobby, Ascent : Pizza, Ascent : Courtyard, Ascent : Mid Top, Ascent : Garden, Ascent : A Lobby |
     | Counter-Strike 2 | Dust II : site B, Dust II : spawn CT, Dust II : entrée de Long A, Dust II : mid, Dust II : spawn T, Dust II : site A, Dust II : Short A, Dust II : fosse de Long A |
     | Overwatch 2 | King's Row (Londres), Dorado (Mexique), Ilios (Grèce), Busan (Corée du Sud), Paraíso (Rio de Janeiro), Blizzard World (Californie), Numbani (Nigeria) |
     | Arma 3 | Kavala, Aéroport international d'Altis, Sofia, Zaros, Neochori |
     | Team Fortress 2 | 2Fort : le pont, 2Fort : salle des renseignements RED, 2Fort : remparts RED, 2Fort : cour RED, 2Fort : entrée de la spirale RED |
     | Minecraft Dungeons | Squid Coast, Soggy Swamp, Redstone Mines, Desert Temple, Highblock Halls, Obsidian Pinnacle, Pumpkin Pastures, Cacti Canyon, Fiery Forge, Creeper Woods |
-    | Left 4 Dead 2 | The Parish : débarquement du bateau, The Parish : Bienville Park, The Parish : statue équestre, The Parish : gare routière |
+    | Left 4 Dead 2 | The Parish : débarquement du bateau, The Parish : Bienville Park, The Parish : statue équestre, The Parish : gare routière, The Parish : marché du front de mer |
     | Dishonored | Prison de Coldridge, Place Holger, Île de Kingsparrow, Le pub des Hound Pits, Distillerie de whiskey de Dunwall, Tour de l'horloge, Pont de Kaldwin, Tour de Dunwall, Abattoir Rothwild, Berges du quartier des Drapers |
-    | The Last of Us | Boston : le Capitole, Barrage de Tommy (Wyoming), Université du Colorado oriental, Salt Lake City, Seattle, Santa Barbara, Île Catalina, Waverly Township |
+    | The Last of Us | Boston : le Capitole, Barrage de Tommy (Wyoming), Université du Colorado oriental, Salt Lake City, Seattle, Santa Barbara, Île Catalina, Waverly Township, Hôpital Saint Mary (Salt Lake City) |
     | Fallout 3 | Tenpenny Tower, Washington Monument, Big Town, Jefferson Memorial, Canterbury Commons, Megaton, Rivet City, Le Capitole, La Citadelle, Paradise Falls |
     | Horizon Zero Dawn | Meridian, Cœur-de-la-Mère (terres des Nora), Sunfall, Pitchcliff, Maker's End, Free Heap, Lone Light, Sunstone Rock, Longnotch, Blazon Arch |
     | Ghost of Tsushima | Sanctuaire du Sommet doré (Izuhara), Sanctuaire de la Roche guérisseuse, Sources chaudes d'Hiyoshi, Domaine du Vent salé, Pont de la rivière Kuta, Dojo d'Ogawa, Camp de la plage, Sanctuaire de la Montagne sinueuse, Temple doré, Sanctuaire du Dragon de pierre |
@@ -188,7 +188,7 @@ Ce que fait le serveur :
     | Infinity Nikki | Florawish : guilde des stylistes, Florawish : puits de la Fortune, Colline des Reliques, Résidence du maire (Florawish), Cabane du chasseur d'insectes, Florawish : auberge Daisy, Florawish : sanctuaire de l'Observateur |
     | Firewatch | Hawk's Rest, Lac Jonesy, Thunder Canyon, Téléphérique de Thorofare, Beartooth Point, Grotte 452, Two Forks Lookout, Largage de ravitaillement |
     | Life is Strange | Le phare, La casse (American Rust), Two Whales Diner, Blackwell Academy, La grange (the barn), Le château d'eau, Parking de Blackwell |
-    | Need for Speed Unbound | City Pier, Planque de Rüdiger, Garage Rydell's Rydes, Storm Drain, Dômes de la carrière, Usine automobile (piste d'essai) |
+    | Need for Speed Unbound | City Pier, Planque de Rüdiger, Garage Rydell's Rydes, Storm Drain, Dômes de la carrière, Usine automobile (piste d'essai), Port d'Edgewater, Chantier de Griffith, Parc d'Underwood, Tunnel de Jefferson, Powderhound, Université |
     | Need for Speed: Underground 2 | Aéroport international de Bayview, Beacon Hill East, City Center, Fort Union, Jackson Heights, Pigeon Park, Stade (Cooper Field), Beacon Hill West, Coal Harbor East, Gare de triage de Coal Harbor |
     | Need for Speed: Hot Pursuit | Big Timber Forest, Barrage de Carson Ridge, Grand Ocean Coast, East Gorge Canyon, Boulder Desert, Parc de Mission Beach, Phare de Coral Bay, Tunnel de Memorial Valley, Eagle Crest, Rockingham Point |
     | Baldur's Gate 3 | Blighted Village, Camp gobelin, Repos de Waukeen, Overgrown Ruins, Épave du nautiloïde |
@@ -206,16 +206,16 @@ Ce que fait le serveur :
     | Deus Ex: Mankind Divided | Station Palisade, Station Pilgrim, Station Monument, Station Čapek, Quartier rouge, Appartements Libuše, Appartements Zeleň, The Time Machine, Chez Chikane, 33 Hlavní |
     | Saints Row 2 | Aéroport Wardill, Cecil Park, Mission Beach, Brighton, Misty Lane, Ultor Dome |
     | Gotham Knights | Le Beffroi (Belfry), Iceberg Lounge, Asile d'Arkham, Prison de Blackgate, Elliot Center |
-    | Once Human | Overlook Town, Greywater Camp, Deadsville, Silo Psi, Épreuve de l'Ancien, Blackfell, Silo Theta, Silo Alpha, Tall Grass Inn, Silo EX1 |
+    | Once Human | Overlook Town, Greywater Camp, Deadsville, Silo Psi, Épreuve de l'Ancien, Blackfell, Silo Theta, Silo Alpha, Tall Grass Inn, Silo EX1, Holt Town, Junkyard |
     | Satisfactory | Côte des Flèches, Cratère bleu, Jungle rouge, Forêt des Titans, Plages de l'Ouest, Marais, Lacs du cratère, Champs de bambou rouge, Canyons du désert, Falaises de l'abysse |
     | Stray | Usine Neco, Place du marché, Prison, Toits, Cité morte, Bar de Midtown, Boîte de nuit, Station de métro de Midtown, Bibliothèque, Égouts |
     | Tom Clancy's Ghost Recon Breakpoint | Smuggler Coves, Mount Hodgson, Liberty, New Stirling, Egg Island, Cape North, Infinity, Seal Islands, Whalers Bay, Wild Coast |
     | Sekiro: Shadows Die Twice | Château d'Ashina, Domaine Hirata, Palais de la Source, Vallée engloutie, Faubourgs d'Ashina, Temple Senpou, Village de Mibu, Donjon abandonné |
     | Dragon Age: Inquisition | Skyhold, Val Royeaux, Forteresse d'Adamant, Redoute de Therinfal, Côte des Tempêtes, Palais d'Hiver (Halamshiral), Redcliffe |
     | Old School RuneScape | Château de Lumbridge, Parc de Falador, Al Kharid, Draynor Village, Edgeville, Canifis, Nardah, Brimhaven, Catherby, Rellekka |
-    | 7 Days to Die | Haven Hotel, Navezgane Athletics Complex, Installation Blue Ridge, Jack's Lumber Mill, Correa Rockworx, Fort Choppa, Hurry Harry's, Navezgane Corrections, Trader Rekt, Fort Bags |
+    | 7 Days to Die | Haven Hotel, Navezgane Athletics Complex, Installation Blue Ridge, Jack's Lumber Mill, Correa Rockworx, Fort Choppa, Hurry Harry's, Navezgane Corrections, Trader Rekt, Fort Bags, Town Hall (Navezgane), Minotaur Theater, Fort Quonset, Pal's Marina, Mortician's House |
     | Hunt: Showdown | Pitching Crematorium, Stillwater Bend, Lockbay Docks, Darrow Livestock, Cyprus Huts, Port Reeker, Alice Farm, Alain & Son's Fish, Davant Ranch, Scupper Lake |
-    | Clair Obscur: Expedition 33 | Village gestral, Le Carrousel, Casino volant, Colisée de Sirène, Île des Visages, Lumière, Robe de Sirène, Cimetière flottant, Île des Yeux, Sables blancs |
+    | Clair Obscur: Expedition 33 | Village gestral, Le Carrousel, Casino volant, Colisée de Sirène, Île des Visages, Lumière, Robe de Sirène, Cimetière flottant, Île des Yeux, Sables blancs, Cœurs gelés, Cimetière des lames, Forêt cramoisie |
     | Test Drive Unlimited 2 | Zenith loft, Salines mansion, Seaside apartment, Portinatx residence, Fujinoki residence, Sant Jordi residence, Sant Llorenç hacienda, Fontanelles house, Eivissa house, Santa Eulària residence |
     | Apex Legends | Le Baromètre, Ship Fall, North Pad, Le Moulin (The Mill), Storm Catcher, Cenote Cave, Checkpoint, L'Antenne (The Antenna), Repaire des Prowlers (Prowler Den) |
     | Skull and Bones | Three Brothers, Île Michel, Sunken Goldmine, The Oubliette, Great Ukuta, Dragon's Back, Return Fleet Bight, Vorona Falls, Ruined Lighthouse, Dutchman's Camp |
