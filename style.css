@@ -157,7 +157,9 @@ td.who .wn.me { color: var(--acc); font-weight: 700; } /* sa propre ligne, repé
 
 .seg { display: flex; background: var(--well); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 3px; flex-wrap: wrap; }
 .seg button { flex: 1; border: 0; background: transparent; padding: 9px 8px; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--mut); min-width: 44px; transition: background-color .15s, color .15s; }
-.seg button:hover:not(:disabled):not(.on) { color: var(--txt); background: rgba(255, 255, 255, .03); }
+/* survol seulement avec une vraie souris : sur téléphone, Safari peut ne donner au premier toucher que l'état
+   survolé (style :hover avec transition), sans clic ; le bouton restait « survolé » et rien ne se passait */
+@media (hover: hover) { .seg button:hover:not(:disabled):not(.on) { color: var(--txt); background: rgba(255, 255, 255, .03); } }
 .seg button.on { background: var(--acc-soft); color: var(--acc); box-shadow: 0 0 0 1px var(--acc-ring) inset; }
 .seg button:disabled { opacity: .35; }
 .settings { display: grid; gap: 14px; }

@@ -896,6 +896,7 @@
     avail.mix = avail.lib || avail.real;
     if (A.mode !== "guest" && !avail[cfg.pack]) { cfg.pack = "demo"; }
     $("packSetting").classList.toggle("hidden", !!SERVER);
+    $("settings").classList.toggle("locked", A.mode === "guest"); // réglages de l'hôte seulement (rôle qui a pu changer)
     // visibilité du salon : seulement à plusieurs, sur le site Docker (la liste des salons publics vient du serveur)
     const multi = A.mode === "host" || A.mode === "guest", pub = cfg.pub === 1;
     $("pubSetting").classList.toggle("hidden", !(SERVER && multi));
@@ -1695,11 +1696,28 @@
     $("bStart").onclick = () => { if (isHost()) hostStart(); };
     $("bReady").onclick = toggleReady;
     for (const b of document.querySelectorAll("#settings [data-step]")) b.onclick = () => { const c = curCfg(); const max = Math.max(1, Math.min(15, pool(c.pack).length)); setCfg("rounds", Math.max(1, Math.min(max, c.rounds + +b.dataset.step))); };
-    for (const seg of document.querySelectorAll("#settings .seg")) seg.addEventListener("click", (e) => {
-      const b = e.target.closest("button"); if (!b || b.disabled) return;
-      const k = seg.dataset.k; const v = k === "pack" ? b.dataset.v : +b.dataset.v;
-      setCfg(k, v);
-    });
+    // boutons de réglage : au doigt, le choix se fait au doigt levé sans glissement (événements tactiles, comme les
+    // suggestions) : Safari sur iPhone n'envoie pas toujours le clic d'un premier toucher (« Public / Privé » restait
+    // en état survolé sans rien changer) ; à la souris et au clavier, le clic. Un clic qui suit un toucher déjà
+    // traité est ignoré (pas de double prise en compte).
+    for (const seg of document.querySelectorAll("#settings .seg")) {
+      const pickSeg = (b) => { if (!b || b.disabled) return; const k = seg.dataset.k; setCfg(k, k === "pack" ? b.dataset.v : +b.dataset.v); };
+      let tt = null, tDone = 0;
+      seg.addEventListener("touchstart", (e) => {
+        const b = e.touches.length === 1 && e.target.closest && e.target.closest("button");
+        tt = b ? { b, x: e.touches[0].screenX, y: e.touches[0].screenY } : null;
+      }, { passive: true });
+      seg.addEventListener("touchmove", (e) => { if (tt && Math.hypot(e.touches[0].screenX - tt.x, e.touches[0].screenY - tt.y) > 10) tt = null; }, { passive: true });
+      seg.addEventListener("touchcancel", () => { tt = null; });
+      seg.addEventListener("touchend", (e) => {
+        const t = tt; tt = null; if (!t) return;
+        const q = e.changedTouches[0];
+        if (!q || Math.hypot(q.screenX - t.x, q.screenY - t.y) > 10) return;
+        if (e.cancelable) e.preventDefault();
+        tDone = Date.now(); pickSeg(t.b);
+      }, { passive: false });
+      seg.addEventListener("click", (e) => { if (Date.now() - tDone < 800) return; pickSeg(e.target.closest("button")); });
+    }
 
     $("fGuess").addEventListener("submit", (e) => { e.preventDefault(); submitGuess($("gInput").value); });
     attachSuggest($("gInput"), $("sugg"), (t) => { $("gInput").value = t; submitGuess(t, true); }, () => (A.st && A.st.cfg.hints ? (t) => true : null));
