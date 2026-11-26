@@ -68,7 +68,7 @@ Ce que fait le serveur :
 ## Images
 
 - **Pack démo** : 6 jeux fictifs (« Chroniques d'Astral II », « Chroniques d'Astral : Origines », « Ferro Nexus III », « Lune Pâle », « Le Récif Perdu », « Néon Velours ») et 48 vues. Tout est dessiné par le code (`js/demo.js`). Le décor dépend de la région de la carte, donc la vue donne des indices sur l'endroit.
-- **Vrais jeux** : 1660 vues de 155 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
+- **Vrais jeux** : 1686 vues de 160 vrais jeux, trouvées en ligne, avec leur position sur la carte (`packs/vrais-jeux.js`). Chaque jeu a la même chance d'être tiré, quel que soit son nombre de vues.
   - **Panoramas 360°** :
     - *The Legend of Zelda: Breath of the Wild* : 47 vues sur 29 lieux, tirées du projet de fan [Zelda BotW Street View](https://nassimsoftware.github.io/zeldabotwstreetview/) (Nassim's Software), qui fournit aussi la carte et la position de chaque vue.
     - *The Elder Scrolls V: Skyrim* : 13 vues (Solitude, Markarth, Riften, Windhelm, Collège de Fortdhiver…) tirées de [Skyrim Panoramas](https://www.snakebytestudios.com/articles/gaming/skyrim-panoramas/) (Snakebyte Studios), placées sur la carte papier du jeu.
@@ -230,6 +230,11 @@ Ce que fait le serveur :
     | LEGO City Undercover | Commissariat, château de Fort Meadows, île de Lady Liberty, Unisphère, aéroport, Honey Hotel, île Albatross, tour Fusileani, Mont Cashmore, Bibliothèque de LEGO City |
     | Outer Wilds | Timber Hearth, Brittle Hollow, Giant's Deep, Jumeaux du sablier (Ash Twin), Hollow's Lantern, Ember Twin (canon gravitationnel), Canon sondeur orbital, Dark Bramble (cimetière nomaï), Interloper (cœur de la comète) |
     | Pathologic 2 | Théâtre, Cathédrale, La Coquille (The Nutshell), Mairie, Hospice d'Aspity, Antre du Haruspice, Shekhen |
+    | Soulmask | Pyramide de la forêt tropicale, Pyramide du désert, Pyramide de la montagne enneigée, Pyramide du plateau, Pyramide de la colline |
+    | Schedule I | Grange, Casino, Motel, Hyland Auto, Agence immobilière de Ray, Entrepôt |
+    | Control | Salle du conseil, Exécutif central, Cafétéria, Affaires exécutives, Salle du courrier, Courrier mort |
+    | God of War Ragnarök | Mines de Jarnsmida, Sables de Sverd, Niðavellir |
+    | The Planet Crafter | Cénote, Chute d'eau, Grottes arc-en-ciel, Chutes rouges, Rivière aux champignons, Chutes de sable |
     | Grand Theft Auto VI (carte officielle « Visit Leonida ») | Starlet Motel à Port Gellhorn, Sahara Arena (Downtown Vice City), Watson Bay, The Rusty Anchor à Key Lento, Ambrosia, Hotel Valetta à Vice Beach |
     | The Legend of Zelda: Tears of the Kingdom | Ville Gerudo, Village de Hateno, Pics jumeaux, Île d'Eventide |
 
