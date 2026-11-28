@@ -927,10 +927,10 @@
     if (A.screen === "lobby" && !(A.editName && $("plName"))) {
       $("nPlayers").textContent = "(" + ps.length + ")";
       $("playersList").innerHTML = ps.map((p) => {
-        const tags = (p.alive === false ? '<span class="tag bad">Absent</span>' : "") + (p.ready && readyLobby() ? '<span class="tag good">Prêt</span>' : "") + (p.host && A.nroom ? '<span class="tag acc">Hôte</span>' : "") + (p.me ? '<span class="tag">Toi</span>' : "");
+        const tags = (p.alive === false ? '<span class="tag bad">Absent</span>' : "") + (p.ready && readyLobby() ? '<span class="tag good">Prêt</span>' : "") + (p.host && A.nroom ? '<span class="tag acc">Hôte</span>' : "");  // plus d'étiquette « Toi » : sa ligne est en or (nom et cadre), le crayon la signale aussi
         if (p.me && A.editName) return '<form class="pl me" id="plNameForm">' + ava(p, 30) + '<input type="text" id="plName" class="grow" maxlength="16" value="' + esc(p.name) + '" autocomplete="off" enterkeyhint="done" aria-label="Ton pseudo">'
           + '<button class="btn icon sm on" type="submit" title="Valider" aria-label="Valider le pseudo">' + ICON_OK + "</button></form>";
-        return '<div class="pl' + (p.me ? " me" : "") + '">' + ava(p, 30) + '<b class="grow">' + esc(p.name) + "</b>"
+        return '<div class="pl' + (p.me ? " me" : "") + '">' + ava(p, 30) + '<b class="grow">' + esc(p.name) + (p.me ? '<span class="sr"> (toi)</span>' : "") + "</b>"
           + (p.me ? '<button class="btn icon sm" type="button" id="bNameEdit" title="Modifier mon pseudo" aria-label="Modifier mon pseudo">' + ICON_PEN + "</button>" : "") + tags + "</div>";
       }).join("");
       if ($("bNameEdit")) $("bNameEdit").onclick = () => editName(true);

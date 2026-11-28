@@ -171,7 +171,8 @@ td.who .wn.me { color: var(--acc); font-weight: 700; } /* sa propre ligne, repé
 .codebox { font-family: var(--fd); font-size: 44px; letter-spacing: 10px; text-align: center; color: var(--acc); padding: 8px 0 2px; user-select: all; }
 .players { display: flex; flex-direction: column; gap: 8px; }
 .pl { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--well); border: 1px solid var(--line-soft); border-radius: 10px; }
-.pl.me { border-color: var(--line); }
+.pl.me { border-color: var(--acc-ring); background: linear-gradient(90deg, rgba(244, 183, 64, .1), rgba(244, 183, 64, .03)), var(--well); } /* sa propre ligne : cadre et fond dorés, à la place de l'étiquette « Toi » */
+.pl.me > b.grow { color: var(--acc); }
 .pl > b.grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* pseudo long : « … » au lieu de passer sous les boutons */
 .pl > .tag { flex: none; }
 .pl .btn.icon.sm { width: 32px; height: 32px; border-radius: 9px; color: var(--mut); flex: none; }
